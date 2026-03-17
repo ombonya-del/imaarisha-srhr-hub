@@ -3620,17 +3620,14 @@ async function submitNewThread() {
   }
 }
 
-// Close modals on overlay click
-document.getElementById('disc-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeDiscModal();
-});
-document.getElementById('new-thread-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeNewThread();
-});
-
-// Enter to submit reply
-document.getElementById('reply-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(); }
+// Wire modal interactions after DOM is ready
+window.addEventListener('DOMContentLoaded', function() {
+  var discModal = document.getElementById('disc-modal');
+  var newThreadModal = document.getElementById('new-thread-modal');
+  var replyInput = document.getElementById('reply-input');
+  if (discModal) discModal.addEventListener('click', function(e) { if (e.target === this) closeDiscModal(); });
+  if (newThreadModal) newThreadModal.addEventListener('click', function(e) { if (e.target === this) closeNewThread(); });
+  if (replyInput) replyInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(); } });
 });
 
 async function handleLogout() { await _supabase.auth.signOut(); }
