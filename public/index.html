@@ -964,6 +964,91 @@ flex; justify-content: space-between; }
 }
 .auth-divider { text-align: center; font-size: 0.72rem; color: var(--muted); margin: 16px 0; }
 
+
+/* DISCUSSION MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(13,17,23,0.88);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 20px; backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 720px;
+  display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.modal-close {
+  background: transparent; border: none; color: var(--muted);
+  font-size: 1.4rem; cursor: pointer; line-height: 1; flex-shrink: 0;
+  padding: 2px 6px; border-radius: 4px;
+}
+.modal-close:hover { color: var(--white); background: var(--dark3); }
+.modal-subject {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 600; line-height: 1.3;
+}
+.modal-meta { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+.modal-body { padding: 20px 28px; flex: 1; overflow-y: auto; max-height: 55vh; }
+.reply-item {
+  display: flex; gap: 12px; padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.reply-item:last-child { border-bottom: none; }
+.reply-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: var(--dark);
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+}
+.reply-content { flex: 1; }
+.reply-author { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+.reply-author span { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.reply-body { font-size: 0.82rem; color: var(--white); line-height: 1.5; }
+.reply-time { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+.modal-footer {
+  padding: 16px 28px 20px;
+  border-top: 1px solid var(--border);
+}
+.reply-input-row { display: flex; gap: 10px; align-items: flex-end; }
+.reply-textarea {
+  flex: 1; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; resize: none;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+  color: var(--white); outline: none; min-height: 60px;
+  transition: border 0.2s;
+}
+.reply-textarea:focus { border-color: var(--gold); }
+.reply-textarea::placeholder { color: var(--muted); }
+
+/* NEW THREAD MODAL */
+.new-thread-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 560px; padding: 32px;
+}
+.new-thread-box .auth-field { margin-bottom: 14px; }
+.new-thread-box select {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none;
+}
+.new-thread-box textarea {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; resize: none;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; min-height: 100px;
+  transition: border 0.2s;
+}
+.new-thread-box textarea:focus,
+.new-thread-box select:focus { border-color: var(--gold); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -1495,7 +1580,7 @@ class="resource-tag">Restricted</span></div>
 <input class="search-input" placeholder="🔍 Search discussions..."
 style="max-width:100%; flex:1"/>
 
-<button class="btn btn-gold" onclick="alert('Start discussion --- full build feature')">+ New Thread</button>
+<button class="btn btn-gold" onclick="openNewThread()">+ New Thread</button>
 
 </div>
 
@@ -3218,14 +3303,19 @@ async function loadDiscussions() {
   if (!data) return;
   const container = document.querySelector('#panel-discussions');
   container.querySelectorAll('.discussion-item').forEach(function(el) { el.remove(); });
+  // Update badge count
+  const badge = document.querySelector('.nav-item [onclick*="discussions"] + .badge');
   const colors = ['linear-gradient(135deg,#2A6B5E,#3D9E8A)', 'linear-gradient(135deg,#7B3F9E,#C9A84C)', 'linear-gradient(135deg,#C0392B,#E74C3C)', 'linear-gradient(135deg,#1A5276,#2E86C1)'];
   data.forEach(function(d, i) {
     const name = d.profiles ? (d.profiles.full_name || '') : '';
     const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2) || 'UN';
     const orgName = d.organizations ? d.organizations.short_name : '';
+    const meta = (orgName || 'Member') + ' · ' + timeAgo(d.created_at);
     const el = document.createElement('div');
     el.className = 'discussion-item';
-    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div></div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + orgName + ' · ' + timeAgo(d.created_at) + '</span></div>';
+    el.style.cursor = 'pointer';
+    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div></div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
+    el.addEventListener('click', function() { openDiscModal(d.id, d.subject, meta); });
     container.appendChild(el);
   });
 }
@@ -3401,9 +3491,207 @@ async function handleSignup() {
   else showSuccess('Account created! Check your email to confirm, then sign in.');
 }
 
+
+// ============================================================
+// DISCUSSIONS - INTERACTIVE
+// ============================================================
+
+var currentDiscussionId = null;
+var currentUser = null;
+
+_supabase.auth.getUser().then(function(result) {
+  if (result.data && result.data.user) currentUser = result.data.user;
+});
+
+_supabase.auth.onAuthStateChange(function(event, session) {
+  if (session) currentUser = session.user;
+});
+
+function openDiscModal(discId, subject, meta) {
+  currentDiscussionId = discId;
+  document.getElementById('disc-modal-subject').textContent = subject;
+  document.getElementById('disc-modal-meta').textContent = meta;
+  document.getElementById('disc-modal').classList.remove('hidden');
+  document.getElementById('reply-input').value = '';
+  loadReplies(discId);
+  // Increment view count
+  _supabase.from('discussions').update({ view_count: null }).eq('id', discId);
+  _supabase.rpc || _supabase.from('discussions').select('view_count').eq('id', discId).single().then(function(r) {
+    if (r.data) _supabase.from('discussions').update({ view_count: (r.data.view_count || 0) + 1 }).eq('id', discId);
+  });
+}
+
+function closeDiscModal() {
+  document.getElementById('disc-modal').classList.add('hidden');
+  currentDiscussionId = null;
+  loadDiscussions();
+}
+
+async function loadReplies(discId) {
+  const repliesEl = document.getElementById('disc-modal-replies');
+  repliesEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:0.82rem;">Loading...</div>';
+  const { data: disc } = await _supabase.from('discussions').select('body, preview').eq('id', discId).single();
+  const { data: replies } = await _supabase.from('discussion_replies').select('*, profiles(full_name)').eq('discussion_id', discId).order('created_at');
+  repliesEl.innerHTML = '';
+  // Show original post
+  const colors = ['linear-gradient(135deg,#2A6B5E,#C9A84C)', 'linear-gradient(135deg,#7B3F9E,#C9A84C)', 'linear-gradient(135deg,#C0392B,#E74C3C)', 'linear-gradient(135deg,#1A5276,#2E86C1)'];
+  if (disc && (disc.body || disc.preview)) {
+    const op = document.createElement('div');
+    op.className = 'reply-item';
+    op.innerHTML = '<div class="reply-avatar" style="background:' + colors[0] + '">OP</div><div class="reply-content"><div class="reply-author">Original Post</div><div class="reply-body">' + (disc.body || disc.preview || '') + '</div></div>';
+    repliesEl.appendChild(op);
+  }
+  if (!replies || replies.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;color:var(--muted);padding:24px;font-size:0.82rem;';
+    empty.textContent = 'No replies yet. Be the first to respond!';
+    repliesEl.appendChild(empty);
+    return;
+  }
+  replies.forEach(function(r, i) {
+    const name = r.profiles ? (r.profiles.full_name || 'Member') : 'Member';
+    const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+    const div = document.createElement('div');
+    div.className = 'reply-item';
+    div.innerHTML = '<div class="reply-avatar" style="background:' + colors[(i+1) % colors.length] + '">' + initials + '</div><div class="reply-content"><div class="reply-author">' + name + '<span>' + timeAgo(r.created_at) + '</span></div><div class="reply-body">' + r.body + '</div></div>';
+    repliesEl.appendChild(div);
+  });
+  repliesEl.scrollTop = repliesEl.scrollHeight;
+}
+
+async function submitReply() {
+  if (!currentDiscussionId) return;
+  const input = document.getElementById('reply-input');
+  const body = input.value.trim();
+  if (!body) return;
+  const btn = document.getElementById('reply-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+  const { error } = await _supabase.from('discussion_replies').insert({
+    discussion_id: currentDiscussionId,
+    author_id: currentUser ? currentUser.id : null,
+    body: body
+  });
+  btn.disabled = false; btn.textContent = 'Reply';
+  if (!error) {
+    input.value = '';
+    loadReplies(currentDiscussionId);
+    // Log activity
+    _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' replied to a discussion', dot_color: 'green' });
+  }
+}
+
+function openNewThread() {
+  document.getElementById('new-thread-modal').classList.remove('hidden');
+  document.getElementById('thread-error').style.display = 'none';
+}
+
+function closeNewThread() {
+  document.getElementById('new-thread-modal').classList.add('hidden');
+}
+
+async function submitNewThread() {
+  const subject = document.getElementById('thread-subject').value.trim();
+  const category = document.getElementById('thread-category').value;
+  const body = document.getElementById('thread-body').value.trim();
+  const errEl = document.getElementById('thread-error');
+  if (!subject || !body) {
+    errEl.textContent = 'Please fill in the subject and message.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('thread-submit-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+  const { error } = await _supabase.from('discussions').insert({
+    subject: subject,
+    preview: body.substring(0, 200),
+    body: body,
+    category: category,
+    author_id: currentUser ? currentUser.id : null
+  });
+  btn.disabled = false; btn.textContent = 'Post Discussion';
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+  } else {
+    closeNewThread();
+    loadDiscussions();
+    document.getElementById('thread-subject').value = '';
+    document.getElementById('thread-body').value = '';
+  }
+}
+
+// Close modals on overlay click
+document.getElementById('disc-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDiscModal();
+});
+document.getElementById('new-thread-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeNewThread();
+});
+
+// Enter to submit reply
+document.getElementById('reply-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitReply(); }
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
+
+
+<!-- DISCUSSION THREAD MODAL -->
+<div class="modal-overlay hidden" id="disc-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-subject" id="disc-modal-subject"></div>
+        <div class="modal-meta" id="disc-modal-meta"></div>
+      </div>
+      <button class="modal-close" onclick="closeDiscModal()">✕</button>
+    </div>
+    <div class="modal-body" id="disc-modal-replies">
+      <div style="text-align:center;color:var(--muted);padding:24px;font-size:0.82rem;">Loading replies...</div>
+    </div>
+    <div class="modal-footer">
+      <div class="reply-input-row">
+        <textarea class="reply-textarea" id="reply-input" placeholder="Write a reply..."></textarea>
+        <button class="btn btn-gold" id="reply-btn" onclick="submitReply()">Reply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW THREAD MODAL -->
+<div class="modal-overlay hidden" id="new-thread-modal">
+  <div class="new-thread-box">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;margin-bottom:20px;">Start a New <span style="color:var(--gold)">Discussion</span></div>
+    <div class="auth-error" id="thread-error"></div>
+    <div class="auth-field">
+      <label>Subject</label>
+      <input type="text" id="thread-subject" placeholder="What do you want to discuss?" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+    </div>
+    <div class="auth-field">
+      <label>Category</label>
+      <select id="thread-category">
+        <option value="General">General</option>
+        <option value="Youth">Youth</option>
+        <option value="Funding">Funding</option>
+        <option value="Digital Health">Digital Health</option>
+        <option value="Clinical">Clinical</option>
+        <option value="Policy">Policy</option>
+        <option value="GBV">GBV</option>
+        <option value="MHM">MHM</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label>Message</label>
+      <textarea id="thread-body" placeholder="Share your thoughts, questions, or updates with the network..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeNewThread()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="thread-submit-btn" onclick="submitNewThread()" style="flex:2">Post Discussion</button>
+    </div>
+  </div>
+</div>
 
 </body>
 
