@@ -11,7 +11,7 @@ initial-scale=1.0"/>
 
 <title>ImaarishaSRHR Community Hub</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <link
 href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
@@ -3099,13 +3099,11 @@ orgs: ['Member', 'Organizations'],
 
 function showPanel(id, el) {
 
-document.querySelectorAll('.panel').forEach(p =>
-p.classList.remove('active'));
+document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
 
 document.getElementById('panel-' + id).classList.add('active');
 
-document.querySelectorAll('.nav-item').forEach(n =>
-n.classList.remove('active'));
+document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
 if (el) el.classList.add('active');
 
@@ -3117,8 +3115,7 @@ document.getElementById('topbar-title').innerHTML = t[0] + ' <span>' + t[1] + '<
 
 function filterMkt(cat, el) {
 
-document.querySelectorAll('#mkt-cats .mkt-cat').forEach(c =>
-c.classList.remove('active'));
+document.querySelectorAll('#mkt-cats .mkt-cat').forEach(c => c.classList.remove('active'));
 
 el.classList.add('active');
 
@@ -3139,30 +3136,17 @@ item.style.display = 'none';
 }
 
 // Filter chips
-
-document.querySelectorAll('.filter-chip').forEach(chip => {
-
-chip.addEventListener('click', function() {
-
-this.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(c
-=> c.classList.remove('active'));
-
-this.classList.add('active');
-
+document.querySelectorAll('.filter-chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    chip.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+  });
 });
 
-});
-
-// ============================================================
 // SUPABASE AUTH
-// ============================================================
-
-const SUPABASE_URL = 'https://uwxtqyqyrhhxqagaqelg.supabase.co';
-const SUPABASE_ANON_KEY = document.currentScript ? null : null; // injected below
-
-const _supabase = supabase.createClient(
+var _supabase = supabase.createClient(
   'https://uwxtqyqyrhhxqagaqelg.supabase.co',
-  'sb_publishable_Pb0w9uNgDR_JILXFTraxDw_OHQjbsP5... sb_secret_k11OqxmzOM6umEP75_UQ3g_MkwKqIYd '
+  'sb_publishable_Pb0w9uNgDR_JILXFTraxDw_OHQjbsP5'
 );
 
 // Check session on load
@@ -3185,20 +3169,26 @@ _supabase.auth.onAuthStateChange((event, session) => {
 
 function showHub(user) {
   document.getElementById('auth-overlay').classList.add('hidden');
-  // Update user card in sidebar
-  const name = user.user_metadata?.full_name || user.email.split('@')[0];
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+  var meta = user.user_metadata || {};
+  var name = meta.full_name || user.email.split('@')[0];
+  var initials = name.split(' ').map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
   document.querySelector('.user-name').textContent = name;
   document.querySelector('.user-avatar').textContent = initials;
-  // Add logout button
-  const footer = document.querySelector('.sidebar-footer');
+  var footer = document.querySelector('.sidebar-footer');
   if (!document.getElementById('logout-btn')) {
-    const btn = document.createElement('button');
+    var btn = document.createElement('button');
     btn.id = 'logout-btn';
     btn.textContent = 'Sign Out';
-    btn.style.cssText = 'width:100%;margin-top:10px;padding:7px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:"DM Sans",sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.2s;';
-    btn.onmouseover = () => { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)'; };
-    btn.onmouseout = () => { btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--muted)'; };
+    btn.style.width = '100%';
+    btn.style.marginTop = '10px';
+    btn.style.padding = '7px';
+    btn.style.borderRadius = '6px';
+    btn.style.background = 'transparent';
+    btn.style.border = '1px solid rgba(201,168,76,0.2)';
+    btn.style.color = '#7A8899';
+    btn.style.fontFamily = 'DM Sans, sans-serif';
+    btn.style.fontSize = '0.75rem';
+    btn.style.cursor = 'pointer';
     btn.onclick = handleLogout;
     footer.appendChild(btn);
   }
