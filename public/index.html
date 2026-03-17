@@ -3074,68 +3074,35 @@ class="resource-tag">Community</span></div>
 </main>
 
 <script>
-
 const titles = {
-
-dashboard: ['Dashboard', 'Overview'],
-
-marketplace: ['SRHR', 'Marketplace'],
-
-resources: ['Resource', 'Library'],
-
-discussions: ['Community', 'Discussions'],
-
-events: ['Events &', 'Calendar'],
-
-tracker: ['SRHR', 'Tracker'],
-
-campaign: ['Digital', 'Campaigns & Advocacy'],
-
-disinfo: ['Disinformation', 'Watch'],
-
-orgs: ['Member', 'Organizations'],
-
+  dashboard: ['Dashboard', 'Overview'],
+  marketplace: ['SRHR', 'Marketplace'],
+  resources: ['Resource', 'Library'],
+  discussions: ['Community', 'Discussions'],
+  events: ['Events &', 'Calendar'],
+  tracker: ['SRHR', 'Tracker'],
+  campaign: ['Digital', 'Campaigns & Advocacy'],
+  disinfo: ['Disinformation', 'Watch'],
+  orgs: ['Member', 'Organizations'],
 };
 
 function showPanel(id, el) {
-
-document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-
-document.getElementById('panel-' + id).classList.add('active');
-
-document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-if (el) el.classList.add('active');
-
-const t = titles[id] || ['', ''];
-
-document.getElementById('topbar-title').innerHTML = t[0] + ' <span>' + t[1] + '</span>';
-
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const t = titles[id] || ['', ''];
+  document.getElementById('topbar-title').innerHTML = t[0] + ' <span>' + t[1] + '</span>';
 }
 
 function filterMkt(cat, el) {
-
-document.querySelectorAll('#mkt-cats .mkt-cat').forEach(c => c.classList.remove('active'));
-
-el.classList.add('active');
-
-document.querySelectorAll('.mkt-item').forEach(item => {
-
-if (cat === 'all' || item.dataset.cat === cat) {
-
-item.style.display = 'flex';
-
-} else {
-
-item.style.display = 'none';
-
+  document.querySelectorAll('#mkt-cats .mkt-cat').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.mkt-item').forEach(item => {
+    item.style.display = (cat === 'all' || item.dataset.cat === cat) ? 'flex' : 'none';
+  });
 }
 
-});
-
-}
-
-// Filter chips
 document.querySelectorAll('.filter-chip').forEach(function(chip) {
   chip.addEventListener('click', function() {
     chip.closest('.filter-bar').querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
@@ -3143,35 +3110,242 @@ document.querySelectorAll('.filter-chip').forEach(function(chip) {
   });
 });
 
-// SUPABASE AUTH
 var _supabase = supabase.createClient(
   'https://uwxtqyqyrhhxqagaqelg.supabase.co',
   'sb_publishable_Pb0w9uNgDR_JILXFTraxDw_OHQjbsP5'
 );
 
-// Check session on load
-_supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    showHub(session.user);
-  } else {
-    showAuthModal();
+function timeAgo(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  if (mins < 60) return mins + ' minutes ago';
+  if (hrs < 24) return hrs + ' hours ago';
+  if (days === 1) return 'Yesterday';
+  return days + ' days ago';
+}
+
+function formatNum(n) {
+  if (!n) return '0';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+  return n.toString();
+}
+
+async function loadDashboard() {
+  const [
+    { count: orgCount },
+    { count: resourceCount },
+    { count: discussionCount },
+    { data: events },
+    { data: activity },
+    { data: orgs }
+  ] = await Promise.all([
+    _supabase.from('organizations').select('*', { count: 'exact', head: true }),
+    _supabase.from('resources').select('*', { count: 'exact', head: true }),
+    _supabase.from('discussions').select('*', { count: 'exact', head: true }),
+    _supabase.from('events').select('id, event_date').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date'),
+    _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5),
+    _supabase.from('organizations').select('short_name').limit(9)
+  ]);
+  const nums = document.querySelectorAll('.stat-number');
+  if (nums[0]) nums[0].textContent = orgCount || 0;
+  if (nums[1]) nums[1].textContent = resourceCount || 0;
+  if (nums[2]) nums[2].textContent = discussionCount || 0;
+  if (nums[3]) nums[3].textContent = (events && events.length) || 0;
+  const changes = document.querySelectorAll('.stat-change');
+  if (changes[3] && events && events[0]) {
+    const d = new Date(events[0].event_date);
+    changes[3].textContent = 'Next: ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
+  if (activity && activity.length) {
+    const feed = document.querySelector('#panel-dashboard .card:first-child');
+    const titleEl = feed.querySelector('.card-title');
+    feed.innerHTML = '';
+    feed.appendChild(titleEl);
+    activity.forEach(function(a) {
+      const dotClass = a.dot_color === 'green' ? 'green' : a.dot_color === 'red' ? 'red' : '';
+      const div = document.createElement('div');
+      div.className = 'activity-item';
+      div.innerHTML = '<div class="activity-dot ' + dotClass + '"></div><div><div class="activity-text">' + a.description + '</div><div class="activity-time">' + timeAgo(a.created_at) + '</div></div>';
+      feed.appendChild(div);
+    });
+  }
+  if (orgs && orgs.length) {
+    const firstPill = document.querySelector('.org-pill');
+    if (firstPill) {
+      const parent = firstPill.parentElement;
+      parent.innerHTML = '';
+      orgs.forEach(function(o) {
+        const s = document.createElement('span');
+        s.className = 'org-pill';
+        s.innerHTML = '<span class="org-dot"></span>' + o.short_name;
+        parent.appendChild(s);
+      });
+    }
+  }
+}
+
+async function loadMarketplace() {
+  const { data } = await _supabase.from('marketplace_listings').select('*, organizations(short_name)').eq('is_active', true).order('created_at', { ascending: false });
+  if (!data) return;
+  const container = document.querySelector('.mkt-items');
+  if (!container) return;
+  container.innerHTML = '';
+  data.forEach(function(item) {
+    const badges = [];
+    if (item.price_type === 'free') badges.push('<span class="mkt-badge free">Free to Members</span>');
+    else if (item.price_type === 'partner_rate') badges.push('<span class="mkt-badge partner">Partner Rate</span>');
+    else if (item.price_type === 'seeking') badges.push('<span class="mkt-badge" style="background:rgba(61,158,138,0.15);color:var(--accent2)">Seeking</span>');
+    if (item.is_new) badges.push('<span class="mkt-badge new">New</span>');
+    const orgName = item.organizations ? item.organizations.short_name : '';
+    const el = document.createElement('div');
+    el.className = 'mkt-item';
+    el.dataset.cat = item.category;
+    el.innerHTML = '<div class="mkt-item-icon">' + (item.icon || '📦') + '</div><div><div class="mkt-item-title">' + item.title + '</div><div class="mkt-item-desc">' + (item.description || '') + '</div><div class="mkt-item-footer">' + badges.join('') + '<span style="margin-left:auto;font-size:0.7rem;color:var(--muted)">' + orgName + '</span></div></div>';
+    container.appendChild(el);
+  });
+}
+
+async function loadResources() {
+  const { data } = await _supabase.from('resources').select('*').order('created_at', { ascending: false });
+  if (!data) return;
+  const grid = document.querySelector('#panel-resources .resources-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const icons = { Guideline: '📄', 'Data Report': '📊', 'Training Material': '🎓', 'IEC Material': '🖼', Tool: '🔧', Other: '📁' };
+  data.forEach(function(r) {
+    const tags = (r.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
+    const card = document.createElement('div');
+    card.className = 'resource-card';
+    card.innerHTML = '<div class="resource-type">' + (icons[r.type] || '📄') + ' ' + r.type + '</div><div class="resource-title">' + r.title + '</div><div>' + tags + '</div><div class="resource-meta"><span>' + (r.source_org || '') + '</span><span>' + (r.file_type || '') + (r.file_size ? ' · ' + r.file_size : '') + '</span></div>';
+    grid.appendChild(card);
+  });
+}
+
+async function loadDiscussions() {
+  const { data } = await _supabase.from('discussions').select('*, profiles(full_name), organizations(short_name)').order('created_at', { ascending: false });
+  if (!data) return;
+  const container = document.querySelector('#panel-discussions');
+  container.querySelectorAll('.discussion-item').forEach(function(el) { el.remove(); });
+  const colors = ['linear-gradient(135deg,#2A6B5E,#3D9E8A)', 'linear-gradient(135deg,#7B3F9E,#C9A84C)', 'linear-gradient(135deg,#C0392B,#E74C3C)', 'linear-gradient(135deg,#1A5276,#2E86C1)'];
+  data.forEach(function(d, i) {
+    const name = d.profiles ? (d.profiles.full_name || '') : '';
+    const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2) || 'UN';
+    const orgName = d.organizations ? d.organizations.short_name : '';
+    const el = document.createElement('div');
+    el.className = 'discussion-item';
+    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div></div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + orgName + ' · ' + timeAgo(d.created_at) + '</span></div>';
+    container.appendChild(el);
+  });
+}
+
+async function loadEvents() {
+  const { data } = await _supabase.from('events').select('*').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date');
+  if (!data) return;
+  const container = document.querySelector('#panel-events .events-layout > div:first-child');
+  container.querySelectorAll('.event-card').forEach(function(el) { el.remove(); });
+  data.forEach(function(e) {
+    const d = new Date(e.event_date + 'T00:00:00');
+    const tags = (e.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
+    const hosts = (e.host_orgs || []).join(' & ');
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.innerHTML = '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en', { month: 'short' }).toUpperCase() + '</div></div><div class="event-body"><div class="event-title">' + e.title + '</div><div class="event-details">📍 ' + (e.location || 'TBC') + (e.start_time ? ' &nbsp;·&nbsp; ' + e.start_time : '') + '<br/>🏛 ' + hosts + '<br/>👥 ' + (e.rsvp_count ? e.rsvp_count + ' registered' : 'Open to all') + '</div><div class="event-tags">' + tags + '</div></div>';
+    container.appendChild(card);
+  });
+}
+
+async function loadTracker() {
+  const { data } = await _supabase.from('tracker_indicators').select('*').order('sort_order');
+  if (!data) return;
+  const grid = document.querySelector('.tracker-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  data.forEach(function(ind) {
+    const pct = ind.progress_pct || Math.round((ind.current_value / ind.target_value) * 100);
+    const card = document.createElement('div');
+    card.className = 'tracker-card';
+    card.innerHTML = '<div class="tracker-header"><div><div class="tracker-name">' + ind.name + '</div><div style="font-size:0.72rem;color:var(--muted)">' + (ind.subtitle || '') + '</div></div><div class="tracker-val">' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div></div><div style="font-size:0.75rem;color:var(--muted)">Progress toward ' + ind.target_value + ' ' + ind.unit + ' target</div><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div><div class="tracker-legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Current: ' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div><div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Target: ' + ind.target_value + (ind.unit === '%' ? '%' : '') + '</div></div>';
+    grid.appendChild(card);
+  });
+}
+
+async function loadCampaigns() {
+  const { data } = await _supabase.from('campaigns').select('*').eq('status', 'active').order('created_at', { ascending: false });
+  if (!data) return;
+  const grid = document.querySelector('.campaign-grid');
+  if (!grid) return;
+  const placeholder = grid.lastElementChild;
+  grid.innerHTML = '';
+  data.forEach(function(c) {
+    const card = document.createElement('div');
+    card.className = 'campaign-card';
+    card.innerHTML = '<div class="campaign-banner" style="background:' + c.banner_gradient + '">' + (c.banner_emoji || '📣') + '</div><div class="campaign-body"><div class="campaign-title">' + c.title + '</div><div class="campaign-desc">' + (c.description || '') + '</div><div class="campaign-stats"><span>Reach: <strong>' + formatNum(c.reach) + '</strong></span><span>Posts: <strong>' + formatNum(c.post_count) + '</strong></span><span>Orgs: <strong>' + (c.org_count || 0) + '</strong></span></div></div>';
+    grid.appendChild(card);
+  });
+  grid.appendChild(placeholder);
+}
+
+async function loadDisinfo() {
+  const { data } = await _supabase.from('disinformation_claims').select('*').eq('is_active', true).order('flagged_date', { ascending: false });
+  if (!data) return;
+  const grid = document.querySelector('.disinfo-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const verdictMap = { false: ['FALSE', 'verdict-false'], misleading: ['MISLEADING', 'verdict-misleading'], partially_false: ['PARTIALLY FALSE', 'verdict-partial'] };
+  const spreadMap = { high: ['🔥 High spread', '#E74C3C'], medium: ['⚡ Medium spread', '#E67E22'], low: ['• Low spread', '#F1C40F'] };
+  data.forEach(function(d) {
+    const [vLabel, vClass] = verdictMap[d.verdict] || ['UNKNOWN', ''];
+    const [sLabel, sColor] = spreadMap[d.spread_level] || ['', '#999'];
+    const platforms = (d.platforms || []).join(', ');
+    const flagged = new Date(d.flagged_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const item = document.createElement('div');
+    item.className = 'disinfo-item';
+    item.innerHTML = '<div class="disinfo-item-header"><div style="font-size:0.72rem;color:var(--muted)">Flagged: ' + flagged + '</div><div class="disinfo-verdict ' + vClass + '">' + vLabel + '</div></div><div class="disinfo-claim">' + d.claim + '</div><div class="disinfo-correction">' + d.correction + '</div><div class="disinfo-meta"><span>📍 ' + platforms + '</span><span style="color:' + sColor + '">' + sLabel + '</span></div>';
+    grid.appendChild(item);
+  });
+}
+
+async function loadOrgs() {
+  const { data } = await _supabase.from('organizations').select('*').order('name');
+  if (!data) return;
+  const grid = document.querySelector('#panel-orgs .resources-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  data.forEach(function(o) {
+    const tags = (o.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
+    const card = document.createElement('div');
+    card.className = 'resource-card';
+    card.innerHTML = '<div class="resource-type">' + o.focus_area + '</div><div class="resource-title">' + o.name + '</div><div style="font-size:0.75rem;color:var(--muted);margin:8px 0;line-height:1.5">' + (o.description || '') + '</div><div>' + tags + '</div>';
+    grid.appendChild(card);
+  });
+}
+
+async function loadAllData() {
+  await Promise.all([
+    loadDashboard(), loadMarketplace(), loadResources(),
+    loadDiscussions(), loadEvents(), loadTracker(),
+    loadCampaigns(), loadDisinfo(), loadOrgs()
+  ]);
+}
+
+_supabase.auth.getSession().then(function(result) {
+  var session = result.data.session;
+  if (session) { showHub(session.user); loadAllData(); }
+  else { showAuthModal(); }
 });
 
-// Listen for auth changes
-_supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_IN' && session) {
-    showHub(session.user);
-  } else if (event === 'SIGNED_OUT') {
-    showAuthModal();
-  }
+_supabase.auth.onAuthStateChange(function(event, session) {
+  if (event === 'SIGNED_IN' && session) { showHub(session.user); loadAllData(); }
+  else if (event === 'SIGNED_OUT') { showAuthModal(); }
 });
 
 function showHub(user) {
   document.getElementById('auth-overlay').classList.add('hidden');
   var meta = user.user_metadata || {};
   var name = meta.full_name || user.email.split('@')[0];
-  var initials = name.split(' ').map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+  var initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
   document.querySelector('.user-name').textContent = name;
   document.querySelector('.user-avatar').textContent = initials;
   var footer = document.querySelector('.sidebar-footer');
@@ -3179,27 +3353,16 @@ function showHub(user) {
     var btn = document.createElement('button');
     btn.id = 'logout-btn';
     btn.textContent = 'Sign Out';
-    btn.style.width = '100%';
-    btn.style.marginTop = '10px';
-    btn.style.padding = '7px';
-    btn.style.borderRadius = '6px';
-    btn.style.background = 'transparent';
-    btn.style.border = '1px solid rgba(201,168,76,0.2)';
-    btn.style.color = '#7A8899';
-    btn.style.fontFamily = 'DM Sans, sans-serif';
-    btn.style.fontSize = '0.75rem';
-    btn.style.cursor = 'pointer';
+    btn.style.cssText = 'width:100%;margin-top:10px;padding:7px;border-radius:6px;background:transparent;border:1px solid rgba(201,168,76,0.2);color:#7A8899;font-family:DM Sans,sans-serif;font-size:0.75rem;cursor:pointer;';
     btn.onclick = handleLogout;
     footer.appendChild(btn);
   }
 }
 
-function showAuthModal() {
-  document.getElementById('auth-overlay').classList.remove('hidden');
-}
+function showAuthModal() { document.getElementById('auth-overlay').classList.remove('hidden'); }
 
 function switchTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
   event.target.classList.add('active');
   document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
@@ -3207,13 +3370,13 @@ function switchTab(tab) {
 }
 
 function showError(msg) {
-  const el = document.getElementById('auth-error');
+  var el = document.getElementById('auth-error');
   el.textContent = msg; el.style.display = 'block';
   document.getElementById('auth-success').style.display = 'none';
 }
 
 function showSuccess(msg) {
-  const el = document.getElementById('auth-success');
+  var el = document.getElementById('auth-success');
   el.textContent = msg; el.style.display = 'block';
   document.getElementById('auth-error').style.display = 'none';
 }
@@ -3224,36 +3387,31 @@ function clearAuthMessages() {
 }
 
 async function handleLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  var email = document.getElementById('login-email').value.trim();
+  var password = document.getElementById('login-password').value;
   if (!email || !password) return showError('Please enter your email and password.');
-  const btn = document.getElementById('login-btn');
+  var btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'Signing in...';
-  const { error } = await _supabase.auth.signInWithPassword({ email, password });
+  var result = await _supabase.auth.signInWithPassword({ email: email, password: password });
   btn.disabled = false; btn.textContent = 'Sign In';
-  if (error) showError(error.message);
+  if (result.error) showError(result.error.message);
 }
 
 async function handleSignup() {
-  const name = document.getElementById('signup-name').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
+  var name = document.getElementById('signup-name').value.trim();
+  var email = document.getElementById('signup-email').value.trim();
+  var password = document.getElementById('signup-password').value;
   if (!name || !email || !password) return showError('Please fill in all fields.');
   if (password.length < 8) return showError('Password must be at least 8 characters.');
-  const btn = document.getElementById('signup-btn');
+  var btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.textContent = 'Creating account...';
-  const { error } = await _supabase.auth.signUp({
-    email, password,
-    options: { data: { full_name: name } }
-  });
+  var result = await _supabase.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
   btn.disabled = false; btn.textContent = 'Request Access';
-  if (error) showError(error.message);
+  if (result.error) showError(result.error.message);
   else showSuccess('Account created! Check your email to confirm, then sign in.');
 }
 
-async function handleLogout() {
-  await _supabase.auth.signOut();
-}
+async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
 
