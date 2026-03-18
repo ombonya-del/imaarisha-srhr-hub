@@ -3422,23 +3422,16 @@ async function loadAllData() {
   ]);
 }
 
-var _dataLoaded = false;
-
+// Auth init - only load data once from getSession
 _supabase.auth.getSession().then(function(result) {
   var session = result.data.session;
-  if (session) { showHub(session.user); loadAllData(); _dataLoaded = true; }
+  if (session) { showHub(session.user); loadAllData(); }
   else { showAuthModal(); }
 });
 
+// onAuthStateChange only handles sign-out and fresh logins (not session restore)
 _supabase.auth.onAuthStateChange(function(event, session) {
-  if (event === 'SIGNED_IN' && session) {
-    showHub(session.user);
-    if (!_dataLoaded) { loadAllData(); }
-    _dataLoaded = true;
-  } else if (event === 'SIGNED_OUT') {
-    showAuthModal();
-    _dataLoaded = false;
-  }
+  if (event === 'SIGNED_OUT') { showAuthModal(); }
 });
 
 function showHub(user) {
@@ -3494,7 +3487,8 @@ async function handleLogin() {
   btn.disabled = true; btn.textContent = 'Signing in...';
   var result = await _supabase.auth.signInWithPassword({ email: email, password: password });
   btn.disabled = false; btn.textContent = 'Sign In';
-  if (result.error) showError(result.error.message);
+  if (result.error) { showError(result.error.message); }
+  else if (result.data && result.data.user) { showHub(result.data.user); loadAllData(); }
 }
 
 async function handleSignup() {
