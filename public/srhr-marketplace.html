@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width,
+initial-scale=1.0">
+
+<title>SRHR Marketplace Kenya --- The Café</title>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+rel="stylesheet">
+
+<style>
+
+:root {
+
+--kente-red: #C0392B;
+
+--kente-gold: #E8A020;
+
+--kente-green: #1A6B3C;
+
+--kente-teal: #0E7C7B;
+
+--kente-purple: #6B2D8B;
+
+--kente-orange: #D4580A;
+
+--cream: #FDF6EC;
+
+--dark: #1A1208;
+
+--mid: #3D2B1A;
+
+--light-gold: #FFF3DC;
+
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+
+background: var(--cream);
+
+color: var(--dark);
+
+font-family: 'DM Sans', sans-serif;
+
+overflow-x: hidden;
+
+}
+
+/* HERO */
+
+.hero {
+
+background: var(--dark);
+
+position: relative;
+
+overflow: hidden;
+
+padding: 80px 40px 60px;
+
+text-align: center;
+
+}
+
+.hero::before {
+
+content: '';
+
+position: absolute;
+
+inset: 0;
+
+background:
+
+repeating-linear-gradient(90deg, transparent, transparent 40px,
+rgba(232,160,32,0.06) 40px, rgba(232,160,32,0.06) 42px),
+
+repeating-linear-gradient(0deg, transparent, transparent 40px,
+rgba(232,160,32,0.06) 40px, rgba(232,160,32,0.06) 42px);
+
+}
+
+.hero-badge {
+
+display: inline-block;
+
+background: var(--kente-gold);
+
+color: var(--dark);
+
+font-family: 'DM Mono', monospace;
+
+font-size: 11px;
+
+font-weight: 500;
+
+letter-spacing: 3px;
+
+text-transform: uppercase;
+
+padding: 6px 18px;
+
+border-radius: 2px;
+
+margin-bottom: 24px;
+
+}
+
+.hero h1 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: clamp(42px, 7vw, 84px);
+
+font-weight: 900;
+
+color: var(--cream);
+
+line-height: 1.0;
+
+margin-bottom: 12px;
+
+position: relative;
+
+}
+
+.hero h1 span {
+
+color: var(--kente-gold);
+
+display: block;
+
+font-style: italic;
+
+}
+
+.hero-sub {
+
+color: rgba(253,246,236,0.65);
+
+font-size: 16px;
+
+max-width: 560px;
+
+margin: 0 auto 40px;
+
+line-height: 1.7;
+
+font-weight: 300;
+
+}
+
+.menu-tabs {
+
+display: flex;
+
+gap: 8px;
+
+justify-content: center;
+
+flex-wrap: wrap;
+
+position: relative;
+
+z-index: 2;
+
+}
+
+.tab-btn {
+
+background: transparent;
+
+border: 1.5px solid rgba(232,160,32,0.4);
+
+color: rgba(253,246,236,0.7);
+
+font-family: 'DM Sans', sans-serif;
+
+font-size: 13px;
+
+font-weight: 500;
+
+padding: 10px 20px;
+
+border-radius: 100px;
+
+cursor: pointer;
+
+transition: all 0.25s ease;
+
+letter-spacing: 0.3px;
+
+}
+
+.tab-btn:hover, .tab-btn.active {
+
+background: var(--kente-gold);
+
+border-color: var(--kente-gold);
+
+color: var(--dark);
+
+font-weight: 600;
+
+}
+
+/* MAIN CONTENT */
+
+.container {
+
+max-width: 1200px;
+
+margin: 0 auto;
+
+padding: 60px 32px;
+
+}
+
+.section { display: none; }
+
+.section.active { display: block; }
+
+.section-header {
+
+display: flex;
+
+align-items: flex-end;
+
+gap: 20px;
+
+margin-bottom: 40px;
+
+padding-bottom: 20px;
+
+border-bottom: 2px solid var(--kente-gold);
+
+}
+
+.section-icon {
+
+width: 56px;
+
+height: 56px;
+
+border-radius: 12px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+font-size: 28px;
+
+flex-shrink: 0;
+
+}
+
+.section-header h2 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 36px;
+
+font-weight: 700;
+
+color: var(--dark);
+
+line-height: 1.1;
+
+}
+
+.section-header p {
+
+color: var(--mid);
+
+font-size: 14px;
+
+margin-top: 4px;
+
+font-weight: 300;
+
+opacity: 0.8;
+
+}
+
+/* CARDS GRID */
+
+.cards-grid {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+
+gap: 20px;
+
+margin-bottom: 48px;
+
+}
+
+.card {
+
+background: white;
+
+border-radius: 16px;
+
+padding: 28px;
+
+position: relative;
+
+overflow: hidden;
+
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+border: 1px solid rgba(0,0,0,0.06);
+
+}
+
+.card:hover {
+
+transform: translateY(-4px);
+
+box-shadow: 0 20px 48px rgba(0,0,0,0.1);
+
+}
+
+.card::before {
+
+content: '';
+
+position: absolute;
+
+top: 0; left: 0; right: 0;
+
+height: 4px;
+
+}
+
+.card.red::before { background: var(--kente-red); }
+
+.card.gold::before { background: var(--kente-gold); }
+
+.card.green::before { background: var(--kente-green); }
+
+.card.teal::before { background: var(--kente-teal); }
+
+.card.purple::before { background: var(--kente-purple); }
+
+.card.orange::before { background: var(--kente-orange); }
+
+.card-tag {
+
+display: inline-block;
+
+font-family: 'DM Mono', monospace;
+
+font-size: 10px;
+
+letter-spacing: 2px;
+
+text-transform: uppercase;
+
+padding: 4px 10px;
+
+border-radius: 4px;
+
+margin-bottom: 14px;
+
+font-weight: 500;
+
+}
+
+.tag-red { background: #FEE9E7; color: var(--kente-red); }
+
+.tag-gold { background: #FFF3DC; color: #9A6A00; }
+
+.tag-green { background: #E6F4EC; color: var(--kente-green); }
+
+.tag-teal { background: #E0F4F4; color: var(--kente-teal); }
+
+.tag-purple { background: #F0E8F8; color: var(--kente-purple); }
+
+.tag-orange { background: #FDF0E6; color: var(--kente-orange); }
+
+.card h3 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 20px;
+
+font-weight: 700;
+
+margin-bottom: 10px;
+
+color: var(--dark);
+
+line-height: 1.25;
+
+}
+
+.card p {
+
+font-size: 14px;
+
+color: #555;
+
+line-height: 1.7;
+
+font-weight: 300;
+
+}
+
+.card-items {
+
+margin-top: 14px;
+
+list-style: none;
+
+}
+
+.card-items li {
+
+font-size: 13px;
+
+color: var(--mid);
+
+padding: 5px 0;
+
+border-bottom: 1px solid #F5F5F5;
+
+display: flex;
+
+align-items: flex-start;
+
+gap: 8px;
+
+line-height: 1.5;
+
+}
+
+.card-items li:last-child { border-bottom: none; }
+
+.card-items li::before {
+
+content: '→';
+
+color: var(--kente-gold);
+
+font-weight: 700;
+
+flex-shrink: 0;
+
+margin-top: 1px;
+
+}
+
+/* WIDE CARD */
+
+.card.wide {
+
+grid-column: 1 / -1;
+
+display: grid;
+
+grid-template-columns: 1fr 1fr;
+
+gap: 32px;
+
+align-items: start;
+
+}
+
+\@media (max-width: 640px) {
+
+.card.wide { grid-template-columns: 1fr; }
+
+}
+
+/* PROCESS FLOW */
+
+.process-flow {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+
+gap: 0;
+
+background: white;
+
+border-radius: 16px;
+
+overflow: hidden;
+
+border: 1px solid rgba(0,0,0,0.06);
+
+margin-bottom: 40px;
+
+}
+
+.process-step {
+
+padding: 28px 24px;
+
+position: relative;
+
+border-right: 1px solid #F0EDE8;
+
+}
+
+.process-step:last-child { border-right: none; }
+
+.step-num {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 48px;
+
+font-weight: 900;
+
+opacity: 0.08;
+
+position: absolute;
+
+top: 12px;
+
+right: 16px;
+
+line-height: 1;
+
+}
+
+.step-icon { font-size: 24px; margin-bottom: 10px; }
+
+.process-step h4 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 16px;
+
+font-weight: 700;
+
+margin-bottom: 8px;
+
+color: var(--dark);
+
+}
+
+.process-step p {
+
+font-size: 12.5px;
+
+color: #666;
+
+line-height: 1.6;
+
+font-weight: 300;
+
+}
+
+.process-step .duration {
+
+display: inline-block;
+
+font-family: 'DM Mono', monospace;
+
+font-size: 10px;
+
+color: var(--kente-gold);
+
+background: var(--light-gold);
+
+padding: 3px 8px;
+
+border-radius: 4px;
+
+margin-top: 10px;
+
+}
+
+/* PARTNERS GRID */
+
+.partners-grid {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+
+gap: 16px;
+
+}
+
+.partner-card {
+
+background: white;
+
+border-radius: 12px;
+
+padding: 20px;
+
+border: 1px solid rgba(0,0,0,0.06);
+
+transition: all 0.2s ease;
+
+}
+
+.partner-card:hover {
+
+border-color: var(--kente-gold);
+
+box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+
+}
+
+.partner-type {
+
+font-family: 'DM Mono', monospace;
+
+font-size: 9px;
+
+letter-spacing: 2px;
+
+text-transform: uppercase;
+
+color: #999;
+
+margin-bottom: 8px;
+
+}
+
+.partner-card h4 {
+
+font-size: 14px;
+
+font-weight: 600;
+
+color: var(--dark);
+
+margin-bottom: 4px;
+
+}
+
+.partner-card p {
+
+font-size: 12px;
+
+color: #888;
+
+line-height: 1.5;
+
+font-weight: 300;
+
+}
+
+/* FOOTER BANNER */
+
+.footer-banner {
+
+background: var(--kente-green);
+
+color: white;
+
+padding: 48px 40px;
+
+text-align: center;
+
+margin-top: 20px;
+
+}
+
+.footer-banner h3 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 28px;
+
+font-weight: 700;
+
+margin-bottom: 10px;
+
+}
+
+.footer-banner p {
+
+font-size: 14px;
+
+opacity: 0.75;
+
+max-width: 480px;
+
+margin: 0 auto;
+
+line-height: 1.7;
+
+font-weight: 300;
+
+}
+
+/* DIVIDER */
+
+.sub-heading {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 22px;
+
+font-weight: 700;
+
+color: var(--dark);
+
+margin: 40px 0 16px;
+
+padding-left: 14px;
+
+border-left: 4px solid var(--kente-gold);
+
+}
+
+/* ANIMATE IN */
+
+\@keyframes fadeUp {
+
+from { opacity: 0; transform: translateY(20px); }
+
+to { opacity: 1; transform: translateY(0); }
+
+}
+
+.section.active .card,
+
+.section.active .process-step,
+
+.section.active .partner-card {
+
+animation: fadeUp 0.4s ease forwards;
+
+}
+
+.section.active .card:nth-child(2) { animation-delay: 0.05s; }
+
+.section.active .card:nth-child(3) { animation-delay: 0.1s; }
+
+.section.active .card:nth-child(4) { animation-delay: 0.15s; }
+
+.section.active .card:nth-child(5) { animation-delay: 0.2s; }
+
+.section.active .card:nth-child(6) { animation-delay: 0.25s; }
+
+/* KENYA FLAG STRIPE */
+
+.flag-stripe {
+
+height: 6px;
+
+background: linear-gradient(90deg, #006600 33%, #000 33%, #000 66%,
+#CC0001 66%);
+
+}
+
+/* INTRO CARD */
+
+.intro-card {
+
+background: linear-gradient(135deg, var(--dark) 0%, #2D1A08 100%);
+
+border-radius: 16px;
+
+padding: 40px;
+
+color: white;
+
+margin-bottom: 40px;
+
+position: relative;
+
+overflow: hidden;
+
+}
+
+.intro-card::after {
+
+content: '☕';
+
+position: absolute;
+
+right: 32px;
+
+top: 50%;
+
+transform: translateY(-50%);
+
+font-size: 80px;
+
+opacity: 0.15;
+
+}
+
+.intro-card h3 {
+
+font-family: 'Playfair Display', serif;
+
+font-size: 24px;
+
+font-weight: 700;
+
+margin-bottom: 12px;
+
+color: var(--kente-gold);
+
+}
+
+.intro-card p {
+
+font-size: 14px;
+
+opacity: 0.8;
+
+line-height: 1.8;
+
+max-width: 600px;
+
+font-weight: 300;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="flag-stripe"></div>
+
+<div class="hero">
+
+<div class="hero-badge">Kenya SRHR Initiative</div>
+
+<h1>The SRHR <span>Marketplace Café</span></h1>
+
+<p class="hero-sub">Your complete menu of skills, tools, resources
+and processes for designing and implementing Sexual & Reproductive
+Health and Rights projects in Kenya.</p>
+
+<div class="menu-tabs">
+
+<button class="tab-btn active" onclick="showTab('overview')">☕
+Welcome</button>
+
+<button class="tab-btn" onclick="showTab('skills')">🎓
+Skills</button>
+
+<button class="tab-btn" onclick="showTab('tools')">🛠
+Tools</button>
+
+<button class="tab-btn" onclick="showTab('resources')">💰
+Resources</button>
+
+<button class="tab-btn" onclick="showTab('process')">🗺
+Process</button>
+
+<button class="tab-btn" onclick="showTab('partners')">🤝
+Partners</button>
+
+<button class="tab-btn" onclick="showTab('context')">🇰🇪 Kenya
+Context</button>
+
+</div>
+
+</div>
+
+<div class="container">
+
+<!-- OVERVIEW -->
+
+<div class="section active" id="overview">
+
+<div class="intro-card">
+
+<h3>Welcome to the Café</h3>
+
+<p>This marketplace organises everything you need to design and
+deliver a successful SRHR project in Kenya --- from the skills on your
+team, to the tools you use, the resources you mobilise, the processes
+you follow, and the partners you engage. Browse each section using the
+menu above.</p>
+
+</div>
+
+<div class="cards-grid">
+
+<div class="card gold" onclick="showTab('skills')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-gold">Menu Item 01</span>
+
+<h3>🎓 Skills Café</h3>
+
+<p>The human capabilities your team needs --- technical, advocacy,
+research, and cultural competencies.</p>
+
+<ul class="card-items">
+
+<li>Technical SRHR knowledge</li>
+
+<li>Policy & legal advocacy</li>
+
+<li>Community mobilisation</li>
+
+<li>M&E and research</li>
+
+</ul>
+
+</div>
+
+<div class="card teal" onclick="showTab('tools')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-teal">Menu Item 02</span>
+
+<h3>🛠 Tools Station</h3>
+
+<p>Assessment, delivery, advocacy and monitoring tools that power your
+implementation.</p>
+
+<ul class="card-items">
+
+<li>KAP surveys & baseline tools</li>
+
+<li>Theory of Change frameworks</li>
+
+<li>Digital health platforms</li>
+
+<li>DHIS2, KoboToolbox, ODK</li>
+
+</ul>
+
+</div>
+
+<div class="card green" onclick="showTab('resources')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-green">Menu Item 03</span>
+
+<h3>💰 Resource Counter</h3>
+
+<p>Human, financial and infrastructure resources --- including key
+funders active in Kenya.</p>
+
+<ul class="card-items">
+
+<li>IPPF, UNFPA, EU, HIVOS</li>
+
+<li>AmplifyChange grants</li>
+
+<li>KEMSA supply chains</li>
+
+<li>Youth-Friendly Centres</li>
+
+</ul>
+
+</div>
+
+<div class="card red" onclick="showTab('process')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-red">Menu Item 04</span>
+
+<h3>🗺 Process Kitchen</h3>
+
+<p>The five-phase implementation journey from situation analysis
+through to learning and evaluation.</p>
+
+<ul class="card-items">
+
+<li>Phase 1: Situation Analysis</li>
+
+<li>Phase 2: Stakeholder Engagement</li>
+
+<li>Phase 3: Capacity Building</li>
+
+<li>Phase 4--5: Delivery & MEAL</li>
+
+</ul>
+
+</div>
+
+<div class="card purple" onclick="showTab('partners')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-purple">Menu Item 05</span>
+
+<h3>🤝 Partners Table</h3>
+
+<p>The ecosystem of organisations, government bodies and networks to
+engage for maximum impact.</p>
+
+<ul class="card-items">
+
+<li>International organisations</li>
+
+<li>Government --- national & county</li>
+
+<li>Civil society networks</li>
+
+<li>Faith & community leaders</li>
+
+</ul>
+
+</div>
+
+<div class="card orange" onclick="showTab('context')"
+style="cursor:pointer;">
+
+<span class="card-tag tag-orange">Menu Item 06</span>
+
+<h3>🇰🇪 Kenya Context</h3>
+
+<p>The political, legal, cultural and funding landscape you must
+navigate on the ground.</p>
+
+<ul class="card-items">
+
+<li>Constitutional framework</li>
+
+<li>Policy-practice gap</li>
+
+<li>Devolution & county variation</li>
+
+<li>USAID funding gap</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- SKILLS -->
+
+<div class="section" id="skills">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#FFF3DC;">🎓</div>
+
+<div>
+
+<h2>Skills Café</h2>
+
+<p>Human capabilities required across your team</p>
+
+</div>
+
+</div>
+
+<div class="cards-grid">
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Technical</span>
+
+<h3>SRHR Programme Knowledge</h3>
+
+<p>Deep subject matter expertise across the full SRHR spectrum.</p>
+
+<ul class="card-items">
+
+<li>Family planning & contraception counselling</li>
+
+<li>Maternal, newborn & child health</li>
+
+<li>Safe abortion law & post-abortion care</li>
+
+<li>STI and HIV prevention & treatment</li>
+
+<li>Gender-based violence response</li>
+
+<li>Comprehensive Sexuality Education (CSE)</li>
+
+<li>Minimum 5 years SRHR experience preferred</li>
+
+</ul>
+
+</div>
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Legal & Policy</span>
+
+<h3>Advocacy & Rights Skills</h3>
+
+<p>Navigate Kenya's legal framework and close the policy-practice
+gap.</p>
+
+<ul class="card-items">
+
+<li>Kenya Constitution Articles 43 & 35 fluency</li>
+
+<li>ICPD25, UNCRC, Beijing Declaration literacy</li>
+
+<li>Legislative drafting and policy brief writing</li>
+
+<li>Budget advocacy and public finance monitoring</li>
+
+<li>Legal aid provision for GBV survivors</li>
+
+<li>LGBTQI+ rights-sensitive programming</li>
+
+</ul>
+
+</div>
+
+<div class="card green">
+
+<span class="card-tag tag-green">Community</span>
+
+<h3>Mobilisation & Communication</h3>
+
+<p>Building trust and driving behaviour change at grassroots
+level.</p>
+
+<ul class="card-items">
+
+<li>Community entry and stakeholder mapping</li>
+
+<li>Behaviour Change Communication (BCC)</li>
+
+<li>Youth engagement and peer education</li>
+
+<li>Performing arts as advocacy</li>
+
+<li>Community radio programming</li>
+
+<li>Fluency in Kiswahili + local languages</li>
+
+</ul>
+
+</div>
+
+<div class="card red">
+
+<span class="card-tag tag-red">Research & MEAL</span>
+
+<h3>Evidence & Learning</h3>
+
+<p>Generate, use and communicate evidence to drive impact.</p>
+
+<ul class="card-items">
+
+<li>KAP survey design and administration</li>
+
+<li>Qualitative and quantitative research methods</li>
+
+<li>Theory of Change development</li>
+
+<li>LogFrame and results framework design</li>
+
+<li>DHIS2 data entry and analysis</li>
+
+<li>Donor and government reporting</li>
+
+</ul>
+
+</div>
+
+<div class="card purple">
+
+<span class="card-tag tag-purple">Intersectionality</span>
+
+<h3>Social Inclusion Competencies</h3>
+
+<p>Reaching those left furthest behind requires specialist
+skills.</p>
+
+<ul class="card-items">
+
+<li>Disability-responsive programming</li>
+
+<li>Adolescent and youth-centred approaches</li>
+
+<li>Gender transformative programming</li>
+
+<li>Marginalised populations sensitivity</li>
+
+<li>Trauma-informed practice</li>
+
+<li>Safeguarding and do-no-harm principles</li>
+
+</ul>
+
+</div>
+
+<div class="card orange">
+
+<span class="card-tag tag-orange">Leadership</span>
+
+<h3>Management & Operations</h3>
+
+<p>Running a well-governed, accountable programme.</p>
+
+<ul class="card-items">
+
+<li>Project cycle management (PCM)</li>
+
+<li>Budget management and financial controls</li>
+
+<li>Partnership and sub-grant management</li>
+
+<li>HR management and staff wellbeing</li>
+
+<li>Donor relationship management</li>
+
+<li>Risk management and compliance</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- TOOLS -->
+
+<div class="section" id="tools">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#E0F4F4;">🛠</div>
+
+<div>
+
+<h2>Tools Station</h2>
+
+<p>Assessment, delivery, advocacy and monitoring tools</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Assessment & Design Tools</h3>
+
+<div class="cards-grid">
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Baseline</span>
+
+<h3>KAP Survey Framework</h3>
+
+<p>Knowledge, Attitudes and Practices survey --- the foundation for
+measuring project change and impact across the lifecycle.</p>
+
+<ul class="card-items">
+
+<li>Pre-designed SRHR question banks</li>
+
+<li>Household and community sampling protocols</li>
+
+<li>Enumerator training guides</li>
+
+<li>Disaggregated data by gender, age, disability</li>
+
+</ul>
+
+</div>
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Strategy</span>
+
+<h3>Theory of Change (ToC)</h3>
+
+<p>Map your pathway from inputs to long-term SRHR impact with a
+robust, evidence-based ToC.</p>
+
+<ul class="card-items">
+
+<li>Awareness → Access → Norms → Policy → Movement</li>
+
+<li>Participatory ToC workshops with communities</li>
+
+<li>Assumption testing and risk mapping</li>
+
+<li>Donor-ready visualisation formats</li>
+
+</ul>
+
+</div>
+
+<div class="card green">
+
+<span class="card-tag tag-green">Planning</span>
+
+<h3>LogFrame & Results Framework</h3>
+
+<p>Structured planning tools for goal-setting, indicator tracking and
+accountability.</p>
+
+<ul class="card-items">
+
+<li>SMART indicator development</li>
+
+<li>Output, outcome and impact levels</li>
+
+<li>Means of verification for each indicator</li>
+
+<li>Quarterly milestone tracking</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Service Delivery Tools</h3>
+
+<div class="cards-grid">
+
+<div class="card red">
+
+<span class="card-tag tag-red">Community</span>
+
+<h3>Youth Peer Provider (YPP) Model</h3>
+
+<p>Peer-to-peer delivery of SRHR information and contraceptive
+distribution --- proven effective across Kenya.</p>
+
+<ul class="card-items">
+
+<li>YPP selection and training curriculum</li>
+
+<li>Monthly monitoring and supervision tools</li>
+
+<li>Contraceptive stock tracking registers</li>
+
+<li>Community referral pathway cards</li>
+
+</ul>
+
+</div>
+
+<div class="card purple">
+
+<span class="card-tag tag-purple">Clinical</span>
+
+<h3>Youth-Friendly Service (YFS) Standards</h3>
+
+<p>WHO and Kenya Ministry of Health standards for adolescent and
+youth-friendly health facilities.</p>
+
+<ul class="card-items">
+
+<li>Facility assessment checklists</li>
+
+<li>Provider attitude and competency tools</li>
+
+<li>Client feedback mechanisms</li>
+
+<li>Confidentiality and privacy protocols</li>
+
+</ul>
+
+</div>
+
+<div class="card orange">
+
+<span class="card-tag tag-orange">Digital</span>
+
+<h3>mHealth & Digital Platforms</h3>
+
+<p>Technology tools for reaching remote and underserved
+populations.</p>
+
+<ul class="card-items">
+
+<li>SMS-based SRHR information services</li>
+
+<li>Chatbot counselling platforms (e.g. SRHR chatbots)</li>
+
+<li>Telemedicine referral links</li>
+
+<li>Social media awareness campaigns</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Monitoring & Data Tools</h3>
+
+<div class="cards-grid">
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">National System</span>
+
+<h3>DHIS2</h3>
+
+<p>Kenya's national health management information system --- your
+data must feed into this for government alignment.</p>
+
+<ul class="card-items">
+
+<li>Integration with county health departments</li>
+
+<li>Routine health data reporting</li>
+
+<li>Dashboard and visualisation tools</li>
+
+</ul>
+
+</div>
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Mobile Data</span>
+
+<h3>KoboToolbox / ODK</h3>
+
+<p>Mobile-first data collection tools for field teams --- offline
+capable for low-connectivity areas.</p>
+
+<ul class="card-items">
+
+<li>Customisable survey forms</li>
+
+<li>GPS-enabled data points</li>
+
+<li>Real-time data dashboards</li>
+
+<li>Free tier available for NGOs</li>
+
+</ul>
+
+</div>
+
+<div class="card green">
+
+<span class="card-tag tag-green">Advocacy</span>
+
+<h3>Policy & Advocacy Tools</h3>
+
+<p>Communications and evidence tools for influencing government and
+public opinion.</p>
+
+<ul class="card-items">
+
+<li>Policy brief templates</li>
+
+<li>Community radio show scripts</li>
+
+<li>Performing arts facilitation guides</li>
+
+<li>Sports tournament planning kits</li>
+
+<li>Budget tracking scorecards</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- RESOURCES -->
+
+<div class="section" id="resources">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#E6F4EC;">💰</div>
+
+<div>
+
+<h2>Resource Counter</h2>
+
+<p>Human, financial and infrastructure resources</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Human Resources --- Core Team</h3>
+
+<div class="cards-grid">
+
+<div class="card green">
+
+<span class="card-tag tag-green">Leadership</span>
+
+<h3>Programme Team</h3>
+
+<ul class="card-items">
+
+<li>Project Manager --- SRHR & public health background</li>
+
+<li>Project Officers --- public health, nursing, social science</li>
+
+<li>MEAL Officer --- data collection and reporting</li>
+
+<li>Legal Officer --- if rights litigation is a component</li>
+
+<li>Finance & Admin Officer</li>
+
+<li>Communications & Advocacy Officer</li>
+
+</ul>
+
+</div>
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Frontline</span>
+
+<h3>Community-Level Staff</h3>
+
+<ul class="card-items">
+
+<li>Community Health Workers (CHWs)</li>
+
+<li>Youth Peer Providers (YPPs)</li>
+
+<li>Community Based Distributors (CBDs)</li>
+
+<li>Peer Educators --- school and out-of-school</li>
+
+<li>GBV case workers and psychosocial counsellors</li>
+
+<li>Community radio presenters</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Financial Resources --- Key Funders in
+Kenya</h3>
+
+<div class="cards-grid">
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Major Donor</span>
+
+<h3>IPPF --- EmpowHER Project</h3>
+
+<p>\$48 million project across Kenya and 13 countries focused on
+marginalised communities --- one of the largest active SRHR investments
+in Kenya right now.</p>
+
+</div>
+
+<div class="card red">
+
+<span class="card-tag tag-red">Grant Opportunity</span>
+
+<h3>AmplifyChange</h3>
+
+<p>Opportunity Grants of up to £75,000 over 18--36 months for small
+and medium civil society organisations doing SRHR advocacy in Kenya.
+Accessible for local NGOs.</p>
+
+</div>
+
+<div class="card purple">
+
+<span class="card-tag tag-purple">UN System</span>
+
+<h3>UNFPA Kenya</h3>
+
+<p>Funds family planning, maternal health, GBV, and adolescent SRHR.
+Strong focus on county-level government systems strengthening and supply
+chain.</p>
+
+</div>
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Bilateral</span>
+
+<h3>EU & Canada (Global Affairs)</h3>
+
+<p>Both active in Kenya SRHR --- EU through consortium models, Canada
+increasingly filling the gap left by USAID withdrawal in 2025.</p>
+
+</div>
+
+<div class="card green">
+
+<span class="card-tag tag-green">INGO Partners</span>
+
+<h3>HIVOS, Planned Parenthood Global</h3>
+
+<p>HIVOS funds feminist movements and SRHR rights organisations; PPG
+funds clinical service delivery partners and reproductive rights
+advocacy.</p>
+
+</div>
+
+<div class="card orange">
+
+<span class="card-tag tag-orange">Rights-Focused</span>
+
+<h3>Center for Reproductive Rights & Segal Family Foundation</h3>
+
+<p>CRR focuses on litigation and policy; Segal Family Foundation funds
+smaller grassroots African-led SRHR organisations in East Africa.</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Infrastructure Resources</h3>
+
+<div class="cards-grid">
+
+<div class="card wide teal">
+
+<div>
+
+<span class="card-tag tag-teal">Supply Chain</span>
+
+<h3>KEMSA --- Kenya Medical Supplies Authority</h3>
+
+<p>The government's central body for procuring and distributing
+medical commodities including contraceptives. Your project must link to
+KEMSA for sustainable supply --- avoid creating parallel supply chains
+that undermine the public system.</p>
+
+<ul class="card-items">
+
+<li>Contraceptive commodities (condoms, pills, injectables, implants,
+IUDs)</li>
+
+<li>HIV test kits, STI treatment commodities</li>
+
+<li>Maternal health supplies</li>
+
+</ul>
+
+</div>
+
+<div>
+
+<span class="card-tag tag-green">Facilities</span>
+
+<h3>Physical Infrastructure Needed</h3>
+
+<ul class="card-items">
+
+<li>Youth-Friendly Resource Centres at community level</li>
+
+<li>Safe spaces for GBV survivors --- private, secure,
+accessible</li>
+
+<li>Equipped health facilities with trained SRH providers</li>
+
+<li>School-linked CSE delivery spaces</li>
+
+<li>Community meeting halls for outreach events</li>
+
+<li>Secure data storage and management systems</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- PROCESS -->
+
+<div class="section" id="process">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#FEE9E7;">🗺</div>
+
+<div>
+
+<h2>Process Kitchen</h2>
+
+<p>Your five-phase implementation journey</p>
+
+</div>
+
+</div>
+
+<div class="process-flow">
+
+<div class="process-step">
+
+<div class="step-num">1</div>
+
+<div class="step-icon">🔍</div>
+
+<h4>Situation Analysis & Design</h4>
+
+<p>Landscape analysis, KAP baseline survey, stakeholder mapping,
+Theory of Change, LogFrame development, regulatory registration.</p>
+
+<span class="duration">3--6 months</span>
+
+</div>
+
+<div class="process-step">
+
+<div class="step-num">2</div>
+
+<div class="step-icon">🤝</div>
+
+<h4>Stakeholder Engagement</h4>
+
+<p>MOUs with county health departments, partnership agreements with
+CSOs, Technical Working Group formation, community entry meetings.</p>
+
+<span class="duration">Months 3--9</span>
+
+</div>
+
+<div class="process-step">
+
+<div class="step-num">3</div>
+
+<div class="step-icon">📚</div>
+
+<h4>Capacity Building</h4>
+
+<p>Train YPPs, teachers, community health workers, police and
+judiciary. Build staff skills in intersectionality and
+disability-responsive programming.</p>
+
+<span class="duration">Months 4--12</span>
+
+</div>
+
+<div class="process-step">
+
+<div class="step-num">4</div>
+
+<div class="step-icon">🚀</div>
+
+<h4>Implementation</h4>
+
+<p>Community outreaches, clinical service delivery, CSE sessions, safe
+spaces, advocacy with county assemblies, GBV response activation.</p>
+
+<span class="duration">Months 6--36</span>
+
+</div>
+
+<div class="process-step">
+
+<div class="step-num">5</div>
+
+<div class="step-icon">📊</div>
+
+<h4>MEAL & Learning</h4>
+
+<p>Quarterly data reviews, monthly YPP monitoring meetings, mid-term
+and end-of-project evaluations, best practice documentation.</p>
+
+<span class="duration">Continuous</span>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Key Registration & Compliance Steps</h3>
+
+<div class="cards-grid">
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Legal</span>
+
+<h3>NGO Board of Kenya</h3>
+
+<p>All NGOs must register with the NGO Board and renew certificates
+annually. Required before any programme activities begin.</p>
+
+<ul class="card-items">
+
+<li>NGO registration certificate</li>
+
+<li>Annual compliance reporting</li>
+
+<li>Project approval for externally funded work</li>
+
+</ul>
+
+</div>
+
+<div class="card red">
+
+<span class="card-tag tag-red">Health Sector</span>
+
+<h3>County Health Department Approval</h3>
+
+<p>Every county where you operate requires formal notification and
+ideally a signed MOU with the County Health Management Team
+(CHMT).</p>
+
+<ul class="card-items">
+
+<li>Letter of intent to County Health Director</li>
+
+<li>Facility-level approvals for clinical services</li>
+
+<li>Integration with County Integrated Health Plans</li>
+
+</ul>
+
+</div>
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Ethics</span>
+
+<h3>Research Ethics Approval</h3>
+
+<p>If your project includes any formal research component, including
+KAP surveys, ethics approval is mandatory.</p>
+
+<ul class="card-items">
+
+<li>NACOSTI --- National Commission for Science, Technology &
+Innovation</li>
+
+<li>Institutional Review Board (IRB) if donor-required</li>
+
+<li>Informed consent protocols</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- PARTNERS -->
+
+<div class="section" id="partners">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#F0E8F8;">🤝</div>
+
+<div>
+
+<h2>Partners Table</h2>
+
+<p>The ecosystem of organisations to engage for maximum impact</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Government Partners</h3>
+
+<div class="partners-grid">
+
+<div class="partner-card">
+
+<div class="partner-type">National</div>
+
+<h4>Ministry of Health</h4>
+
+<p>Policy alignment, facility integration, commodity supply via
+KEMSA</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">National</div>
+
+<h4>Ministry of Education</h4>
+
+<p>CSE curriculum integration, school-based programming approval</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">County</div>
+
+<h4>County Health Management Teams</h4>
+
+<p>Local implementation authority, facility linkages, CHW
+networks</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">County</div>
+
+<h4>County Assemblies</h4>
+
+<p>Budget advocacy, local legislation, county-level SRHR bills</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Regulatory</div>
+
+<h4>NGO Board of Kenya</h4>
+
+<p>Registration and compliance; builds government legitimacy</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Research</div>
+
+<h4>NACOSTI</h4>
+
+<p>Research ethics and study approvals for project research</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">International & UN Partners</h3>
+
+<div class="partners-grid">
+
+<div class="partner-card">
+
+<div class="partner-type">UN Agency</div>
+
+<h4>UNFPA Kenya</h4>
+
+<p>Technical support, funding, commodities, government systems
+strengthening</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">INGO</div>
+
+<h4>IPPF / FHOK</h4>
+
+<p>Clinical service delivery, YPP models, adolescent programming</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">INGO</div>
+
+<h4>HIVOS East Africa</h4>
+
+<p>Feminist movement strengthening, rights-based SRHR advocacy</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Rights</div>
+
+<h4>Center for Reproductive Rights</h4>
+
+<p>Legal advocacy, litigation support, policy documentation</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">UN Agency</div>
+
+<h4>WHO Kenya</h4>
+
+<p>Technical guidance, YFS standards, clinical protocols</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">UN Agency</div>
+
+<h4>UNICEF Kenya</h4>
+
+<p>Adolescent SRHR, CSE, child protection linkages</p>
+
+</div>
+
+</div>
+
+<h3 class="sub-heading">Civil Society & Community Partners</h3>
+
+<div class="partners-grid">
+
+<div class="partner-card">
+
+<div class="partner-type">Legal Aid</div>
+
+<h4>FIDA Kenya</h4>
+
+<p>Legal aid, GBV response, women's rights litigation</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Youth</div>
+
+<h4>Youth Changers Kenya</h4>
+
+<p>Gender equality and SRHR youth advocacy --- Johari project
+model</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Network</div>
+
+<h4>RHNK --- Reproductive Health Network</h4>
+
+<p>National civil society coordination on SRHR advocacy</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Disability</div>
+
+<h4>Organisations of Persons with Disabilities</h4>
+
+<p>Inclusive programming co-design and social accountability</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Community</div>
+
+<h4>Faith-Based Organisations</h4>
+
+<p>Navigate cultural and religious barriers; reach conservative
+communities</p>
+
+</div>
+
+<div class="partner-card">
+
+<div class="partner-type">Media</div>
+
+<h4>Community Radio Stations</h4>
+
+<p>Mass SRHR awareness in local languages for low-literacy
+populations</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- KENYA CONTEXT -->
+
+<div class="section" id="context">
+
+<div class="section-header">
+
+<div class="section-icon" style="background:#FDF0E6;">🇰🇪</div>
+
+<div>
+
+<h2>Kenya Context</h2>
+
+<p>The landscape you must understand and navigate</p>
+
+</div>
+
+</div>
+
+<div class="cards-grid">
+
+<div class="card green">
+
+<span class="card-tag tag-green">Legal Framework</span>
+
+<h3>Constitutional Protections</h3>
+
+<p>Kenya's 2010 Constitution is one of Africa's strongest for SRHR
+--- but enforcement is inconsistent.</p>
+
+<ul class="card-items">
+
+<li>Article 43: Right to highest attainable standard of health,
+including reproductive health</li>
+
+<li>Article 35: Right to access information --- relevant to CSE and
+SRHR education</li>
+
+<li>Article 27: Equality and non-discrimination --- basis for
+marginalised groups programming</li>
+
+<li>Know these articles --- they are your rights-based
+foundation</li>
+
+</ul>
+
+</div>
+
+<div class="card red">
+
+<span class="card-tag tag-red">Critical Gap</span>
+
+<h3>The Policy-Practice Gap</h3>
+
+<p>Policies exist. Implementation does not always follow.</p>
+
+<ul class="card-items">
+
+<li>Abortion: legally permitted in limited circumstances but access is
+routinely denied</li>
+
+<li>Early marriage and FGM: banned by law but prevalent in specific
+counties</li>
+
+<li>Teenage pregnancy: criminalisation debate remains politically
+live</li>
+
+<li>Your project must address both law and lived reality</li>
+
+</ul>
+
+</div>
+
+<div class="card gold">
+
+<span class="card-tag tag-gold">Governance</span>
+
+<h3>Devolution --- The 47-County Reality</h3>
+
+<p>Kenya's devolved system means health service delivery is a county
+function --- and counties vary widely.</p>
+
+<ul class="card-items">
+
+<li>Kilifi County has its own Sexual and GBV Bill</li>
+
+<li>County health budgets vary enormously --- budget advocacy matters
+at county level</li>
+
+<li>Engage both national and county government throughout</li>
+
+<li>County Integrated Development Plans (CIDPs) are your entry
+point</li>
+
+</ul>
+
+</div>
+
+<div class="card purple">
+
+<span class="card-tag tag-purple">Funding Crisis</span>
+
+<h3>The USAID Withdrawal Impact</h3>
+
+<p>The 2025 withdrawal of US foreign aid has created a significant
+funding and service gap across Kenya's health sector.</p>
+
+<ul class="card-items">
+
+<li>HIV services most severely affected --- links to SRHR services
+disrupted</li>
+
+<li>Contraceptive supply chains under strain in some counties</li>
+
+<li>Canada, EU, and private foundations now filling gaps</li>
+
+<li>Local government funding advocacy is now more urgent than
+ever</li>
+
+</ul>
+
+</div>
+
+<div class="card teal">
+
+<span class="card-tag tag-teal">Social Context</span>
+
+<h3>Cultural & Religious Dynamics</h3>
+
+<p>Conservative social norms --- shaped by religion and tradition ---
+are among the biggest SRHR barriers.</p>
+
+<ul class="card-items">
+
+<li>Significant resistance to CSE in schools from faith
+communities</li>
+
+<li>FGM still practised in Samburu, Kajiado, Kilifi, and
+Marsabit</li>
+
+<li>Male engagement is critical --- most programmes under-reach men
+and boys</li>
+
+<li>Performing arts and sports events proven to break through norm
+barriers</li>
+
+</ul>
+
+</div>
+
+<div class="card orange">
+
+<span class="card-tag tag-orange">International Commitments</span>
+
+<h3>Frameworks Kenya Has Ratified</h3>
+
+<p>Use these to hold government accountable and frame your
+advocacy.</p>
+
+<ul class="card-items">
+
+<li>ICPD25 --- Nairobi Summit commitments</li>
+
+<li>UN Convention on the Rights of the Child (UNCRC)</li>
+
+<li>Beijing Declaration and Platform for Action</li>
+
+<li>African Union Maputo Protocol</li>
+
+<li>SDG 3 (Good Health) and SDG 5 (Gender Equality)</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="footer-banner">
+
+<h3>Designed for Impact in Kenya 🇰🇪</h3>
+
+<p>This marketplace framework covers the full ecosystem needed to
+design and implement rights-based SRHR programming --- from team skills
+to tools, resources, processes, partners and context.</p>
+
+</div>
+
+<script>
+
+function showTab(tabId) {
+
+document.querySelectorAll('.section').forEach(s =>
+s.classList.remove('active'));
+
+document.querySelectorAll('.tab-btn').forEach(b =>
+b.classList.remove('active'));
+
+document.getElementById(tabId).classList.add('active');
+
+const labels = {
+
+overview: '☕ Welcome', skills: '🎓 Skills', tools: '🛠 Tools',
+
+resources: '💰 Resources', process: '🗺 Process',
+
+partners: '🤝 Partners', context: '🇰🇪 Kenya Context'
+
+};
+
+document.querySelectorAll('.tab-btn').forEach(b => {
+
+if (b.textContent.trim() === labels[tabId])
+b.classList.add('active');
+
+});
+
+window.scrollTo({ top: 0, behavior: 'smooth' });
+
+}
+
+</script>
+
+</body>
+
+</html>
