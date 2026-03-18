@@ -1098,6 +1098,59 @@ flex; justify-content: space-between; }
 }
 .resource-card .resource-link:hover { color: var(--gold-light); }
 
+
+/* DISINFORMATION WATCH - INTERACTIVE */
+.disinfo-item { cursor: pointer; }
+.disinfo-item:hover { border-color: rgba(192,57,43,0.5); transform: translateY(-1px); transition: all 0.2s; }
+.disinfo-sources { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: none; }
+.disinfo-sources.open { display: block; }
+.disinfo-source-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; font-size: 0.75rem; color: var(--accent2);
+  text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.disinfo-source-link:hover { color: var(--gold-light); }
+.disinfo-source-link:last-child { border-bottom: none; }
+.disinfo-actions {
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.disinfo-btn {
+  padding: 6px 14px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 500; cursor: pointer; border: none;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.disinfo-btn-copy { background: var(--gold-dim); color: var(--gold-light); border: 1px solid var(--border); }
+.disinfo-btn-copy:hover { background: var(--gold); color: var(--dark); }
+.disinfo-btn-report { background: rgba(192,57,43,0.12); color: #E74C3C; border: 1px solid rgba(192,57,43,0.3); }
+.disinfo-btn-report:hover { background: rgba(192,57,43,0.25); }
+.disinfo-expand-hint { font-size: 0.68rem; color: var(--muted); margin-top: 6px; }
+
+/* REPORT CLAIM MODAL */
+.report-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 560px; padding: 32px;
+}
+.report-box .auth-field input,
+.report-box .auth-field textarea,
+.report-box .auth-field select {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.report-box .auth-field textarea { min-height: 80px; resize: none; }
+.report-box .auth-field input:focus,
+.report-box .auth-field textarea:focus,
+.report-box .auth-field select:focus { border-color: var(--gold); }
+.copied-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: var(--white);
+  padding: 10px 20px; border-radius: 8px; font-size: 0.82rem;
+  font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+.copied-toast.show { opacity: 1; }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2770,7 +2823,7 @@ networks.</div>
 </div>
 
 <button class="btn btn-outline" style="flex-shrink:0"
-onclick="alert('Submit a report --- full build feature')">+ Report
+onclick="openReportModal(event)">+ Report
 a Claim</button>
 
 </div>
@@ -3424,25 +3477,7 @@ async function loadCampaigns() {
   grid.appendChild(placeholder);
 }
 
-async function loadDisinfo() {
-  const { data } = await _supabase.from('disinformation_claims').select('*').eq('is_active', true).order('flagged_date', { ascending: false });
-  if (!data) return;
-  const grid = document.querySelector('.disinfo-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const verdictMap = { false: ['FALSE', 'verdict-false'], misleading: ['MISLEADING', 'verdict-misleading'], partially_false: ['PARTIALLY FALSE', 'verdict-partial'] };
-  const spreadMap = { high: ['🔥 High spread', '#E74C3C'], medium: ['⚡ Medium spread', '#E67E22'], low: ['• Low spread', '#F1C40F'] };
-  data.forEach(function(d) {
-    const [vLabel, vClass] = verdictMap[d.verdict] || ['UNKNOWN', ''];
-    const [sLabel, sColor] = spreadMap[d.spread_level] || ['', '#999'];
-    const platforms = (d.platforms || []).join(', ');
-    const flagged = new Date(d.flagged_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const item = document.createElement('div');
-    item.className = 'disinfo-item';
-    item.innerHTML = '<div class="disinfo-item-header"><div style="font-size:0.72rem;color:var(--muted)">Flagged: ' + flagged + '</div><div class="disinfo-verdict ' + vClass + '">' + vLabel + '</div></div><div class="disinfo-claim">' + d.claim + '</div><div class="disinfo-correction">' + d.correction + '</div><div class="disinfo-meta"><span>📍 ' + platforms + '</span><span style="color:' + sColor + '">' + sLabel + '</span></div>';
-    grid.appendChild(item);
-  });
-}
+// loadDisinfo replaced below
 
 async function loadOrgs() {
   const { data } = await _supabase.from('organizations').select('*').order('name');
@@ -3864,6 +3899,189 @@ async function saveLink() {
   }
 }
 
+
+// ============================================================
+// DISINFORMATION WATCH - INTERACTIVE
+// ============================================================
+
+// Sources and response templates per claim (keyed by verdict + partial claim text)
+var disinfoSources = {
+  'contraceptives': {
+    sources: [
+      { label: 'WHO — Contraceptive Use and Fertility Return', url: 'https://www.who.int/news-room/fact-sheets/detail/family-planning-contraception' },
+      { label: 'MoH Kenya — Family Planning Guidelines 2022', url: 'https://www.health.go.ke/family-planning' },
+      { label: 'UNFPA — Contraceptive Safety Evidence', url: 'https://www.unfpa.org/contraception' },
+    ],
+    response: 'FACT: Modern contraceptives do NOT cause permanent infertility. According to WHO and Kenya MoH, fertility returns within weeks to months after stopping most contraceptive methods. Millions of Kenyan women use contraceptives safely every year. For accurate information, speak to a trained health provider or visit your nearest public health facility. #SRHRFacts #MyBodyMyRights'
+  },
+  'sexuality education': {
+    sources: [
+      { label: 'UNESCO — International Technical Guidance on Sexuality Education', url: 'https://www.unesco.org/en/health-education/cse' },
+      { label: 'WHO — Adolescent Sexual & Reproductive Health Evidence', url: 'https://www.who.int/teams/sexual-and-reproductive-health-and-research/key-aspects/adolescents-and-sexual-reproductive-health' },
+      { label: 'Guttmacher Institute — CSE Evidence Review', url: 'https://www.guttmacher.org/fact-sheet/sex-education' },
+    ],
+    response: 'FACT: Comprehensive sexuality education (CSE) does NOT promote promiscuity. Multiple peer-reviewed studies show CSE actually delays sexual debut and increases protective behaviors among young people. UNESCO and WHO endorse CSE as an evidence-based approach. Denying young people accurate information puts them at greater risk. #CSEWorks #YouthSRHR'
+  },
+  'HIV': {
+    sources: [
+      { label: 'WHO — HIV/AIDS Key Facts', url: 'https://www.who.int/news-room/fact-sheets/detail/hiv-aids' },
+      { label: 'NACC Kenya — Antiretroviral Therapy Information', url: 'https://nacc.or.ke' },
+      { label: 'UNAIDS — Treatment Facts', url: 'https://www.unaids.org/en/resources/fact-sheet' },
+    ],
+    response: 'FACT: There is no herbal cure for HIV. This dangerous myth causes people to delay life-saving antiretroviral therapy (ART). ART suppresses HIV to undetectable levels, allowing people to live long healthy lives and preventing transmission. If you or someone you know is HIV positive, please contact your nearest health facility for ART. Free treatment is available across Kenya. #KnowYourStatus #TreatmentWorks'
+  },
+  'abortion': {
+    sources: [
+      { label: 'Kenya Constitution Article 26 — Right to Life', url: 'https://www.constituteproject.org/constitution/Kenya_2010' },
+      { label: 'WHO — Safe Abortion Care Guideline 2022', url: 'https://www.who.int/publications/i/item/9789240039483' },
+      { label: 'Kenya MoH — Standards & Guidelines for Reducing Morbidity & Mortality from Unsafe Abortion', url: 'https://www.health.go.ke' },
+    ],
+    response: 'FACT: Safe abortion services are NOT illegal in all circumstances in Kenya. The Constitution of Kenya (Article 26) permits abortion when the life or health of the mother is at risk, or in an emergency. Spreading misinformation about abortion legality puts women's lives at risk by deterring them from accessing legal, safe care. Women deserve accurate information. #AbortionIsHealthcare #KenyaConstitution'
+  }
+};
+
+function getDisinfoKey(claim) {
+  if (!claim) return null;
+  const lower = claim.toLowerCase();
+  if (lower.includes('contraceptiv') || lower.includes('infertility')) return 'contraceptives';
+  if (lower.includes('sexuality education') || lower.includes('promiscuity')) return 'sexuality education';
+  if (lower.includes('hiv') || lower.includes('herbs')) return 'HIV';
+  if (lower.includes('abortion')) return 'abortion';
+  return null;
+}
+
+async function loadDisinfo() {
+  const { data } = await _supabase.from('disinformation_claims').select('*').eq('is_active', true).order('flagged_date', { ascending: false });
+  if (!data) return;
+  const grid = document.querySelector('.disinfo-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const verdictMap = { false: ['FALSE', 'verdict-false'], misleading: ['MISLEADING', 'verdict-misleading'], partially_false: ['PARTIALLY FALSE', 'verdict-partial'] };
+  const spreadMap = { high: ['🔥 High spread', '#E74C3C'], medium: ['⚡ Medium spread', '#E67E22'], low: ['• Low spread', '#F1C40F'] };
+  data.forEach(function(d) {
+    const [vLabel, vClass] = verdictMap[d.verdict] || ['UNKNOWN', ''];
+    const [sLabel, sColor] = spreadMap[d.spread_level] || ['', '#999'];
+    const platforms = (d.platforms || []).join(', ');
+    const flagged = new Date(d.flagged_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const key = getDisinfoKey(d.claim);
+    const sources = key && disinfoSources[key] ? disinfoSources[key].sources : [];
+    const responseText = key && disinfoSources[key] ? disinfoSources[key].response : d.correction;
+    const sourcesHtml = sources.length ? sources.map(function(s) {
+      return '<a href="' + s.url + '" target="_blank" class="disinfo-source-link">📎 ' + s.label + ' →</a>';
+    }).join('') : '';
+
+    const item = document.createElement('div');
+    item.className = 'disinfo-item';
+    item.dataset.id = d.id;
+    item.innerHTML =
+      '<div class="disinfo-item-header"><div style="font-size:0.72rem;color:var(--muted)">Flagged: ' + flagged + '</div><div class="disinfo-verdict ' + vClass + '">' + vLabel + '</div></div>' +
+      '<div class="disinfo-claim">' + d.claim + '</div>' +
+      '<div class="disinfo-correction">' + d.correction + '</div>' +
+      '<div class="disinfo-expand-hint">👆 Click to see sources & response template</div>' +
+      '<div class="disinfo-sources" id="sources-' + d.id + '">' +
+        (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Verified Sources</div>' + sourcesHtml : '') +
+        '<div class="disinfo-actions">' +
+          '<button class="disinfo-btn disinfo-btn-copy" onclick="copyResponse(event, '' + d.id + '')">📋 Copy Response Template</button>' +
+          '<button class="disinfo-btn disinfo-btn-report" onclick="openReportModal(event)">⚠️ Report Similar Claim</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="disinfo-meta"><span>📍 ' + platforms + '</span><span style="color:' + sColor + '">' + sLabel + '</span></div>';
+
+    // Store response text on element
+    item.dataset.response = responseText;
+
+    item.addEventListener('click', function(e) {
+      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+      const sourcesEl = document.getElementById('sources-' + d.id);
+      const hint = item.querySelector('.disinfo-expand-hint');
+      if (sourcesEl.classList.contains('open')) {
+        sourcesEl.classList.remove('open');
+        hint.style.display = 'block';
+      } else {
+        sourcesEl.classList.add('open');
+        hint.style.display = 'none';
+      }
+    });
+
+    grid.appendChild(item);
+  });
+
+  // Update alert banner
+  const alertTitle = document.querySelector('.disinfo-alert-title');
+  if (alertTitle) alertTitle.textContent = data.length + ' Active Alerts — Disinformation Circulating in Network Counties';
+  const badge = document.querySelector('[onclick*="disinfo"] .badge');
+  if (badge) badge.textContent = data.filter(function(d) { return d.spread_level === 'high'; }).length;
+}
+
+function copyResponse(e, claimId) {
+  e.stopPropagation();
+  const item = document.querySelector('[data-id="' + claimId + '"]');
+  const text = item ? item.dataset.response : '';
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function() {
+    const toast = document.getElementById('copied-toast');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2500);
+  });
+}
+
+function openReportModal(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('report-modal').classList.remove('hidden');
+  document.getElementById('report-error').style.display = 'none';
+  document.getElementById('report-success').style.display = 'none';
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.add('hidden');
+}
+
+async function submitReport() {
+  const claim = document.getElementById('report-claim').value.trim();
+  const platforms = document.getElementById('report-platforms').value.trim();
+  const spread = document.getElementById('report-spread').value;
+  const context = document.getElementById('report-context').value.trim();
+  const errEl = document.getElementById('report-error');
+  const successEl = document.getElementById('report-success');
+
+  if (!claim) { errEl.textContent = 'Please enter the claim text.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('report-submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  const platformArr = platforms ? platforms.split(',').map(function(p) { return p.trim(); }) : [];
+
+  const { error } = await _supabase.from('disinformation_claims').insert({
+    claim: '"' + claim + '"',
+    correction: 'Under review — correction being developed by network.',
+    verdict: 'false',
+    spread_level: spread,
+    platforms: platformArr,
+    reported_by: currentUser ? currentUser.id : null,
+    is_active: true
+  });
+
+  btn.disabled = false; btn.textContent = 'Submit Report';
+
+  if (error) {
+    errEl.textContent = error.message; errEl.style.display = 'block';
+  } else {
+    successEl.textContent = '✓ Report submitted! The network will review and develop a response.';
+    successEl.style.display = 'block';
+    errEl.style.display = 'none';
+    document.getElementById('report-claim').value = '';
+    document.getElementById('report-platforms').value = '';
+    document.getElementById('report-context').value = '';
+    setTimeout(function() { closeReportModal(); loadDisinfo(); }, 2000);
+    _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: 'New disinformation claim reported for network review', dot_color: 'red' });
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var reportModal = document.getElementById('report-modal');
+  if (reportModal) reportModal.addEventListener('click', function(e) { if (e.target === this) closeReportModal(); });
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -4012,6 +4230,47 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     </div>
   </div>
 </div>
+
+
+<!-- REPORT CLAIM MODAL -->
+<div class="modal-overlay hidden" id="report-modal">
+  <div class="report-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Report <span style="color:#E74C3C">Disinformation</span></div>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Spotted a false or misleading SRHR claim circulating in your community or online? Report it here and the network will coordinate a response.</div>
+    <div class="auth-error" id="report-error"></div>
+    <div class="auth-success" id="report-success"></div>
+    <div class="auth-field">
+      <label>The Claim (quote it exactly)</label>
+      <textarea id="report-claim" placeholder='"Exact text of the false claim being circulated..."'></textarea>
+    </div>
+    <div class="auth-field">
+      <label>Where is it spreading?</label>
+      <input type="text" id="report-platforms" placeholder="e.g. WhatsApp groups, TikTok, Facebook" />
+    </div>
+    <div class="auth-field">
+      <label>Estimated Spread</label>
+      <select id="report-spread">
+        <option value="low">Low — a few people</option>
+        <option value="medium" selected>Medium — spreading in community</option>
+        <option value="high">High — viral / wide circulation</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label>Additional context (optional)</label>
+      <textarea id="report-context" placeholder="Any additional context, links, or background..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeReportModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="report-submit-btn" onclick="submitReport()" style="flex:2">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- COPIED TOAST -->
+<div class="copied-toast" id="copied-toast">✓ Response copied to clipboard!</div>
 
 </body>
 
