@@ -3422,15 +3422,23 @@ async function loadAllData() {
   ]);
 }
 
+var _dataLoaded = false;
+
 _supabase.auth.getSession().then(function(result) {
   var session = result.data.session;
-  if (session) { showHub(session.user); loadAllData(); }
+  if (session) { showHub(session.user); loadAllData(); _dataLoaded = true; }
   else { showAuthModal(); }
 });
 
 _supabase.auth.onAuthStateChange(function(event, session) {
-  if (event === 'SIGNED_IN' && session) { showHub(session.user); loadAllData(); }
-  else if (event === 'SIGNED_OUT') { showAuthModal(); }
+  if (event === 'SIGNED_IN' && session) {
+    showHub(session.user);
+    if (!_dataLoaded) { loadAllData(); }
+    _dataLoaded = true;
+  } else if (event === 'SIGNED_OUT') {
+    showAuthModal();
+    _dataLoaded = false;
+  }
 });
 
 function showHub(user) {
