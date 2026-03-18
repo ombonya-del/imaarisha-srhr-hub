@@ -1151,6 +1151,128 @@ flex; justify-content: space-between; }
 }
 .copied-toast.show { opacity: 1; }
 
+
+/* RESPONSE RESOURCES */
+.templates-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 720px;
+  max-height: 85vh; display: flex; flex-direction: column;
+}
+.templates-body {
+  overflow-y: auto; padding: 8px 28px 24px; flex: 1;
+}
+.template-section {
+  margin-bottom: 24px; padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.template-section:last-child { border-bottom: none; }
+.template-topic {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.15em; color: var(--gold); margin-bottom: 10px;
+}
+.template-verdict {
+  display: inline-block; font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+  margin-bottom: 8px; margin-left: 8px;
+}
+.template-text {
+  font-size: 0.8rem; color: var(--white); line-height: 1.6;
+  background: var(--dark3); border-radius: 8px; padding: 14px;
+  margin-bottom: 10px; border-left: 3px solid var(--gold);
+}
+.template-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.template-btn {
+  padding: 6px 14px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 500; cursor: pointer; border: none;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.template-btn-copy { background: var(--gold-dim); color: var(--gold-light); border: 1px solid var(--border); }
+.template-btn-copy:hover { background: var(--gold); color: var(--dark); }
+.template-char-count { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+
+/* RAPID RESPONSE NETWORK */
+.rapid-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 580px; padding: 32px;
+}
+.network-orgs {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0;
+}
+.network-org-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 16px;
+  background: var(--dark3); border: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--accent2);
+}
+.network-org-pill::before { content: '●'; font-size: 0.5rem; }
+.alert-sent {
+  background: rgba(61,158,138,0.15); border: 1px solid rgba(61,158,138,0.4);
+  border-radius: 12px; padding: 20px; text-align: center; display: none;
+}
+.alert-sent-icon { font-size: 2rem; margin-bottom: 8px; }
+.alert-sent-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--accent2); }
+.alert-sent-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+
+/* RESPONSE RESOURCES MODALS */
+.templates-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 680px;
+  max-height: 85vh; display: flex; flex-direction: column;
+}
+.templates-body { padding: 20px 28px; overflow-y: auto; flex: 1; }
+.template-item {
+  background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; margin-bottom: 12px;
+}
+.template-topic {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--gold); margin-bottom: 6px;
+}
+.template-text {
+  font-size: 0.8rem; color: var(--white); line-height: 1.6;
+  margin-bottom: 10px;
+}
+.template-copy-btn {
+  padding: 5px 14px; border-radius: 5px; font-size: 0.72rem;
+  font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+  background: var(--gold-dim); color: var(--gold-light);
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.template-copy-btn:hover { background: var(--gold); color: var(--dark); }
+
+.rapid-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 540px; padding: 32px;
+}
+.org-check-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin: 12px 0 20px;
+}
+.org-check-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; font-size: 0.78rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.org-check-item.selected {
+  border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light);
+}
+.org-check-item input[type="checkbox"] { accent-color: var(--gold); }
+.alert-urgency {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.urgency-btn {
+  flex: 1; padding: 8px; border-radius: 6px; text-align: center;
+  font-size: 0.75rem; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.urgency-btn.active-low { border-color: #F1C40F; color: #F1C40F; background: rgba(241,196,15,0.1); }
+.urgency-btn.active-medium { border-color: #E67E22; color: #E67E22; background: rgba(230,126,34,0.1); }
+.urgency-btn.active-high { border-color: #E74C3C; color: #E74C3C; background: rgba(231,76,60,0.1); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -3970,6 +4092,172 @@ window.addEventListener('DOMContentLoaded', function() {
   if (reportModal) reportModal.addEventListener('click', function(e) { if (e.target === this) closeReportModal(); });
 });
 
+
+// ============================================================
+// RESPONSE RESOURCES - ALL THREE
+// ============================================================
+
+var currentUrgency = 'medium';
+
+var mythTemplates = [
+  { topic: 'Family Planning', text: 'FACT: Modern contraceptives are safe and do NOT cause permanent infertility. WHO and Kenya MoH confirm fertility returns quickly after stopping most methods. For accurate FP information, visit your nearest health facility or call the Kenya Health Hotline. #SRHRFacts' },
+  { topic: 'Contraceptives & Youth', text: 'FACT: Young people have the right to access contraceptive information and services. Kenya law protects adolescent access to SRH services. Denying young people this information increases risk of unintended pregnancy and STIs. #YouthSRHRRights' },
+  { topic: 'HIV Treatment', text: 'FACT: Antiretroviral therapy (ART) works. People on ART can live long, healthy lives and have undetectable viral loads. There is no herbal cure for HIV. Free ART is available at all public health facilities in Kenya. #TreatmentWorks #KnowYourStatus' },
+  { topic: 'HIV Transmission', text: 'FACT: HIV cannot be transmitted through casual contact — hugging, sharing food, mosquito bites, or touching. HIV is transmitted through specific bodily fluids. Education and accurate information save lives. #EndHIVStigma' },
+  { topic: 'Comprehensive Sexuality Education', text: 'FACT: CSE does NOT promote promiscuity. Evidence from over 100 studies shows CSE delays sexual debut and increases safer behaviors. Informed young people make better decisions. UNESCO and WHO endorse quality CSE. #CSEWorks' },
+  { topic: 'Safe Abortion — Legal Status', text: 'FACT: Kenya Constitution Article 26 permits abortion when the life or health of the mother is at risk. Total illegality claims are inaccurate and endanger lives. Women deserve accurate legal information to access safe care. #AbortionIsHealthcare' },
+  { topic: 'Safe Abortion — Safety', text: 'FACT: Safe, legal abortion is one of the safest medical procedures when performed by trained providers. Unsafe abortion is a leading cause of maternal death in Kenya. Access to safe services saves lives. #SafeAbortionSavesLives' },
+  { topic: 'Menstrual Health', text: 'FACT: Menstruation is a normal, healthy biological process. Girls who miss school due to lack of sanitary products lose up to 20% of their school year. MHM support keeps girls in school and in control of their futures. #BreakTheStigma' },
+  { topic: 'GBV — Victim Blaming', text: 'FACT: Gender-based violence is never the victim\'s fault. No clothing, behavior, or relationship status justifies violence. GBV is a violation of human rights. Survivors deserve support, not blame. Free GBV support: Gender Violence Recovery Centre 0800 723 253.' },
+  { topic: 'Male Engagement', text: 'FACT: Men and boys are essential allies in achieving SRHR for all. Engaging men in FP, GBV prevention, and sexual health improves outcomes for entire families and communities. #MenForSRHR' },
+  { topic: 'STI Treatment', text: 'FACT: Most STIs including syphilis, gonorrhoea and chlamydia are curable with antibiotics. Early treatment prevents complications. Get tested regularly — free STI testing is available at public health facilities across Kenya. #GetTested' },
+  { topic: 'Maternal Health', text: 'FACT: Skilled birth attendance dramatically reduces maternal and newborn deaths. Every woman deserves to deliver with a trained health worker present. Facility delivery is free in Kenya public hospitals. #SafeMotherhood' },
+  { topic: 'FP & Religion', text: 'FACT: Family planning is compatible with many religious and cultural traditions. Many faith leaders across Kenya actively support FP as a tool for family wellbeing. The choice to use FP belongs to individuals and couples. #FPIsYourRight' },
+  { topic: 'Disability & SRHR', text: 'FACT: Persons with disabilities have the same sexual and reproductive health rights as everyone else. Inclusive SRH services are a right, not a privilege. Service providers must accommodate all persons with dignity. #InclusiveSRHR' },
+  { topic: 'Adolescent SRH', text: 'FACT: Adolescents have SRHR rights. Kenya National Adolescent Health Policy guarantees young people access to youth-friendly SRH services. Age-appropriate information protects young people — it does not harm them. #YouthFriendlyServices' },
+];
+
+function openTemplatesModal() {
+  document.getElementById('templates-modal').classList.remove('hidden');
+  const body = document.getElementById('templates-body');
+  body.innerHTML = '';
+  mythTemplates.forEach(function(t, i) {
+    const div = document.createElement('div');
+    div.className = 'template-item';
+    div.innerHTML = '<div class="template-topic">' + t.topic + '</div><div class="template-text">' + t.text + '</div><button class="template-copy-btn" onclick="copyTemplate(' + i + ', this)">📋 Copy to Clipboard</button>';
+    body.appendChild(div);
+  });
+}
+
+function closeTemplatesModal() {
+  document.getElementById('templates-modal').classList.add('hidden');
+}
+
+function copyTemplate(index, btn) {
+  navigator.clipboard.writeText(mythTemplates[index].text).then(function() {
+    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--accent)';
+    btn.style.color = 'white';
+    setTimeout(function() {
+      btn.textContent = '📋 Copy to Clipboard';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+
+function openRapidModal() {
+  document.getElementById('rapid-modal').classList.remove('hidden');
+  document.getElementById('rapid-error').style.display = 'none';
+  document.getElementById('rapid-success').style.display = 'none';
+  // Load orgs into checkboxes
+  _supabase.from('organizations').select('id, short_name').then(function(result) {
+    var orgs = result.data || [];
+    var grid = document.getElementById('org-check-grid');
+    grid.innerHTML = '';
+    orgs.forEach(function(o) {
+      var div = document.createElement('div');
+      div.className = 'org-check-item selected';
+      div.dataset.orgId = o.id;
+      div.dataset.orgName = o.short_name;
+      div.innerHTML = '<input type="checkbox" checked onchange="toggleOrg(this)" /> ' + o.short_name;
+      div.addEventListener('click', function(e) {
+        if (e.target.tagName === 'INPUT') return;
+        var cb = div.querySelector('input');
+        cb.checked = !cb.checked;
+        div.classList.toggle('selected', cb.checked);
+      });
+      div.querySelector('input').addEventListener('change', function() {
+        div.classList.toggle('selected', this.checked);
+      });
+      grid.appendChild(div);
+    });
+  });
+}
+
+function closeRapidModal() {
+  document.getElementById('rapid-modal').classList.add('hidden');
+}
+
+function setUrgency(level) {
+  currentUrgency = level;
+  document.getElementById('urg-low').className = 'urgency-btn' + (level === 'low' ? ' active-low' : '');
+  document.getElementById('urg-medium').className = 'urgency-btn' + (level === 'medium' ? ' active-medium' : '');
+  document.getElementById('urg-high').className = 'urgency-btn' + (level === 'high' ? ' active-high' : '');
+}
+
+async function sendRapidAlert() {
+  var subject = document.getElementById('rapid-subject').value.trim();
+  var message = document.getElementById('rapid-message').value.trim();
+  var errEl = document.getElementById('rapid-error');
+  var successEl = document.getElementById('rapid-success');
+
+  if (!subject || !message) {
+    errEl.textContent = 'Please fill in subject and message.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var selectedOrgs = [];
+  document.querySelectorAll('#org-check-grid .org-check-item.selected').forEach(function(el) {
+    selectedOrgs.push(el.dataset.orgName);
+  });
+
+  var btn = document.getElementById('rapid-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending alert...';
+
+  var urgencyLabel = currentUrgency === 'high' ? '🔥 HIGH' : currentUrgency === 'medium' ? '⚡ MEDIUM' : '• LOW';
+  var fullMessage = '[RAPID RESPONSE ALERT - ' + urgencyLabel + ' URGENCY] ' + subject + ' ' + message + ' Organizations notified: ' + selectedOrgs.join(', ');
+  // Log as a disinformation claim for tracking
+  var { error } = await _supabase.from('disinformation_claims').insert({
+    claim: '"' + subject + '"',
+    correction: 'Rapid response alert sent to network. Correction in development.',
+    verdict: 'false',
+    spread_level: currentUrgency,
+    platforms: ['Network Alert'],
+    reported_by: currentUser ? currentUser.id : null,
+    is_active: true
+  });
+
+  // Log in activity
+  await _supabase.from('activity_log').insert({
+    activity_type: 'campaign_launch',
+    description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'Hub Admin') + ' sent a rapid response alert to ' + selectedOrgs.length + ' organizations',
+    dot_color: 'red'
+  });
+
+  btn.disabled = false; btn.textContent = '🚨 Send Alert to Network';
+
+  successEl.textContent = '✓ Alert sent to ' + selectedOrgs.length + ' organizations! Activity logged in dashboard.';
+  successEl.style.display = 'block';
+  errEl.style.display = 'none';
+
+  setTimeout(function() {
+    closeRapidModal();
+    loadDisinfo();
+    loadDashboard();
+  }, 2500);
+}
+
+// Wire up the toolkit items
+window.addEventListener('DOMContentLoaded', function() {
+  // Templates modal
+  var templatesModal = document.getElementById('templates-modal');
+  if (templatesModal) templatesModal.addEventListener('click', function(e) { if (e.target === this) closeTemplatesModal(); });
+
+  // Rapid modal
+  var rapidModal = document.getElementById('rapid-modal');
+  if (rapidModal) rapidModal.addEventListener('click', function(e) { if (e.target === this) closeRapidModal(); });
+
+  // Wire toolkit items after a short delay for DOM to be ready
+  setTimeout(function() {
+    var toolkitItems = document.querySelectorAll('#panel-disinfo .toolkit-item');
+    if (toolkitItems[0]) toolkitItems[0].style.cursor = 'pointer', toolkitItems[0].addEventListener('click', openTemplatesModal);
+    if (toolkitItems[1]) toolkitItems[1].style.cursor = 'pointer', toolkitItems[1].addEventListener('click', function() { showPanel('resources', document.querySelector('.nav-item[onclick*=resources]')); });
+    if (toolkitItems[2]) toolkitItems[2].style.cursor = 'pointer', toolkitItems[2].addEventListener('click', openRapidModal);
+  }, 1000);
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -4159,6 +4447,180 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 
 <!-- COPIED TOAST -->
 <div class="copied-toast" id="copied-toast">✓ Response copied to clipboard!</div>
+
+
+<!-- MYTH-BUSTING TEMPLATES MODAL -->
+<div class="modal-overlay hidden" id="templates-modal">
+  <div class="templates-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-subject">SRHR Myth-Busting <span style="color:var(--gold)">Response Templates</span></div>
+        <div class="modal-meta">Ready-to-post counter-narratives · Click to copy for WhatsApp, Twitter/X, Facebook</div>
+      </div>
+      <button class="modal-close" onclick="closeTemplatesModal()">✕</button>
+    </div>
+    <div class="templates-body">
+
+      <div class="template-section">
+        <div class="template-topic">🔴 Contraception & Fertility <span class="template-verdict verdict-false">FALSE CLAIM</span></div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">Claim: "Modern contraceptives cause permanent infertility in young women"</div>
+        <div class="template-text" id="tpl-1">FACT: Modern contraceptives do NOT cause permanent infertility. According to WHO and Kenya MoH, fertility returns within weeks to months after stopping most contraceptive methods. Millions of Kenyan women use contraceptives safely every year. For accurate information, speak to a trained health provider or visit your nearest public health facility. #SRHRFacts #MyBodyMyRights</div>
+        <div class="template-char-count">📊 Twitter/X: 280 chars max · WhatsApp: Full text · Facebook: Full text</div>
+        <div class="template-actions" style="margin-top:8px;">
+          <button class="template-btn template-btn-copy" onclick="copyTemplate('tpl-1', this)">📋 Copy Full Response</button>
+          <button class="template-btn template-btn-copy" onclick="copyShort('FACT: Modern contraceptives do NOT cause permanent infertility. WHO &amp; Kenya MoH confirm fertility returns quickly after stopping. Get accurate info from your health provider. #SRHRFacts', this)">🐦 Copy Twitter Version</button>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <div class="template-topic">🟠 Comprehensive Sexuality Education <span class="template-verdict verdict-misleading">MISLEADING CLAIM</span></div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">Claim: "Comprehensive sexuality education promotes promiscuity among teenagers"</div>
+        <div class="template-text" id="tpl-2">FACT: Comprehensive sexuality education (CSE) does NOT promote promiscuity. Multiple peer-reviewed studies show CSE actually delays sexual debut and increases protective behaviors among young people. UNESCO and WHO endorse CSE as an evidence-based approach. Denying young people accurate information puts them at greater risk. #CSEWorks #YouthSRHR</div>
+        <div class="template-char-count">📊 Twitter/X: 280 chars max · WhatsApp: Full text · Facebook: Full text</div>
+        <div class="template-actions" style="margin-top:8px;">
+          <button class="template-btn template-btn-copy" onclick="copyTemplate('tpl-2', this)">📋 Copy Full Response</button>
+          <button class="template-btn template-btn-copy" onclick="copyShort('FACT: CSE does NOT promote promiscuity. Research shows it delays sexual debut and increases protective behaviors. UNESCO &amp; WHO endorse it. #CSEWorks #YouthSRHR', this)">🐦 Copy Twitter Version</button>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <div class="template-topic">🔴 HIV Treatment <span class="template-verdict verdict-false">FALSE CLAIM</span></div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">Claim: "HIV can be cured by traditional herbs — doctors are hiding the cure"</div>
+        <div class="template-text" id="tpl-3">FACT: There is no herbal cure for HIV. This dangerous myth causes people to delay life-saving antiretroviral therapy (ART). ART suppresses HIV to undetectable levels, allowing people to live long healthy lives and preventing transmission. If you or someone you know is HIV positive, please contact your nearest health facility for free ART. #KnowYourStatus #TreatmentWorks</div>
+        <div class="template-char-count">📊 Twitter/X: 280 chars max · WhatsApp: Full text · Facebook: Full text</div>
+        <div class="template-actions" style="margin-top:8px;">
+          <button class="template-btn template-btn-copy" onclick="copyTemplate('tpl-3', this)">📋 Copy Full Response</button>
+          <button class="template-btn template-btn-copy" onclick="copyShort('FACT: No herbal cure for HIV exists. ART is life-saving and FREE in Kenya. Delaying treatment is dangerous. Contact your nearest health facility. #KnowYourStatus #TreatmentWorks', this)">🐦 Copy Twitter Version</button>
+        </div>
+      </div>
+
+      <div class="template-section">
+        <div class="template-topic">🟡 Safe Abortion Access <span class="template-verdict verdict-partial">PARTIALLY FALSE</span></div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">Claim: "Safe abortion services are illegal everywhere in Kenya"</div>
+        <div class="template-text" id="tpl-4">FACT: Safe abortion services are NOT illegal in all circumstances in Kenya. The Constitution of Kenya (Article 26) permits abortion when the life or health of the mother is at risk, or in an emergency. Spreading misinformation about abortion legality puts lives at risk and deters people from accessing legal, safe care. All women deserve accurate information. #AbortionIsHealthcare #KenyaConstitution</div>
+        <div class="template-char-count">📊 Twitter/X: 280 chars max · WhatsApp: Full text · Facebook: Full text</div>
+        <div class="template-actions" style="margin-top:8px;">
+          <button class="template-btn template-btn-copy" onclick="copyTemplate('tpl-4', this)">📋 Copy Full Response</button>
+          <button class="template-btn template-btn-copy" onclick="copyShort('FACT: The Kenya Constitution (Art. 26) permits abortion when the mother life or health is at risk. Misinformation deters people from legal care. #AbortionIsHealthcare', this)">🐦 Copy Twitter Version</button>
+        </div>
+      </div>
+
+      <div style="background:var(--dark3);border-radius:10px;padding:16px;margin-top:8px;">
+        <div style="font-size:0.78rem;font-weight:600;margin-bottom:6px;">📌 Best Practices for Responding to Disinformation</div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.7;">
+          1. Lead with FACT — not the false claim<br/>
+          2. Keep responses under 280 chars for Twitter/X<br/>
+          3. Always include a credible source link<br/>
+          4. Use hashtags consistently across the network<br/>
+          5. Tag @MoHKenya or @WHO_Kenya where relevant<br/>
+          6. Report the original post if platform allows
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- RAPID RESPONSE NETWORK MODAL -->
+<div class="modal-overlay hidden" id="rapid-modal">
+  <div class="rapid-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Network Alert</span></div>
+      <button class="modal-close" onclick="closeRapidModal()">✕</button>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Send an urgent alert to all 12 member organizations when a new SRHR claim is going viral and needs a coordinated response.</div>
+
+    <div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Alert will be sent to:</div>
+    <div class="network-orgs" id="network-orgs-list"></div>
+
+    <div class="auth-error" id="rapid-error" style="margin-top:12px;"></div>
+
+    <div id="rapid-form">
+      <div class="auth-field" style="margin-top:16px;">
+        <label>Claim going viral (describe it)</label>
+        <textarea id="rapid-claim" placeholder="What false or misleading claim is spreading right now?" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;min-height:80px;resize:none;transition:border 0.2s;"></textarea>
+      </div>
+      <div class="auth-field">
+        <label>Where is it spreading?</label>
+        <input type="text" id="rapid-platforms" placeholder="e.g. WhatsApp groups in Nairobi, TikTok" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+      </div>
+      <div class="auth-field">
+        <label>Urgency Level</label>
+        <select id="rapid-urgency" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;">
+          <option value="high">🔴 HIGH — Viral, needs immediate response</option>
+          <option value="medium" selected>🟠 MEDIUM — Spreading, coordinate response</option>
+          <option value="low">🟡 LOW — Monitor and prepare</option>
+        </select>
+      </div>
+      <div class="auth-field">
+        <label>Suggested response action (optional)</label>
+        <input type="text" id="rapid-action" placeholder="e.g. Use Template 3, share WHO fact sheet link" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn btn-outline" onclick="closeRapidModal()" style="flex:1">Cancel</button>
+        <button class="btn" id="rapid-send-btn" onclick="sendRapidAlert()" style="flex:2;background:var(--red);color:var(--white);border:none;padding:10px;border-radius:6px;font-family:DM Sans,sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;">🚨 Send Alert to All 12 Orgs</button>
+      </div>
+    </div>
+
+    <div class="alert-sent" id="alert-sent-confirmation">
+      <div class="alert-sent-icon">✅</div>
+      <div class="alert-sent-title">Alert Sent to Network!</div>
+      <div class="alert-sent-sub">All 12 member organizations have been notified and the claim has been logged for coordinated response.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MYTH-BUSTING TEMPLATES MODAL -->
+<div class="modal-overlay hidden" id="templates-modal">
+  <div class="templates-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-subject">SRHR Myth-Busting <span style="color:var(--gold)">Response Templates</span></div>
+        <div class="modal-meta">20 pre-written counter-narratives · Click to copy · English</div>
+      </div>
+      <button class="modal-close" onclick="closeTemplatesModal()">✕</button>
+    </div>
+    <div class="templates-body" id="templates-body"></div>
+  </div>
+</div>
+
+<!-- RAPID RESPONSE NETWORK MODAL -->
+<div class="modal-overlay hidden" id="rapid-modal">
+  <div class="rapid-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Alert</span></div>
+      <button class="modal-close" onclick="closeRapidModal()">✕</button>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Send an urgent alert to member organizations when a new disinformation claim is spreading fast and needs coordinated response.</div>
+    <div class="auth-error" id="rapid-error"></div>
+    <div class="auth-success" id="rapid-success"></div>
+    <div class="auth-field">
+      <label>Alert Subject</label>
+      <input type="text" id="rapid-subject" placeholder="e.g. Viral claim about contraceptives circulating in Kisumu" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+    </div>
+    <div class="auth-field">
+      <label>Urgency Level</label>
+      <div class="alert-urgency">
+        <button class="urgency-btn" id="urg-low" onclick="setUrgency('low')">• Low</button>
+        <button class="urgency-btn active-medium" id="urg-medium" onclick="setUrgency('medium')">⚡ Medium</button>
+        <button class="urgency-btn" id="urg-high" onclick="setUrgency('high')">🔥 High</button>
+      </div>
+    </div>
+    <div class="auth-field">
+      <label>Alert Message</label>
+      <textarea id="rapid-message" placeholder="Describe the claim, where it is spreading, and what response is needed..." style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;min-height:90px;resize:none;"></textarea>
+    </div>
+    <div class="auth-field">
+      <label>Notify Organizations</label>
+      <div class="org-check-grid" id="org-check-grid"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeRapidModal()" style="flex:1">Cancel</button>
+      <button class="btn" id="rapid-send-btn" onclick="sendRapidAlert()" style="flex:2;background:#C0392B;color:white;border:none;cursor:pointer;border-radius:6px;font-family:'DM Sans',sans-serif;font-weight:600;">🚨 Send Alert to Network</button>
+    </div>
+  </div>
+</div>
 
 </body>
 
