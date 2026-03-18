@@ -1587,6 +1587,27 @@ flex; justify-content: space-between; }
 .org-contact-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 8px; background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold-light); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
 .org-contact-btn:hover { background: var(--gold); color: var(--dark); }
 
+
+/* CREATE EVENT MODAL */
+.create-event-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 580px; padding: 32px;
+  max-height: 90vh; overflow-y: auto;
+}
+.create-event-box .auth-field input,
+.create-event-box .auth-field select,
+.create-event-box .auth-field textarea {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: "DM Sans", sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.create-event-box .auth-field input:focus,
+.create-event-box .auth-field select:focus,
+.create-event-box .auth-field textarea:focus { border-color: var(--gold); }
+.create-event-box .auth-field textarea { min-height: 80px; resize: none; }
+.create-event-box .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2290,7 +2311,7 @@ margin-bottom:20px;">
 <div style="font-size:0.82rem; color:var(--muted)">Showing upcoming
 events · March--May 2026</div>
 
-<button class="btn btn-gold" onclick="alert('Create event --- full build feature')">+ Create Event</button>
+<button class="btn btn-gold" onclick="openCreateEvent()">+ Create Event</button>
 
 </div>
 
@@ -6330,6 +6351,104 @@ window.addEventListener('DOMContentLoaded', function() {
   if (orgModal) orgModal.addEventListener('click', function(e) { if (e.target === this) closeOrgProfile(); });
 });
 
+
+// ============================================================
+// CREATE EVENT
+// ============================================================
+
+function openCreateEvent() {
+  document.getElementById('create-event-modal').classList.remove('hidden');
+  document.getElementById('create-event-error').style.display = 'none';
+  document.getElementById('create-event-success').style.display = 'none';
+  // Set default date to tomorrow
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('ev-date').value = tomorrow.toISOString().split('T')[0];
+}
+
+function closeCreateEvent() {
+  document.getElementById('create-event-modal').classList.add('hidden');
+}
+
+async function submitCreateEvent() {
+  var title = document.getElementById('ev-title').value.trim();
+  var desc = document.getElementById('ev-desc').value.trim();
+  var date = document.getElementById('ev-date').value;
+  var type = document.getElementById('ev-type').value;
+  var start = document.getElementById('ev-start').value.trim();
+  var end = document.getElementById('ev-end').value.trim();
+  var location = document.getElementById('ev-location').value.trim();
+  var hosts = document.getElementById('ev-hosts').value.trim();
+  var tagsRaw = document.getElementById('ev-tags').value.trim();
+  var capacity = document.getElementById('ev-capacity').value;
+  var regLink = document.getElementById('ev-reg-link').value.trim();
+
+  var errEl = document.getElementById('create-event-error');
+  var successEl = document.getElementById('create-event-success');
+
+  if (!title || !date || !location) {
+    errEl.textContent = 'Please fill in title, date and location.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+  var hostArr = hosts ? hosts.split(',').map(function(h) { return h.trim(); }) : ['ImaarishaSRHR Hub'];
+
+  var btn = document.getElementById('create-event-btn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+
+  var { data: newEvent, error } = await _supabase.from('events').insert({
+    title: title,
+    description: desc,
+    event_date: date,
+    event_type: type,
+    start_time: start || null,
+    end_time: end || null,
+    location: location,
+    is_virtual: location.toLowerCase().includes('zoom') || location.toLowerCase().includes('online'),
+    host_orgs: hostArr,
+    tags: tags,
+    capacity: capacity ? parseInt(capacity) : null,
+    created_by: currentUser ? currentUser.id : null,
+    rsvp_count: 0
+  }).select().single();
+
+  btn.disabled = false; btn.textContent = 'Create Event';
+
+  if (error) {
+    errEl.textContent = error.message; errEl.style.display = 'block';
+  } else {
+    // Store registration link in eventDetails
+    if (regLink && newEvent) {
+      var key = title.split(' ')[0];
+      eventDetails[key] = {
+        description: desc,
+        agenda: [],
+        speakers: hostArr,
+        registration: regLink
+      };
+    }
+    successEl.textContent = '✓ Event created! It is now live on the hub.';
+    successEl.style.display = 'block';
+    // Clear form
+    ['ev-title','ev-desc','ev-start','ev-end','ev-location','ev-hosts','ev-tags','ev-capacity','ev-reg-link'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    await _supabase.from('activity_log').insert({
+      activity_type: 'event_rsvp',
+      description: (currentUser&&currentUser.user_metadata&&currentUser.user_metadata.full_name?currentUser.user_metadata.full_name:'Hub Admin') + ' created a new event: ' + title,
+      dot_color: 'gold'
+    });
+    setTimeout(function() { closeCreateEvent(); loadEvents(); }, 1500);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var createEventModal = document.getElementById('create-event-modal');
+  if (createEventModal) createEventModal.addEventListener('click', function(e) { if (e.target === this) closeCreateEvent(); });
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -6833,6 +6952,78 @@ async function handleLogout() { await _supabase.auth.signOut(); }
       <button class="modal-close" onclick="closeOrgProfile()" style="margin-left:auto;color:white;">✕</button>
     </div>
     <div class="org-profile-body" id="org-profile-body"></div>
+  </div>
+</div>
+
+
+<!-- CREATE EVENT MODAL -->
+<div class="modal-overlay hidden" id="create-event-modal">
+  <div class="create-event-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Create <span style="color:var(--gold)">New Event</span></div>
+      <button class="modal-close" onclick="closeCreateEvent()">✕</button>
+    </div>
+    <div class="auth-error" id="create-event-error"></div>
+    <div class="auth-success" id="create-event-success"></div>
+    <div class="auth-field">
+      <label>Event Title</label>
+      <input type="text" id="ev-title" placeholder="e.g. SRHR Network Quarterly Convening" />
+    </div>
+    <div class="auth-field">
+      <label>Description</label>
+      <textarea id="ev-desc" placeholder="What is this event about? Who should attend? What will happen?"></textarea>
+    </div>
+    <div class="auth-field two-col">
+      <div>
+        <label>Date</label>
+        <input type="date" id="ev-date" />
+      </div>
+      <div>
+        <label>Event Type</label>
+        <select id="ev-type">
+          <option value="convening">Convening</option>
+          <option value="webinar">Webinar</option>
+          <option value="workshop">Workshop</option>
+          <option value="training">Training</option>
+          <option value="symposium">Symposium</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="auth-field two-col">
+      <div>
+        <label>Start Time</label>
+        <input type="text" id="ev-start" placeholder="e.g. 9:00 AM" />
+      </div>
+      <div>
+        <label>End Time</label>
+        <input type="text" id="ev-end" placeholder="e.g. 5:00 PM" />
+      </div>
+    </div>
+    <div class="auth-field">
+      <label>Location</label>
+      <input type="text" id="ev-location" placeholder="e.g. KICC, Nairobi OR Online (Zoom)" />
+    </div>
+    <div class="auth-field">
+      <label>Hosted By</label>
+      <input type="text" id="ev-hosts" placeholder="e.g. ImaarishaSRHR Hub, SRHR Alliance" />
+    </div>
+    <div class="auth-field">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="ev-tags" placeholder="e.g. Networking, Data, Youth" />
+    </div>
+    <div class="auth-field">
+      <label>Capacity (leave blank for unlimited)</label>
+      <input type="number" id="ev-capacity" placeholder="e.g. 50" />
+    </div>
+    <div class="auth-field">
+      <label>Registration Link (optional)</label>
+      <input type="url" id="ev-reg-link" placeholder="https://forms.gle/..." />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeCreateEvent()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="create-event-btn" onclick="submitCreateEvent()" style="flex:2">Create Event</button>
+    </div>
   </div>
 </div>
 
