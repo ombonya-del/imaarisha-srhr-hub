@@ -4677,9 +4677,8 @@ async function loadTracker() {
     }).join('');
 
     // Build county tags
-    const countiesHtml = counties.map(function(c) {
-      return '<span class="county-tag high">' + c + '</span>';
-    }).join('');
+    // countiesHtml now built by buildLeadingCountyTags with click handlers
+    const countiesHtml = true; // placeholder - actual HTML built in buildLeadingCountyTags
 
     // Build org tags
     const orgsHtml = orgs.map(function(o) {
@@ -4713,6 +4712,13 @@ async function loadTracker() {
       '</div>';
 
     card.addEventListener('click', function(e) {
+      // Handle county tag clicks
+      if (e.target.classList.contains('clickable-county')) {
+        var county = e.target.getAttribute('data-county');
+        var indId = e.target.getAttribute('data-indicator-id');
+        showLeadingCountyDetail(e.target, county, ind.name, indId);
+        return;
+      }
       if (e.target.tagName === 'A') return;
       var detail = document.getElementById('tracker-detail-' + ind.id);
       var hint = card.querySelector('.tracker-expand-hint');
@@ -4888,8 +4894,7 @@ function buildLeadingCountyTags(counties, indicatorName, indicatorId) {
     var hasData = allCountyData[indicatorName] && allCountyData[indicatorName][county];
     var isFocus = ['Nairobi','Narok','Homa Bay'].indexOf(county) > -1;
     var cls = 'county-tag high' + (isFocus ? ' focus' : '') + (hasData ? ' clickable-county' : '');
-    var onClick = hasData ? ' onclick="showLeadingCountyDetail(this, \'' + county.replace(/'/g,"\\'") + '\', \'' + indicatorName.replace(/'/g,"\\'").replace(/"/g,'\\"') + '\', \'' + indicatorId + '\')"' : '';
-    return '<span class="' + cls + '" data-county="' + county + '"' + onClick + '>' + county + (isFocus ? ' ★' : '') + '</span>';
+    return '<span class="' + cls + '" data-county="' + county + '" data-indicator-id="' + indicatorId + '">' + county + (isFocus ? ' ★' : '') + '</span>';
   }).join('');
 }
 
