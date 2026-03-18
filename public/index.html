@@ -1389,6 +1389,75 @@ flex; justify-content: space-between; }
 
 .tracker-org-tag.active { border-color: var(--gold) !important; color: var(--gold) !important; background: var(--gold-dim) !important; }
 
+
+/* MARKETPLACE - INTERACTIVE */
+.mkt-item { cursor: pointer; }
+.mkt-item:hover { border-color: var(--gold); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(201,168,76,0.1); }
+.mkt-item-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.mkt-item-detail.open { display: block; }
+.mkt-item-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.mkt-action-btn {
+  padding: 7px 16px; border-radius: 6px; font-size: 0.75rem;
+  font-weight: 600; cursor: pointer; border: none;
+  font-family: "DM Sans", sans-serif; transition: all 0.2s;
+}
+.mkt-action-primary { background: var(--gold); color: var(--dark); }
+.mkt-action-primary:hover { background: var(--gold-light); }
+.mkt-action-secondary { background: var(--dark3); color: var(--white); border: 1px solid var(--border); }
+.mkt-action-secondary:hover { border-color: var(--gold); color: var(--gold); }
+.mkt-action-share { background: transparent; color: var(--accent2); border: 1px solid rgba(61,158,138,0.4); }
+.mkt-action-share:hover { background: rgba(61,158,138,0.1); }
+.mkt-org-snippet {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--dark3);
+  border-radius: 8px; margin-top: 10px; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.2s;
+}
+.mkt-org-snippet:hover { border-color: var(--gold); }
+.mkt-org-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: var(--dark);
+  flex-shrink: 0;
+}
+.mkt-org-info { flex: 1; }
+.mkt-org-name { font-size: 0.8rem; font-weight: 600; }
+.mkt-org-focus { font-size: 0.68rem; color: var(--muted); }
+
+/* LIST OFFERING MODAL */
+.list-offer-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 560px; padding: 32px;
+}
+.list-offer-box .auth-field input,
+.list-offer-box .auth-field select,
+.list-offer-box .auth-field textarea {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: "DM Sans", sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.list-offer-box .auth-field input:focus,
+.list-offer-box .auth-field select:focus,
+.list-offer-box .auth-field textarea:focus { border-color: var(--gold); }
+.list-offer-box .auth-field textarea { min-height: 80px; resize: none; }
+
+/* REQUEST MODAL */
+.request-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 500px; padding: 32px;
+}
+.request-box .auth-field input,
+.request-box .auth-field textarea {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: "DM Sans", sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.request-box .auth-field textarea { min-height: 90px; resize: none; }
+.request-box .auth-field input:focus,
+.request-box .auth-field textarea:focus { border-color: var(--gold); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2406,7 +2475,7 @@ organizations offer and need.</p>
 
 </div>
 
-<button class="btn btn-gold" onclick="alert('List an offering --- full build feature')">+ List an Offering</button>
+<button class="btn btn-gold" onclick="openListOfferModal()">+ List an Offering</button>
 
 </div>
 
@@ -3346,26 +3415,7 @@ async function loadDashboard() {
   }
 }
 
-async function loadMarketplace() {
-  const { data } = await _supabase.from('marketplace_listings').select('*, organizations(short_name)').eq('is_active', true).order('created_at', { ascending: false });
-  if (!data) return;
-  const container = document.querySelector('.mkt-items');
-  if (!container) return;
-  container.innerHTML = '';
-  data.forEach(function(item) {
-    const badges = [];
-    if (item.price_type === 'free') badges.push('<span class="mkt-badge free">Free to Members</span>');
-    else if (item.price_type === 'partner_rate') badges.push('<span class="mkt-badge partner">Partner Rate</span>');
-    else if (item.price_type === 'seeking') badges.push('<span class="mkt-badge" style="background:rgba(61,158,138,0.15);color:var(--accent2)">Seeking</span>');
-    if (item.is_new) badges.push('<span class="mkt-badge new">New</span>');
-    const orgName = item.organizations ? item.organizations.short_name : '';
-    const el = document.createElement('div');
-    el.className = 'mkt-item';
-    el.dataset.cat = item.category;
-    el.innerHTML = '<div class="mkt-item-icon">' + (item.icon || '📦') + '</div><div><div class="mkt-item-title">' + item.title + '</div><div class="mkt-item-desc">' + (item.description || '') + '</div><div class="mkt-item-footer">' + badges.join('') + '<span style="margin-left:auto;font-size:0.7rem;color:var(--muted)">' + orgName + '</span></div></div>';
-    container.appendChild(el);
-  });
-}
+// loadMarketplace replaced
 
 async function loadResources() {
   const { data } = await _supabase.from('resources').select('*').order('created_at', { ascending: false });
@@ -4337,6 +4387,58 @@ var allCountyData = {
   }
 };
 
+
+var marketplaceExtra = {
+  'Peer Educator Training': {
+    fullDesc: 'NAYA offers a structured 3-day facilitator-led training on adolescent SRHR peer education methodology. The training covers facilitation skills, content delivery on FP, HIV, GBV and rights, and community mobilization. Adaptable to county contexts across Kenya. Certificates provided.',
+    access: 'Contact NAYA to schedule a training for your organization.',
+    tags: ['ASRH','Youth','Training','Peer Education'],
+    orgSlug: 'naya', orgName: 'NAYA', orgFocus: 'Pan-African Youth'
+  },
+  'Menstrual Health Education Kit': {
+    fullDesc: 'Zana Africa school-ready MHM toolkit includes a facilitator guide, student workbooks (English & Swahili), reusable pad patterns, and a school administration guide. Designed for Standard 4-8 girls. Used in 200+ schools across Kenya.',
+    access: 'Available at partner rate for member organizations. Bulk orders available.',
+    tags: ['MHM','Schools','Girls','WASH'],
+    orgSlug: 'zana-africa', orgName: 'Zana Africa', orgFocus: 'Menstrual Health'
+  },
+  'SRHR Community Needs Assessment Tool': {
+    fullDesc: 'KoboToolbox-ready assessment instrument covering FP, maternal health, GBV, and youth SRHR indicators at community level. Includes 45 questions, skip logic, and automatic data export. Can be deployed offline. Used in 12 counties.',
+    access: 'Free download for all member organizations. Training available.',
+    tags: ['Assessment','KoboToolbox','FP','Data Collection'],
+    orgSlug: 'afyafrika', orgName: 'AfyAfrika', orgFocus: 'Community Health'
+  },
+  'Male Engagement Facilitation Skills': {
+    fullDesc: 'Men Engage Kenya offers 2-day coaching sessions on facilitating male engagement in SRHR programming. Covers community entry, managing resistance, engaging men as FP partners, and GBV prevention facilitation. Available online or in-person.',
+    access: 'Available at partner rate. Online sessions can accommodate up to 20 participants.',
+    tags: ['Male Engagement','GBV','Facilitation','Training'],
+    orgSlug: 'men-engage-kenya', orgName: 'Men Engage Kenya', orgFocus: 'Male Engagement'
+  },
+  'Disability-Inclusive SRHR Service Protocol': {
+    fullDesc: 'This Ability Trust step-by-step protocol for adapting clinical and community SRHR services for persons with disabilities. Covers physical accessibility, communication adaptations, staff training guidance, and client rights. Endorsed by MoH Kenya.',
+    access: 'Free to all member organizations. Available in print and digital formats.',
+    tags: ['Disability','Inclusion','Clinical','Protocol'],
+    orgSlug: 'this-ability-trust', orgName: 'This Ability Trust', orgFocus: 'Disability Inclusion'
+  },
+  'County Government SRHR Partner': {
+    fullDesc: 'CYAN is seeking county health department partnerships to integrate youth-friendly SRHR services into public facilities. Looking for county government contacts, MoH county teams, and NGOs with county health relationships in Nairobi, Narok and Homa Bay.',
+    access: 'Reach out to CYAN directly to explore partnership possibilities.',
+    tags: ['County','Youth-Friendly','Partnership','Government'],
+    orgSlug: 'cyan', orgName: 'CYAN', orgFocus: 'County Youth Network'
+  },
+  'HIV Prevention IEC Materials': {
+    fullDesc: 'MMAAK print-ready posters (A2, A3), community flipcharts, and social media graphics focused on HIV prevention among men and their partners. All materials are in Swahili and English. Professionally designed for high-impact community use.',
+    access: 'Free digital files for all members. Print copies available on request.',
+    tags: ['HIV','IEC','Swahili','Prevention','Print'],
+    orgSlug: 'mmaak', orgName: 'MMAAK', orgFocus: 'HIV & Men'
+  },
+  'Community Social Accountability Framework': {
+    fullDesc: 'Beyond Initiative community-led monitoring and accountability process for tracking SRHR service quality at facility level. Includes data collection tools, community scorecard templates, and engagement guides for health facility management committees.',
+    access: 'Available at partner rate. Includes 1-day orientation training.',
+    tags: ['Accountability','Monitoring','Community','SRHR Quality'],
+    orgSlug: 'beyond-initiative', orgName: 'Beyond Initiative', orgFocus: 'Social Development'
+  }
+};
+
 var countySpecificData = {
   "Family Planning Coverage": {
     "Nairobi": {
@@ -5102,6 +5204,243 @@ function showOrgContribution(el, orgName) {
     '<div>' + countiesHtml + '</div>';
 }
 
+
+// ============================================================
+// MARKETPLACE - INTERACTIVE
+// ============================================================
+
+var currentRequestListing = null;
+
+function getMarketplaceKey(title) {
+  if (!title) return null;
+  var keys = Object.keys(marketplaceExtra);
+  for (var i = 0; i < keys.length; i++) {
+    if (title.toLowerCase().indexOf(keys[i].toLowerCase().split(' ')[0]) > -1 ||
+        keys[i].toLowerCase().indexOf(title.toLowerCase().split(' ')[0]) > -1) {
+      return keys[i];
+    }
+  }
+  return null;
+}
+
+async function loadMarketplace() {
+  const { data } = await _supabase.from('marketplace_listings').select('*, organizations(short_name, focus_area, avatar_gradient)').eq('is_active', true).order('created_at', { ascending: false });
+  if (!data) return;
+  const container = document.querySelector('.mkt-items');
+  if (!container) return;
+  container.innerHTML = '';
+
+  data.forEach(function(item) {
+    var extra = null;
+    var keys = Object.keys(marketplaceExtra);
+    for (var i = 0; i < keys.length; i++) {
+      if (item.title && item.title.toLowerCase().indexOf(keys[i].toLowerCase().substring(0,8)) > -1) {
+        extra = marketplaceExtra[keys[i]];
+        break;
+      }
+    }
+
+    const badges = [];
+    if (item.price_type === 'free') badges.push('<span class="mkt-badge free">Free to Members</span>');
+    else if (item.price_type === 'partner_rate') badges.push('<span class="mkt-badge partner">Partner Rate</span>');
+    else if (item.price_type === 'seeking') badges.push('<span class="mkt-badge" style="background:rgba(61,158,138,0.15);color:var(--accent2)">Seeking</span>');
+    else if (item.price_type === 'paid') badges.push('<span class="mkt-badge" style="background:rgba(201,168,76,0.15);color:var(--gold)">Paid</span>');
+    if (item.is_new) badges.push('<span class="mkt-badge new">New</span>');
+
+    const orgName = item.organizations ? item.organizations.short_name : '';
+    const orgFocus = item.organizations ? item.organizations.focus_area : '';
+    const orgGrad = item.organizations ? item.organizations.avatar_gradient : 'linear-gradient(135deg,#2A6B5E,#C9A84C)';
+    const orgInitials = orgName ? orgName.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2) : 'OR';
+
+    const fullDesc = extra ? extra.fullDesc : (item.description || '');
+    const accessNote = extra ? extra.access : '';
+    const tags = (item.tags || []).map(function(t) {
+      return '<span class="resource-tag">' + t + '</span>';
+    }).join('');
+
+    const orgSnippet = orgName ? 
+      '<div class="mkt-org-snippet" data-action="goto-orgs">' +
+        '<div class="mkt-org-avatar" style="background:' + orgGrad + '">' + orgInitials + '</div>' +
+        '<div class="mkt-org-info">' +
+          '<div class="mkt-org-name">' + orgName + '</div>' +
+          '<div class="mkt-org-focus">' + orgFocus + ' · Click to view full profile</div>' +
+        '</div>' +
+        '<span style="color:var(--muted);font-size:0.75rem;">→</span>' +
+      '</div>' : '';
+
+    const accessBtn = item.price_type === 'free' || item.price_type === 'partner_rate'
+      ? '<button class="mkt-action-btn mkt-action-primary" data-item-id="' + item.id + '" data-action="request">📩 Request Access</button>'
+      : item.price_type === 'seeking'
+      ? '<button class="mkt-action-btn mkt-action-primary" data-item-id="' + item.id + '" data-action="request">🤝 Express Interest</button>'
+      : '<button class="mkt-action-btn mkt-action-primary" data-item-id="' + item.id + '" data-action="request">📩 Contact</button>';
+
+    const el = document.createElement('div');
+    el.className = 'mkt-item';
+    el.dataset.cat = item.category;
+    el.dataset.itemId = item.id;
+    el.dataset.title = item.title;
+    el.dataset.org = orgName;
+    el.innerHTML =
+      '<div class="mkt-item-icon">' + (item.icon || '📦') + '</div>' +
+      '<div style="flex:1">' +
+        '<div class="mkt-item-title">' + item.title + '</div>' +
+        '<div class="mkt-item-desc">' + (item.description || '') + '</div>' +
+        '<div class="mkt-item-footer">' + badges.join('') + '<span style="margin-left:auto;font-size:0.7rem;color:var(--muted)">' + orgName + '</span></div>' +
+        '<div class="mkt-item-detail" id="mkt-detail-' + item.id + '">' +
+          '<div style="font-size:0.8rem;color:var(--white);line-height:1.6;margin-bottom:10px;">' + fullDesc + '</div>' +
+          (accessNote ? '<div style="font-size:0.75rem;color:var(--accent2);margin-bottom:10px;">ℹ️ ' + accessNote + '</div>' : '') +
+          (tags ? '<div style="margin-bottom:10px;">' + tags + '</div>' : '') +
+          orgSnippet +
+          '<div class="mkt-item-actions">' +
+            accessBtn +
+            '<button class="mkt-action-btn mkt-action-share" data-item-id="' + item.id + '" data-action="share">🔗 Share</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    el.addEventListener('click', function(e) {
+      var action = e.target.getAttribute('data-action') || (e.target.closest('[data-action]') ? e.target.closest('[data-action]').getAttribute('data-action') : null);
+      if (action === 'request') { openRequestModal(item); return; }
+      if (action === 'share') { shareMarketplaceListing(item); return; }
+      if (action === 'goto-orgs') { showPanel('orgs', document.querySelector('[onclick*=orgs]')); return; }
+      if (e.target.tagName === 'BUTTON' || e.target.closest('.mkt-org-snippet')) return;
+
+      var detail = document.getElementById('mkt-detail-' + item.id);
+      if (detail) {
+        detail.classList.toggle('open');
+        el.style.borderColor = detail.classList.contains('open') ? 'var(--gold)' : '';
+      }
+    });
+
+    container.appendChild(el);
+  });
+
+  // Update category counts
+  var counts = {};
+  data.forEach(function(i) { counts[i.category] = (counts[i.category] || 0) + 1; });
+  document.querySelectorAll('.mkt-cat').forEach(function(cat) {
+    var countEl = cat.querySelector('.mkt-cat-count');
+    if (!countEl) return;
+    var onclick = cat.getAttribute('onclick') || '';
+    var match = onclick.match(/filterMkt\('(\w+)'/);
+    var key = match ? match[1] : null;
+    if (key === 'all') countEl.textContent = data.length + ' items';
+    else if (key && counts[key]) countEl.textContent = counts[key] + ' items';
+  });
+}
+
+function openRequestModal(item) {
+  currentRequestListing = item;
+  document.getElementById('request-modal').classList.remove('hidden');
+  document.getElementById('request-error').style.display = 'none';
+  document.getElementById('request-success').style.display = 'none';
+  document.getElementById('request-from').value = currentUser && currentUser.user_metadata ? (currentUser.user_metadata.full_name || '') : '';
+  document.getElementById('request-email').value = currentUser ? (currentUser.email || '') : '';
+  document.getElementById('request-message').value = '';
+
+  var info = document.getElementById('request-listing-info');
+  var priceLabel = item.price_type === 'free' ? 'Free to Members' : item.price_type === 'partner_rate' ? 'Partner Rate' : item.price_type === 'seeking' ? 'Seeking Partner' : 'Paid';
+  info.innerHTML = '<div style="font-weight:600;margin-bottom:4px;">' + (item.icon || '📦') + ' ' + item.title + '</div><div style="font-size:0.75rem;color:var(--muted);">Offered by ' + (item.organizations ? item.organizations.short_name : 'Organization') + ' · ' + priceLabel + '</div>';
+}
+
+function closeRequestModal() {
+  document.getElementById('request-modal').classList.add('hidden');
+  currentRequestListing = null;
+}
+
+async function submitRequest() {
+  var from = document.getElementById('request-from').value.trim();
+  var message = document.getElementById('request-message').value.trim();
+  var email = document.getElementById('request-email').value.trim();
+  var errEl = document.getElementById('request-error');
+  var successEl = document.getElementById('request-success');
+
+  if (!from || !message) { errEl.textContent = 'Please fill in your name and message.'; errEl.style.display = 'block'; return; }
+
+  var btn = document.getElementById('request-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+
+  await _supabase.from('activity_log').insert({
+    activity_type: 'resource_upload',
+    description: from + ' requested access to: ' + (currentRequestListing ? currentRequestListing.title : 'a marketplace listing'),
+    org_name: from,
+    dot_color: 'gold'
+  });
+
+  btn.disabled = false; btn.textContent = 'Send Request';
+  successEl.textContent = '✓ Request sent! The offering organization will be in touch at ' + email;
+  successEl.style.display = 'block';
+  errEl.style.display = 'none';
+  setTimeout(function() { closeRequestModal(); }, 2500);
+}
+
+function shareMarketplaceListing(item) {
+  var url = window.location.origin + window.location.pathname + '#marketplace-' + item.id;
+  navigator.clipboard.writeText(url).then(function() {
+    var toast = document.getElementById('copied-toast');
+    if (toast) {
+      toast.textContent = '🔗 Link copied to clipboard!';
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); toast.textContent = '✓ Response copied to clipboard!'; }, 2500);
+    }
+  });
+}
+
+function openListOfferModal() {
+  document.getElementById('list-offer-modal').classList.remove('hidden');
+  document.getElementById('list-error').style.display = 'none';
+  document.getElementById('list-success').style.display = 'none';
+}
+
+function closeListOfferModal() {
+  document.getElementById('list-offer-modal').classList.add('hidden');
+}
+
+async function submitListing() {
+  var title = document.getElementById('offer-title').value.trim();
+  var desc = document.getElementById('offer-desc').value.trim();
+  var category = document.getElementById('offer-category').value;
+  var priceType = document.getElementById('offer-price').value;
+  var url = document.getElementById('offer-url').value.trim();
+  var tagsRaw = document.getElementById('offer-tags').value;
+  var errEl = document.getElementById('list-error');
+  var successEl = document.getElementById('list-success');
+
+  if (!title || !desc) { errEl.textContent = 'Please add a title and description.'; errEl.style.display = 'block'; return; }
+
+  var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+  var btn = document.getElementById('list-offer-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+
+  var { error } = await _supabase.from('marketplace_listings').insert({
+    title: title, description: desc,
+    category: category, price_type: priceType,
+    tags: tags, file_url: url || null,
+    posted_by: currentUser ? currentUser.id : null,
+    is_new: true, is_active: true
+  });
+
+  btn.disabled = false; btn.textContent = 'Post Offering';
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
+  else {
+    successEl.textContent = '✓ Offering listed! It is now visible to all 12 member organizations.';
+    successEl.style.display = 'block';
+    document.getElementById('offer-title').value = '';
+    document.getElementById('offer-desc').value = '';
+    document.getElementById('offer-url').value = '';
+    document.getElementById('offer-tags').value = '';
+    setTimeout(function() { closeListOfferModal(); loadMarketplace(); }, 2000);
+    _supabase.from('activity_log').insert({ activity_type: 'campaign_launch', description: (currentUser && currentUser.user_metadata ? currentUser.user_metadata.full_name : 'A member') + ' listed a new marketplace offering: ' + title, dot_color: 'gold' });
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var listModal = document.getElementById('list-offer-modal');
+  var requestModal = document.getElementById('request-modal');
+  if (listModal) listModal.addEventListener('click', function(e) { if (e.target === this) closeListOfferModal(); });
+  if (requestModal) requestModal.addEventListener('click', function(e) { if (e.target === this) closeRequestModal(); });
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -5503,6 +5842,89 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeSubmitModal()" style="flex:1">Cancel</button>
       <button class="btn btn-gold" id="submit-data-btn" onclick="submitTrackerData()" style="flex:2">Submit Data</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- LIST OFFERING MODAL -->
+<div class="modal-overlay hidden" id="list-offer-modal">
+  <div class="list-offer-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">List an <span style="color:var(--gold)">Offering</span></div>
+      <button class="modal-close" onclick="closeListOfferModal()">✕</button>
+    </div>
+    <div class="auth-error" id="list-error"></div>
+    <div class="auth-success" id="list-success"></div>
+    <div class="auth-field">
+      <label>Title</label>
+      <input type="text" id="offer-title" placeholder="e.g. Community Health Worker Training Module" />
+    </div>
+    <div class="auth-field">
+      <label>Description</label>
+      <textarea id="offer-desc" placeholder="Describe what you are offering, who it is for, and how to access it..."></textarea>
+    </div>
+    <div class="auth-field" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div>
+        <label>Category</label>
+        <select id="offer-category">
+          <option value="skills">Skills & Training</option>
+          <option value="resources">Resources</option>
+          <option value="tools">Tools</option>
+          <option value="processes">Processes</option>
+          <option value="partners">Partnership Seeking</option>
+        </select>
+      </div>
+      <div>
+        <label>Availability</label>
+        <select id="offer-price">
+          <option value="free">Free to Members</option>
+          <option value="partner_rate">Partner Rate</option>
+          <option value="seeking">Seeking Partner</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+    </div>
+    <div class="auth-field">
+      <label>Link / URL (optional)</label>
+      <input type="url" id="offer-url" placeholder="https://... (file, form, or website)" />
+    </div>
+    <div class="auth-field">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="offer-tags" placeholder="e.g. FP, Youth, Training" />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeListOfferModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="list-offer-btn" onclick="submitListing()" style="flex:2">Post Offering</button>
+    </div>
+  </div>
+</div>
+
+<!-- REQUEST MODAL -->
+<div class="modal-overlay hidden" id="request-modal">
+  <div class="request-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Request / <span style="color:var(--gold)">Connect</span></div>
+      <button class="modal-close" onclick="closeRequestModal()">✕</button>
+    </div>
+    <div id="request-listing-info" style="background:var(--dark3);border-radius:8px;padding:12px;margin-bottom:20px;font-size:0.82rem;"></div>
+    <div class="auth-error" id="request-error"></div>
+    <div class="auth-success" id="request-success"></div>
+    <div class="auth-field">
+      <label>Your Name & Organization</label>
+      <input type="text" id="request-from" placeholder="e.g. Jane Mwangi, AfyAfrika" />
+    </div>
+    <div class="auth-field">
+      <label>Your Message</label>
+      <textarea id="request-message" placeholder="Describe how you would like to use this resource or collaborate..."></textarea>
+    </div>
+    <div class="auth-field">
+      <label>Contact Email</label>
+      <input type="email" id="request-email" placeholder="your@organization.org" />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeRequestModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="request-btn" onclick="submitRequest()" style="flex:2">Send Request</button>
     </div>
   </div>
 </div>
