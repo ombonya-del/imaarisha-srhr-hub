@@ -1340,6 +1340,47 @@ flex; justify-content: space-between; }
   border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light);
 }
 
+
+/* COUNTY FOCUS */
+.county-tag { cursor: pointer; transition: all 0.2s; }
+.county-tag:hover { border-color: var(--gold); color: var(--gold-light); transform: scale(1.05); }
+.county-tag.focus { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); font-weight: 600; }
+.county-focus-section {
+  margin-top: 14px; padding: 14px;
+  background: var(--dark); border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.county-focus-title {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--gold); margin-bottom: 10px;
+}
+.county-focus-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.county-focus-card {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; text-align: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.county-focus-card:hover, .county-focus-card.active {
+  border-color: var(--gold); background: var(--gold-dim);
+}
+.county-focus-name { font-size: 0.72rem; font-weight: 600; margin-bottom: 4px; }
+.county-focus-val { font-family: "Cormorant Garamond", serif; font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+.county-focus-unit { font-size: 0.65rem; color: var(--muted); }
+.county-focus-bar { height: 3px; border-radius: 2px; margin-top: 6px; background: var(--dark3); }
+.county-focus-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+.county-detail-popup {
+  margin-top: 10px; padding: 10px 14px;
+  background: var(--dark2); border-radius: 8px;
+  border: 1px solid var(--gold); display: none;
+}
+.county-detail-popup.open { display: block; }
+.county-detail-name { font-size: 0.85rem; font-weight: 600; color: var(--gold-light); margin-bottom: 6px; }
+.county-detail-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+.county-detail-stat { font-size: 0.75rem; color: var(--muted); }
+.county-detail-stat strong { color: var(--white); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -4178,6 +4219,179 @@ window.addEventListener('DOMContentLoaded', function() {
 // TRACKER - INTERACTIVE
 // ============================================================
 
+var countySpecificData = {
+  "Family Planning Coverage": {
+    "Nairobi": {
+      "val": 72,
+      "trend": "+1%",
+      "notes": "Urban uptake strong. Youth FP access improving."
+    },
+    "Narok": {
+      "val": 41,
+      "trend": "+5%",
+      "notes": "Cultural barriers remain. CHW outreach active."
+    },
+    "Homa Bay": {
+      "val": 53,
+      "trend": "+3%",
+      "notes": "HIV-FP integration driving uptake."
+    }
+  },
+  "Skilled Birth Attendance": {
+    "Nairobi": {
+      "val": 92,
+      "trend": "+1%",
+      "notes": "Near-universal facility delivery."
+    },
+    "Narok": {
+      "val": 54,
+      "trend": "+6%",
+      "notes": "Remote communities still under-served."
+    },
+    "Homa Bay": {
+      "val": 71,
+      "trend": "+4%",
+      "notes": "County referral system improving."
+    }
+  },
+  "Youth SRHR Services": {
+    "Nairobi": {
+      "val": 78,
+      "trend": "+3%",
+      "notes": "94 youth-friendly facilities operational."
+    },
+    "Narok": {
+      "val": 28,
+      "trend": "+8%",
+      "notes": "14 facilities. Major scale-up needed."
+    },
+    "Homa Bay": {
+      "val": 41,
+      "trend": "+5%",
+      "notes": "32 facilities. Strong NAYA presence."
+    }
+  },
+  "GBV Response Coverage": {
+    "Nairobi": {
+      "val": 84,
+      "trend": "+2%",
+      "notes": "SGBV court and recovery centre operational."
+    },
+    "Narok": {
+      "val": 31,
+      "trend": "+7%",
+      "notes": "FGM hotspot. Community response networks active."
+    },
+    "Homa Bay": {
+      "val": 52,
+      "trend": "+4%",
+      "notes": "GBV recovery centre in Homa Bay town."
+    }
+  },
+  "Access to SRHR Services": {
+    "Nairobi": {
+      "val": 89,
+      "trend": "+1%",
+      "notes": "Dense facility network. Informal settlements still underserved."
+    },
+    "Narok": {
+      "val": 28,
+      "trend": "+4%",
+      "notes": "Large distances between facilities. Mobility barrier."
+    },
+    "Homa Bay": {
+      "val": 41,
+      "trend": "+5%",
+      "notes": "Lake basin geography creates access challenges."
+    }
+  },
+  "Youth Friendliness of SRHR Facilities": {
+    "Nairobi": {
+      "val": 52,
+      "trend": "+4%",
+      "notes": "Private facilities leading on YFS standards."
+    },
+    "Narok": {
+      "val": 18,
+      "trend": "+6%",
+      "notes": "Only 3 facilities fully meeting YFS standards."
+    },
+    "Homa Bay": {
+      "val": 29,
+      "trend": "+5%",
+      "notes": "9 facilities certified. Adolescent corners active."
+    }
+  },
+  "Young Girls Accessing Safe Abortion": {
+    "Nairobi": {
+      "val": 34,
+      "trend": "+3%",
+      "notes": "Urban services more accessible. Stigma reducing."
+    },
+    "Narok": {
+      "val": 11,
+      "trend": "+2%",
+      "notes": "Critical gap. Girls at high risk from unsafe providers."
+    },
+    "Homa Bay": {
+      "val": 19,
+      "trend": "+3%",
+      "notes": "Community health workers providing referrals."
+    }
+  },
+  "Women Accessing Safe Abortion": {
+    "Nairobi": {
+      "val": 44,
+      "trend": "+3%",
+      "notes": "Marie Stopes and IPAS active. Legal access improving."
+    },
+    "Narok": {
+      "val": 17,
+      "trend": "+2%",
+      "notes": "Significant unmet need. Distance and cost barriers."
+    },
+    "Homa Bay": {
+      "val": 26,
+      "trend": "+4%",
+      "notes": "Facility-based services expanding."
+    }
+  },
+  "Deaths from Unsafe Abortion": {
+    "Nairobi": {
+      "val": 8,
+      "trend": "-2%",
+      "notes": "Declining due to improved safe access. Still too high."
+    },
+    "Narok": {
+      "val": 24,
+      "trend": "-1%",
+      "notes": "Highest rate in project counties. Priority intervention."
+    },
+    "Homa Bay": {
+      "val": 18,
+      "trend": "-2%",
+      "notes": "Declining but significant burden remains."
+    }
+  },
+  "Access to Quality SRHR Information": {
+    "Nairobi": {
+      "val": 61,
+      "trend": "+4%",
+      "notes": "Digital channels reaching urban youth effectively."
+    },
+    "Narok": {
+      "val": 24,
+      "trend": "+5%",
+      "notes": "Radio and CHWs primary channels. Low literacy context."
+    },
+    "Homa Bay": {
+      "val": 38,
+      "trend": "+6%",
+      "notes": "Community dialogues and peer education active."
+    }
+  }
+};
+
 var trackerData = {
   'Family Planning Coverage': {
     trend: [
@@ -4389,7 +4603,8 @@ async function loadTracker() {
         (trend.length ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Quarterly Trend</div><div class="tracker-trend">' + trendHtml + '</div>' : '') +
         (extra.note ? '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;line-height:1.5;font-style:italic;">' + extra.note + '</div>' : '') +
         (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Data Sources</div><div class="tracker-sources">' + sourcesHtml + '</div>' : '') +
-        (countiesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Leading Counties</div><div class="tracker-counties">' + countiesHtml + '</div>' : '') +
+        (countiesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Leading Counties</div><div class="tracker-counties" data-indicator="' + ind.name + '">' + countiesHtml + '</div>' : '') +
+        buildFocusCounties(ind.name) +
         (orgsHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Contributing Organizations</div><div class="tracker-orgs">' + orgsHtml + '</div>' : '') +
       '</div>';
 
@@ -4498,6 +4713,70 @@ window.addEventListener('DOMContentLoaded', function() {
   var submitModal = document.getElementById('submit-modal');
   if (submitModal) submitModal.addEventListener('click', function(e) { if (e.target === this) closeSubmitModal(); });
 });
+
+
+// ============================================================
+// FOCUS COUNTIES - Nairobi, Narok, Homa Bay
+// ============================================================
+
+var focusCounties = ['Nairobi', 'Narok', 'Homa Bay'];
+
+function buildFocusCounties(indicatorName) {
+  var data = countySpecificData[indicatorName];
+  if (!data) return '';
+
+  var cards = focusCounties.map(function(county) {
+    var cd = data[county];
+    if (!cd) return '';
+    var pct = Math.min(100, cd.val);
+    var trendColor = cd.trend && cd.trend.startsWith('-') ? (indicatorName.includes('Death') ? 'var(--accent2)' : '#E74C3C') : 'var(--accent2)';
+    if (indicatorName.includes('Death') && cd.trend && cd.trend.startsWith('-')) trendColor = 'var(--accent2)'; // declining deaths = good
+    return '<div class="county-focus-card" data-county="' + county + '" data-indicator="' + indicatorName.replace(/"/g, '') + '" onclick="toggleCountyDetail(this)">' +
+      '<div class="county-focus-name">' + county + '</div>' +
+      '<div class="county-focus-val">' + cd.val + '%</div>' +
+      '<div class="county-focus-unit" style="color:' + trendColor + '">' + cd.trend + ' this quarter</div>' +
+      '<div class="county-focus-bar"><div class="county-focus-bar-fill" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="county-focus-section">' +
+    '<div class="county-focus-title">🎯 Project Focus Counties</div>' +
+    '<div class="county-focus-grid">' + cards + '</div>' +
+    '<div class="county-detail-popup" id="county-popup-' + indicatorName.replace(/[^a-zA-Z]/g, '') + '"></div>' +
+  '</div>';
+}
+
+function toggleCountyDetail(el) {
+  var county = el.getAttribute('data-county');
+  var indicator = el.getAttribute('data-indicator');
+  var data = countySpecificData[indicator];
+  if (!data || !data[county]) return;
+  var cd = data[county];
+
+  var popupId = 'county-popup-' + indicator.replace(/[^a-zA-Z]/g, '');
+  var popup = document.getElementById(popupId);
+  if (!popup) return;
+
+  // Toggle
+  var card = el.closest('.county-focus-grid');
+  if (card) card.querySelectorAll('.county-focus-card').forEach(function(c) { c.classList.remove('active'); });
+
+  if (popup.classList.contains('open') && popup.dataset.county === county) {
+    popup.classList.remove('open');
+    return;
+  }
+
+  el.classList.add('active');
+  popup.dataset.county = county;
+  popup.classList.add('open');
+  popup.innerHTML =
+    '<div class="county-detail-name">📍 ' + county + ' County</div>' +
+    '<div class="county-detail-stats">' +
+      '<div class="county-detail-stat">Current value: <strong>' + cd.val + '%</strong></div>' +
+      '<div class="county-detail-stat">Quarterly change: <strong>' + cd.trend + '</strong></div>' +
+    '</div>' +
+    '<div style="font-size:0.75rem;color:var(--muted);margin-top:8px;line-height:1.5;">' + cd.notes + '</div>';
+}
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
