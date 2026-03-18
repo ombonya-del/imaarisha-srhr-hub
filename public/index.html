@@ -1273,6 +1273,73 @@ flex; justify-content: space-between; }
 .urgency-btn.active-medium { border-color: #E67E22; color: #E67E22; background: rgba(230,126,34,0.1); }
 .urgency-btn.active-high { border-color: #E74C3C; color: #E74C3C; background: rgba(231,76,60,0.1); }
 
+
+/* TRACKER - INTERACTIVE */
+.tracker-card { cursor: pointer; transition: all 0.2s; }
+.tracker-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+.tracker-detail { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.tracker-detail.open { display: block; }
+.tracker-expand-hint { font-size: 0.68rem; color: var(--muted); margin-top: 8px; text-align: right; }
+.tracker-trend {
+  display: flex; gap: 6px; align-items: flex-end;
+  margin: 12px 0; height: 60px;
+}
+.trend-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.trend-bar {
+  width: 100%; border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, var(--gold), var(--accent));
+  transition: height 0.6s ease;
+}
+.trend-label { font-size: 0.6rem; color: var(--muted); }
+.trend-value { font-size: 0.65rem; color: var(--gold-light); font-weight: 600; }
+.tracker-sources { margin-top: 10px; }
+.tracker-source-link {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.72rem; color: var(--accent2); text-decoration: none;
+  padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.tracker-source-link:hover { color: var(--gold-light); }
+.tracker-counties {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px;
+}
+.county-tag {
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 10px;
+  background: var(--dark3); border: 1px solid var(--border); color: var(--muted);
+}
+.county-tag.high { border-color: var(--accent2); color: var(--accent2); }
+.tracker-orgs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tracker-org-tag {
+  font-size: 0.65rem; padding: 3px 10px; border-radius: 10px;
+  background: var(--gold-dim); border: 1px solid var(--border); color: var(--gold-light);
+}
+
+/* SUBMIT DATA MODAL */
+.submit-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 520px; padding: 32px;
+}
+.submit-box .auth-field input,
+.submit-box .auth-field select,
+.submit-box .auth-field textarea {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.submit-box .auth-field input:focus,
+.submit-box .auth-field select:focus { border-color: var(--gold); }
+.indicator-select-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+}
+.indicator-select-item {
+  background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; cursor: pointer;
+  font-size: 0.75rem; transition: all 0.2s; text-align: center;
+}
+.indicator-select-item:hover, .indicator-select-item.selected {
+  border-color: var(--gold); background: var(--gold-dim); color: var(--gold-light);
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2229,7 +2296,7 @@ member organization reports · Last updated March 2026</div>
 
 </div>
 
-<button class="btn btn-outline" onclick="alert('Submit data --- full build feature')">+ Submit Data</button>
+<button class="btn btn-outline" onclick="openSubmitModal()">+ Submit Data</button>
 
 </div>
 
@@ -4258,6 +4325,271 @@ window.addEventListener('DOMContentLoaded', function() {
   }, 1000);
 });
 
+
+// ============================================================
+// TRACKER - INTERACTIVE
+// ============================================================
+
+var trackerData = {
+  'Family Planning Coverage': {
+    trend: [
+      { q: 'Q2 2025', val: 57 }, { q: 'Q3 2025', val: 58 },
+      { q: 'Q4 2025', val: 60 }, { q: 'Q1 2026', val: 61 }
+    ],
+    sources: [
+      { label: 'Kenya Demographic & Health Survey 2022', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
+      { label: 'KHIS — Kenya Health Information System', url: 'https://hiskenya.org' },
+      { label: 'FP2030 Kenya Commitment Dashboard', url: 'https://fp2030.org/kenya' }
+    ],
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Meru'],
+    orgs: ['AfyAfrika', 'SRHR Alliance', 'Zamara Foundation', 'Men Engage Kenya'],
+    note: 'Modern contraceptive prevalence rate among women aged 15-49'
+  },
+  'Skilled Birth Attendance': {
+    trend: [
+      { q: 'Q2 2025', val: 74 }, { q: 'Q3 2025', val: 75 },
+      { q: 'Q4 2025', val: 77 }, { q: 'Q1 2026', val: 78 }
+    ],
+    sources: [
+      { label: 'KDHS 2022 — Maternal Health Chapter', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
+      { label: 'WHO Kenya Country Profile', url: 'https://www.who.int/countries/ken/' },
+      { label: 'MoH Kenya — Reproductive Health Indicators', url: 'https://www.health.go.ke' }
+    ],
+    counties: ['Nairobi', 'Kiambu', 'Mombasa', 'Nyeri', 'Kisii'],
+    orgs: ['SRHR Alliance', 'Zamara Foundation', 'Beyond Initiative'],
+    note: 'Percentage of deliveries attended by a skilled health worker'
+  },
+  'Youth SRHR Services': {
+    trend: [
+      { q: 'Q2 2025', val: 280 }, { q: 'Q3 2025', val: 290 },
+      { q: 'Q4 2025', val: 300 }, { q: 'Q1 2026', val: 312 }
+    ],
+    sources: [
+      { label: 'MoH Kenya — Youth-Friendly Services Report', url: 'https://www.health.go.ke' },
+      { label: 'UNFPA Kenya — Adolescent SRH Dashboard', url: 'https://kenya.unfpa.org' },
+      { label: 'NAYA Network Annual Report', url: 'https://nayaafrica.org' }
+    ],
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos', 'Kilifi'],
+    orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa'],
+    note: 'Number of operational youth-friendly health facilities across Kenya'
+  },
+  'GBV Response Coverage': {
+    trend: [
+      { q: 'Q2 2025', val: 24 }, { q: 'Q3 2025', val: 26 },
+      { q: 'Q4 2025', val: 28 }, { q: 'Q1 2026', val: 29 }
+    ],
+    sources: [
+      { label: 'National Council on Administration of Justice — GBV Report', url: 'https://www.ncaj.go.ke' },
+      { label: 'UNFPA GBV Information Management System', url: 'https://www.unfpa.org/gbv' },
+      { label: 'LVCT Health — GBV Programme Data', url: 'https://lvcthealth.org' }
+    ],
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'],
+    orgs: ['Men Engage Kenya', 'MMAAK', 'This Ability Trust', 'Beyond Initiative'],
+    note: 'Counties with functional GBV response capacity including survivor support services'
+  },
+  'Access to SRHR Services': {
+    trend: [
+      { q: 'Q2 2025', val: 50 }, { q: 'Q3 2025', val: 51 },
+      { q: 'Q4 2025', val: 53 }, { q: 'Q1 2026', val: 54 }
+    ],
+    sources: [
+      { label: 'Kenya Master Health Facility List', url: 'https://kmhfl.health.go.ke' },
+      { label: 'KNBS — Kenya Population & Housing Census 2019', url: 'https://www.knbs.or.ke' },
+      { label: 'MoH Kenya — Service Availability Mapping', url: 'https://www.health.go.ke' }
+    ],
+    counties: ['Nairobi', 'Kisumu', 'Mombasa', 'Turkana', 'Mandera'],
+    orgs: ['AfyAfrika', 'Secny CBO', 'Beyond Initiative', 'Zamara Foundation'],
+    note: 'Percentage of Kenya population living within 5km of a functional SRHR facility'
+  },
+  'Youth Friendliness of SRHR Facilities': {
+    trend: [
+      { q: 'Q2 2025', val: 32 }, { q: 'Q3 2025', val: 34 },
+      { q: 'Q4 2025', val: 36 }, { q: 'Q1 2026', val: 38 }
+    ],
+    sources: [
+      { label: 'WHO Youth-Friendly Health Services Assessment Tool', url: 'https://www.who.int/publications/i/item/youth-friendly-health-services' },
+      { label: 'MoH Kenya — Youth-Friendly Services Standards', url: 'https://www.health.go.ke' },
+      { label: 'UNFPA Kenya — Adolescent SRH Assessment', url: 'https://kenya.unfpa.org' }
+    ],
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru'],
+    orgs: ['NAYA', 'CYAN', 'Activate Action', 'This Ability Trust'],
+    note: 'Percentage of health facilities meeting MoH/WHO youth-friendly service delivery standards'
+  }
+};
+
+async function loadTracker() {
+  const { data } = await _supabase.from('tracker_indicators').select('*').order('sort_order');
+  if (!data) return;
+  const grid = document.querySelector('.tracker-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Load contributing orgs
+  const { data: submissions } = await _supabase.from('tracker_submissions')
+    .select('indicator_id, organizations(short_name)')
+    .order('created_at', { ascending: false });
+
+  data.forEach(function(ind) {
+    const pct = ind.progress_pct || Math.round((ind.current_value / ind.target_value) * 100);
+    const extra = trackerData[ind.name] || {};
+    const trend = extra.trend || [];
+    const sources = extra.sources || [];
+    const counties = extra.counties || [];
+    const orgs = extra.orgs || [];
+
+    // Build trend bars
+    const maxVal = trend.length ? Math.max.apply(null, trend.map(function(t) { return t.val; })) : ind.target_value;
+    const trendHtml = trend.length ? trend.map(function(t) {
+      var h = Math.round((t.val / maxVal) * 50);
+      return '<div class="trend-bar-wrap"><div class="trend-value">' + t.val + (ind.unit === '%' ? '%' : '') + '</div><div class="trend-bar" style="height:' + h + 'px"></div><div class="trend-label">' + t.q + '</div></div>';
+    }).join('') : '';
+
+    // Build sources
+    const sourcesHtml = sources.map(function(s) {
+      return '<a href="' + s.url + '" target="_blank" class="tracker-source-link">📎 ' + s.label + ' →</a>';
+    }).join('');
+
+    // Build county tags
+    const countiesHtml = counties.map(function(c) {
+      return '<span class="county-tag high">' + c + '</span>';
+    }).join('');
+
+    // Build org tags
+    const orgsHtml = orgs.map(function(o) {
+      return '<span class="tracker-org-tag">' + o + '</span>';
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'tracker-card';
+    card.innerHTML =
+      '<div class="tracker-header">' +
+        '<div>' +
+          '<div class="tracker-name">' + ind.name + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--muted)">' + (ind.subtitle || '') + '</div>' +
+        '</div>' +
+        '<div class="tracker-val">' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+      '</div>' +
+      '<div style="font-size:0.75rem;color:var(--muted)">Progress toward ' + ind.target_value + ' ' + ind.unit + ' target</div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="tracker-legend">' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Current: ' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Target: ' + ind.target_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+      '</div>' +
+      '<div class="tracker-expand-hint">👆 Click for trend, sources & breakdown</div>' +
+      '<div class="tracker-detail" id="tracker-detail-' + ind.id + '">' +
+        (trend.length ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Quarterly Trend</div><div class="tracker-trend">' + trendHtml + '</div>' : '') +
+        (extra.note ? '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;line-height:1.5;font-style:italic;">' + extra.note + '</div>' : '') +
+        (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Data Sources</div><div class="tracker-sources">' + sourcesHtml + '</div>' : '') +
+        (countiesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Leading Counties</div><div class="tracker-counties">' + countiesHtml + '</div>' : '') +
+        (orgsHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Contributing Organizations</div><div class="tracker-orgs">' + orgsHtml + '</div>' : '') +
+      '</div>';
+
+    card.addEventListener('click', function(e) {
+      if (e.target.tagName === 'A') return;
+      var detail = document.getElementById('tracker-detail-' + ind.id);
+      var hint = card.querySelector('.tracker-expand-hint');
+      if (detail.classList.contains('open')) {
+        detail.classList.remove('open');
+        hint.style.display = 'block';
+      } else {
+        detail.classList.add('open');
+        hint.style.display = 'none';
+      }
+    });
+
+    grid.appendChild(card);
+  });
+
+  // Update contributing orgs section
+  const contribOrgs = document.querySelector('#panel-tracker .card');
+  if (contribOrgs) {
+    const { data: allOrgs } = await _supabase.from('organizations').select('short_name');
+    if (allOrgs) {
+      const pillsContainer = contribOrgs.querySelector('div[style*="flex"]');
+      if (pillsContainer) {
+        pillsContainer.innerHTML = '';
+        allOrgs.forEach(function(o, i) {
+          const span = document.createElement('span');
+          span.className = 'org-pill';
+          span.style.color = i < 4 ? 'var(--accent2)' : i < 6 ? 'var(--gold)' : 'var(--muted)';
+          if (i < 4) span.style.borderColor = 'var(--accent2)';
+          span.innerHTML = '<span class="org-dot"></span>' + o.short_name + (i < 4 ? ' ✓' : i < 6 ? ' ⏳' : '');
+          pillsContainer.appendChild(span);
+        });
+      }
+    }
+  }
+}
+
+// Submit data modal
+function openSubmitModal() {
+  document.getElementById('submit-modal').classList.remove('hidden');
+  document.getElementById('submit-error').style.display = 'none';
+  document.getElementById('submit-success').style.display = 'none';
+  // Load indicators into select
+  _supabase.from('tracker_indicators').select('id, name').order('sort_order').then(function(result) {
+    var sel = document.getElementById('submit-indicator');
+    sel.innerHTML = '<option value="">Select an indicator...</option>';
+    (result.data || []).forEach(function(ind) {
+      var opt = document.createElement('option');
+      opt.value = ind.id;
+      opt.textContent = ind.name;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function closeSubmitModal() {
+  document.getElementById('submit-modal').classList.add('hidden');
+}
+
+async function submitTrackerData() {
+  var indicatorId = document.getElementById('submit-indicator').value;
+  var value = document.getElementById('submit-value').value;
+  var quarter = document.getElementById('submit-quarter').value;
+  var notes = document.getElementById('submit-notes').value.trim();
+  var errEl = document.getElementById('submit-error');
+  var successEl = document.getElementById('submit-success');
+
+  if (!indicatorId || !value) {
+    errEl.textContent = 'Please select an indicator and enter a value.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var btn = document.getElementById('submit-data-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  var { error } = await _supabase.from('tracker_submissions').insert({
+    indicator_id: indicatorId,
+    submitted_by: currentUser ? currentUser.id : null,
+    value: parseFloat(value),
+    quarter: quarter,
+    notes: notes
+  });
+
+  btn.disabled = false; btn.textContent = 'Submit Data';
+
+  if (error) {
+    errEl.textContent = error.message; errEl.style.display = 'block';
+  } else {
+    successEl.textContent = '✓ Data submitted successfully! It will be reviewed and aggregated by the Hub Administrator.';
+    successEl.style.display = 'block';
+    errEl.style.display = 'none';
+    await _supabase.from('activity_log').insert({
+      activity_type: 'tracker_submit',
+      description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' submitted tracker data for Q' + quarter,
+      dot_color: 'green'
+    });
+    setTimeout(function() { closeSubmitModal(); }, 2000);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var submitModal = document.getElementById('submit-modal');
+  if (submitModal) submitModal.addEventListener('click', function(e) { if (e.target === this) closeSubmitModal(); });
+});
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -4618,6 +4950,47 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeRapidModal()" style="flex:1">Cancel</button>
       <button class="btn" id="rapid-send-btn" onclick="sendRapidAlert()" style="flex:2;background:#C0392B;color:white;border:none;cursor:pointer;border-radius:6px;font-family:'DM Sans',sans-serif;font-weight:600;">🚨 Send Alert to Network</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- SUBMIT DATA MODAL -->
+<div class="modal-overlay hidden" id="submit-modal">
+  <div class="submit-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Submit <span style="color:var(--gold)">Tracker Data</span></div>
+      <button class="modal-close" onclick="closeSubmitModal()">✕</button>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Submit your organization's quarterly data for SRHR indicators. All submissions are aggregated to update the network tracker.</div>
+    <div class="auth-error" id="submit-error"></div>
+    <div class="auth-success" id="submit-success"></div>
+    <div class="auth-field">
+      <label>Indicator</label>
+      <select id="submit-indicator">
+        <option value="">Select an indicator...</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label>Your Value</label>
+      <input type="number" id="submit-value" placeholder="e.g. 65 (for 65%)" step="0.1" />
+    </div>
+    <div class="auth-field">
+      <label>Quarter</label>
+      <select id="submit-quarter">
+        <option value="Q1 2026">Q1 2026</option>
+        <option value="Q4 2025">Q4 2025</option>
+        <option value="Q3 2025">Q3 2025</option>
+        <option value="Q2 2025">Q2 2025</option>
+      </select>
+    </div>
+    <div class="auth-field">
+      <label>Notes / Context (optional)</label>
+      <textarea id="submit-notes" placeholder="Data source, methodology, county coverage..." style="min-height:70px;resize:none;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closeSubmitModal()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="submit-data-btn" onclick="submitTrackerData()" style="flex:2">Submit Data</button>
     </div>
   </div>
 </div>
