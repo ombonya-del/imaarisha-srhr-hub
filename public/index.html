@@ -2832,8 +2832,44 @@ color:var(--muted)">Beyond Initiative</span>
 <!-- FORUM MARKETPLACE -->
 <div id="mkt-forum-content" style="display:none">
   <div id="forum-stations-view">
-    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">The original ImaarishaSRHR Stakeholders Forum Marketplace — fully accessible to all hub members.</div>
-    <iframe id="forum-mkt-iframe" style="width:100%;height:85vh;border:none;border-radius:12px;" title="SRHR Forum Marketplace"></iframe>
+    <div style="margin-bottom:24px;">
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;font-weight:700;margin-bottom:6px;">ImaarishaSRHR <span style="color:var(--gold)">Forum Marketplace</span></div>
+      <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;max-width:600px;">The original Stakeholders Forum Marketplace — Skills Café, Tools Station, Resource Counter, Process Kitchen and Partners Corner. Click to open the full interactive marketplace.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px;">
+      <div class="forum-station" onclick="window.open('/srhr-marketplace.html#skills','_blank')">
+        <div class="forum-station-icon">☕</div>
+        <div class="forum-station-name">Skills Café</div>
+        <div class="forum-station-count">8 skill areas</div>
+      </div>
+      <div class="forum-station" onclick="window.open('/srhr-marketplace.html#tools','_blank')">
+        <div class="forum-station-icon">🔧</div>
+        <div class="forum-station-name">Tools Station</div>
+        <div class="forum-station-count">6 tool sets</div>
+      </div>
+      <div class="forum-station" onclick="window.open('/srhr-marketplace.html#resources','_blank')">
+        <div class="forum-station-icon">📚</div>
+        <div class="forum-station-name">Resource Counter</div>
+        <div class="forum-station-count">9 resource types</div>
+      </div>
+      <div class="forum-station" onclick="window.open('/srhr-marketplace.html#processes','_blank')">
+        <div class="forum-station-icon">⚙️</div>
+        <div class="forum-station-name">Process Kitchen</div>
+        <div class="forum-station-count">5 processes</div>
+      </div>
+      <div class="forum-station" onclick="window.open('/srhr-marketplace.html#partners','_blank')">
+        <div class="forum-station-icon">🤝</div>
+        <div class="forum-station-name">Partners Corner</div>
+        <div class="forum-station-count">7 partner types</div>
+      </div>
+    </div>
+    <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;margin-bottom:4px;">Open Full Marketplace</div>
+        <div style="font-size:0.75rem;color:var(--muted);">Browse all 5 stations in the complete interactive Forum Marketplace experience</div>
+      </div>
+      <button class="btn btn-gold" onclick="window.open('/srhr-marketplace.html','_blank')" style="white-space:nowrap;flex-shrink:0;">Open Forum Marketplace →</button>
+    </div>
   </div>
     <div id="forum-station-detail" style="display:none">
     <button class="forum-back-btn" onclick="closeStation()">← Back to all stations</button>
