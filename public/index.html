@@ -1386,6 +1386,9 @@ flex; justify-content: space-between; }
 .county-tag.clickable-county:hover { border-color: var(--gold); color: var(--gold-light); }
 .county-tag.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
 
+
+.tracker-org-tag.active { border-color: var(--gold) !important; color: var(--gold) !important; background: var(--gold-dim) !important; }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -4693,7 +4696,7 @@ async function loadTracker() {
 
     // Build org tags
     const orgsHtml = orgs.map(function(o) {
-      return '<span class="tracker-org-tag">' + o + '</span>';
+      return '<span class="tracker-org-tag" style="cursor:pointer" data-org="' + o + '">' + o + '</span>';
     }).join('');
 
     const card = document.createElement('div');
@@ -4723,6 +4726,11 @@ async function loadTracker() {
       '</div>';
 
     card.addEventListener('click', function(e) {
+      // Handle org tag clicks
+      if (e.target.classList.contains('tracker-org-tag')) {
+        var orgName = e.target.getAttribute('data-org');
+        if (orgName) { showOrgContribution(e.target, orgName); return; }
+      }
       // Handle county tag clicks
       if (e.target.classList.contains('clickable-county')) {
         var county = e.target.getAttribute('data-county');
@@ -4949,6 +4957,149 @@ function showLeadingCountyDetail(el, county, indicatorName, indicatorId) {
       '<div class="county-detail-stat">Change: <strong style="color:' + trendColor + '">' + cd.trend + '</strong></div>' +
     '</div>' +
     '<div style="font-size:0.75rem;color:var(--muted);margin-top:8px;line-height:1.5;">' + cd.notes + '</div>';
+}
+
+
+// ============================================================
+// ORG TRACKER CONTRIBUTIONS
+// ============================================================
+
+var orgContributions = {
+  'AfyAfrika': {
+    focus: 'Community Health & FP',
+    counties: ['Nairobi', 'Narok', 'Homa Bay'],
+    indicators: ['Family Planning Coverage', 'Access to SRHR Services', 'Young Girls Accessing Safe Abortion'],
+    contribution: 'Leads community-based FP outreach in underserved areas. Runs mobile clinics reaching remote populations in Narok and Homa Bay. Primary contributor to FP Coverage data in all 3 focus counties.',
+    contact: 'afyafrika@imaarishasrhr.org'
+  },
+  'SRHR Alliance': {
+    focus: 'Policy Advocacy & Data',
+    counties: ['Nairobi', 'Homa Bay'],
+    indicators: ['Family Planning Coverage', 'Skilled Birth Attendance', 'Women Accessing Safe Abortion', 'Access to Quality SRHR Information'],
+    contribution: 'Coordinates national data collection and policy advocacy. Leads indicator reporting to MoH and KHIS. Drives the quarterly tracker data submissions across the network.',
+    contact: 'srhralliance@imaarishasrhr.org'
+  },
+  'Zamara Foundation': {
+    focus: 'Health Systems & Funding',
+    counties: ['Nairobi', 'Nakuru'],
+    indicators: ['Skilled Birth Attendance', 'Access to SRHR Services', 'Family Planning Coverage'],
+    contribution: 'Funds facility upgrades and equipment for skilled birth attendance. Supports 12 health facilities with SRHR commodities and training grants.',
+    contact: 'zamara@imaarishasrhr.org'
+  },
+  'Men Engage Kenya': {
+    focus: 'GBV Prevention & Male Engagement',
+    counties: ['Nairobi', 'Nakuru', 'Homa Bay'],
+    indicators: ['GBV Response Coverage', 'Family Planning Coverage', 'Deaths from Unsafe Abortion'],
+    contribution: 'Leads male engagement in GBV prevention. Runs community dialogues reaching 5,000+ men quarterly. Key contributor to GBV response capacity in Nairobi and Nakuru.',
+    contact: 'menengagekenya@imaarishasrhr.org'
+  },
+  'NAYA': {
+    focus: 'Adolescent & Youth SRHR',
+    counties: ['Nairobi', 'Kisumu', 'Homa Bay'],
+    indicators: ['Youth SRHR Services', 'Youth Friendliness of SRHR Facilities', 'Access to Quality SRHR Information', 'Young Girls Accessing Safe Abortion'],
+    contribution: 'Primary network for adolescent SRHR programming. Trains peer educators and monitors youth-friendly facility standards. Submits quarterly youth services data.',
+    contact: 'naya@imaarishasrhr.org'
+  },
+  'CYAN': {
+    focus: 'County Youth Advocacy',
+    counties: ['Nairobi', 'Narok', 'Homa Bay'],
+    indicators: ['Youth SRHR Services', 'Youth Friendliness of SRHR Facilities', 'Access to Quality SRHR Information'],
+    contribution: 'Bridges youth voices with county health departments. Monitors youth-friendly service standards across 18 counties. Reports on county-level SRHR budget allocations.',
+    contact: 'cyan@imaarishasrhr.org'
+  },
+  'Activate Action': {
+    focus: 'Digital Advocacy & Youth',
+    counties: ['Nairobi', 'Mombasa'],
+    indicators: ['Access to Quality SRHR Information', 'Youth SRHR Services', 'Young Girls Accessing Safe Abortion'],
+    contribution: 'Drives digital SRHR information campaigns reaching 90K+ youth. Monitors online disinformation and coordinates rapid response. Tracks social media engagement metrics.',
+    contact: 'activateaction@imaarishasrhr.org'
+  },
+  'Zana Africa': {
+    focus: 'Menstrual Health & Girls Education',
+    counties: ['Nairobi', 'Kisumu', 'Homa Bay'],
+    indicators: ['Youth SRHR Services', 'Access to Quality SRHR Information', 'Young Girls Accessing Safe Abortion'],
+    contribution: 'Provides MHM kits to 50,000+ girls annually. Runs school-based SRHR education programs. Contributes to youth SRHR services data in 6 counties.',
+    contact: 'zanaafrica@imaarishasrhr.org'
+  },
+  'MMAAK': {
+    focus: 'HIV Prevention & Men',
+    counties: ['Nairobi', 'Homa Bay', 'Kisumu'],
+    indicators: ['GBV Response Coverage', 'Access to Quality SRHR Information'],
+    contribution: 'Mobilizes men for HIV testing and treatment. Runs community sensitization on GBV and SRHR rights. Contributes to GBV response capacity data in Lake region.',
+    contact: 'mmaak@imaarishasrhr.org'
+  },
+  'This Ability Trust': {
+    focus: 'Disability-Inclusive SRHR',
+    counties: ['Nairobi', 'Mombasa'],
+    indicators: ['Access to SRHR Services', 'Youth Friendliness of SRHR Facilities', 'GBV Response Coverage'],
+    contribution: 'Audits health facilities for disability accessibility and SRHR inclusivity. Trains health workers on disability-inclusive service delivery. Reports on accessible facility standards.',
+    contact: 'thisabilitytrust@imaarishasrhr.org'
+  },
+  'Beyond Initiative': {
+    focus: 'Social Accountability & Monitoring',
+    counties: ['Nairobi', 'Homa Bay', 'Narok'],
+    indicators: ['GBV Response Coverage', 'Skilled Birth Attendance', 'Access to SRHR Services'],
+    contribution: 'Leads community-led monitoring of SRHR service quality. Runs citizen scorecards at facility level. Key contributor to accountability data across all 3 focus counties.',
+    contact: 'beyondinitiative@imaarishasrhr.org'
+  },
+  'Secny CBO': {
+    focus: 'Last-Mile Service Delivery',
+    counties: ['Homa Bay', 'Narok'],
+    indicators: ['Access to SRHR Services', 'Deaths from Unsafe Abortion', 'Access to Quality SRHR Information'],
+    contribution: 'Delivers last-mile SRHR services in remote Homa Bay and Narok communities. Runs village health days reaching populations 20km+ from health facilities.',
+    contact: 'secny@imaarishasrhr.org'
+  }
+};
+
+function showOrgContribution(el, orgName) {
+  var data = orgContributions[orgName];
+  if (!data) return;
+
+  var orgsDiv = el.closest('.tracker-orgs');
+  var cardEl = el.closest('.tracker-card');
+  var indId = cardEl ? cardEl.querySelector('[id^="tracker-detail-"]') : null;
+  var popupId = 'org-popup-' + (indId ? indId.id.replace('tracker-detail-','') : 'main');
+
+  var popup = document.getElementById(popupId);
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = popupId;
+    popup.className = 'county-detail-popup';
+    popup.style.marginTop = '10px';
+    orgsDiv.parentNode.insertBefore(popup, orgsDiv.nextSibling);
+  }
+
+  if (popup.classList.contains('open') && popup.dataset.org === orgName) {
+    popup.classList.remove('open');
+    orgsDiv.querySelectorAll('.tracker-org-tag').forEach(function(t) { t.classList.remove('active'); });
+    return;
+  }
+
+  orgsDiv.querySelectorAll('.tracker-org-tag').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  el.style.borderColor = 'var(--gold)';
+  popup.dataset.org = orgName;
+  popup.classList.add('open');
+
+  var indicatorsHtml = data.indicators.map(function(ind) {
+    return '<span style="font-size:0.68rem;background:var(--dark3);border:1px solid var(--border);padding:2px 8px;border-radius:10px;margin-right:4px;margin-bottom:4px;display:inline-block;">' + ind + '</span>';
+  }).join('');
+
+  var countiesHtml = data.counties.map(function(c) {
+    var isFocus = ['Nairobi','Narok','Homa Bay'].indexOf(c) > -1;
+    return '<span style="font-size:0.68rem;background:' + (isFocus ? 'var(--gold-dim)' : 'var(--dark3)') + ';border:1px solid ' + (isFocus ? 'var(--gold)' : 'var(--border)') + ';color:' + (isFocus ? 'var(--gold-light)' : 'var(--muted)') + ';padding:2px 8px;border-radius:10px;margin-right:4px;">' + c + (isFocus ? ' ★' : '') + '</span>';
+  }).join('');
+
+  popup.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">' +
+      '<div class="county-detail-name">🏛 ' + orgName + '</div>' +
+      '<span style="font-size:0.65rem;background:var(--gold-dim);color:var(--gold);padding:2px 8px;border-radius:10px;">' + data.focus + '</span>' +
+    '</div>' +
+    '<div style="font-size:0.75rem;color:var(--muted);line-height:1.5;margin-bottom:10px;">' + data.contribution + '</div>' +
+    '<div style="font-size:0.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Contributing to</div>' +
+    '<div style="margin-bottom:8px;">' + indicatorsHtml + '</div>' +
+    '<div style="font-size:0.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">County Focus</div>' +
+    '<div>' + countiesHtml + '</div>';
 }
 
 async function handleLogout() { await _supabase.auth.signOut(); }
