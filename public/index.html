@@ -5555,75 +5555,320 @@ var forumStationsData = {
     name: 'Skills Cafe',
     icon: '☕',
     color: 'linear-gradient(135deg,#1A3A2A,#2A6B5E)',
-    desc: 'A curated menu of skills, expertise and capacity-building offers from across the ImaarishaSRHR network.',
+    desc: 'Human capabilities required across your team to deliver high-impact SRHR programming.',
     items: [
-      { title: 'Peer Educator Training — ASRH Module', org: 'NAYA', desc: '3-day facilitator-led training on adolescent SRHR peer education. Adaptable to county contexts. Certificates provided.', tags: ['ASRH','Youth','Training'], type: 'free', url: '' },
-      { title: 'Male Engagement Facilitation', org: 'Men Engage Kenya', desc: '2-day coaching on facilitating male engagement in SRHR programming. Available online or in-person for up to 20 participants.', tags: ['GBV','Male Engagement','Facilitation'], type: 'partner_rate', url: '' },
-      { title: 'Community Health Worker Training', org: 'AfyAfrika', desc: 'Structured CHW training curriculum covering FP counselling, maternal health referrals, and SRHR rights. 5-day residential programme.', tags: ['CHW','FP','Maternal Health'], type: 'free', url: '' },
-      { title: 'Digital Advocacy & Campaign Skills', org: 'Activate Action', desc: 'Workshop on social media advocacy, counter-narrative development, and digital campaign management for SRHR advocates.', tags: ['Digital','Advocacy','Social Media'], type: 'free', url: '' },
-      { title: 'GBV Response & Survivor Support', org: 'Beyond Initiative', desc: 'Training on trauma-informed approaches to GBV survivor support at community level. Includes referral pathway mapping.', tags: ['GBV','Survivor Support','Trauma'], type: 'partner_rate', url: '' },
-      { title: 'MHM School Programme Facilitation', org: 'Zana Africa', desc: 'Train-the-trainer programme for school teachers and CHWs on delivering menstrual health education in school settings.', tags: ['MHM','Schools','Teachers'], type: 'free', url: '' },
-      { title: 'Disability-Inclusive Service Delivery', org: 'This Ability Trust', desc: 'Training health workers on adapting SRHR services for persons with disabilities. Online or in-person. CME accredited.', tags: ['Disability','Inclusion','Health Workers'], type: 'free', url: '' },
-      { title: 'Social Accountability Facilitation', org: 'Beyond Initiative', desc: 'Skills for facilitating community scorecards and social accountability processes at health facilities.', tags: ['Accountability','Community','Facilitation'], type: 'partner_rate', url: '' }
+      {
+        title: 'SRHR Programme Knowledge',
+        org: 'Technical Skills',
+        category: 'TECHNICAL',
+        desc: 'Deep subject matter expertise across the full SRHR spectrum.',
+        bullets: ['Family planning & contraception counselling', 'Maternal, newborn & child health', 'Safe abortion law & post-abortion care', 'STI and HIV prevention & treatment', 'Gender-based violence response', 'Comprehensive Sexuality Education (CSE)', 'Minimum 5 years SRHR experience preferred'],
+        tags: ['Technical','FP','Maternal Health','GBV','HIV'], type: 'free', url: ''
+      },
+      {
+        title: 'Advocacy & Rights Skills',
+        org: 'Legal & Policy',
+        category: 'LEGAL & POLICY',
+        desc: 'Navigate Kenya legal framework and close the policy-practice gap.',
+        bullets: ['Kenya Constitution Articles 43 & 35 fluency', 'ICPD25, UNCRC, Beijing Declaration literacy', 'Legislative drafting and policy brief writing', 'Budget advocacy and public finance monitoring', 'Legal aid provision for GBV survivors', 'LGBTQI+ rights-sensitive programming'],
+        tags: ['Legal','Policy','Advocacy','Rights'], type: 'free', url: ''
+      },
+      {
+        title: 'Mobilisation & Communication',
+        org: 'Community Skills',
+        category: 'COMMUNITY',
+        desc: 'Building trust and driving behaviour change at grassroots level.',
+        bullets: ['Community entry and stakeholder mapping', 'Behaviour Change Communication (BCC)', 'Youth engagement and peer education', 'Performing arts as advocacy', 'Community radio programming', 'Fluency in Kiswahili + local languages'],
+        tags: ['Community','BCC','Youth','Communication'], type: 'free', url: ''
+      },
+      {
+        title: 'Evidence & Learning',
+        org: 'Research & MEAL',
+        category: 'RESEARCH & MEAL',
+        desc: 'Turn data into decisions and learning into programme improvement.',
+        bullets: ['Quantitative and qualitative research design', 'KAP survey design and enumerator training', 'DHIS2 and KoboToolbox proficiency', 'Indicator tracking and results frameworks', 'Participatory evaluation methods', 'Donor reporting and evidence synthesis'],
+        tags: ['MEAL','Research','Data','Evidence'], type: 'free', url: ''
+      },
+      {
+        title: 'Social Inclusion Competencies',
+        org: 'Intersectionality',
+        category: 'INTERSECTIONALITY',
+        desc: 'Ensure no one is left behind in SRHR programming.',
+        bullets: ['Disability-inclusive SRHR service design', 'Age and gender disaggregated programming', 'Adolescent-responsive approaches', 'Refugee and displaced population SRHR', 'LGBTQI+ inclusive programming', 'Intersectional analysis frameworks'],
+        tags: ['Inclusion','Disability','Gender','Youth'], type: 'free', url: ''
+      },
+      {
+        title: 'Management & Operations',
+        org: 'Leadership',
+        category: 'LEADERSHIP',
+        desc: 'The organizational backbone that keeps SRHR programmes running.',
+        bullets: ['Project cycle management', 'Financial management and donor compliance', 'Human resource management', 'Partnership and consortium management', 'Risk management and safeguarding', 'Board governance and organizational development'],
+        tags: ['Management','Leadership','Operations','Governance'], type: 'free', url: ''
+      },
+      {
+        title: 'Digital & Technology Skills',
+        org: 'Digital',
+        category: 'DIGITAL',
+        desc: 'Harness technology to extend reach and deepen impact.',
+        bullets: ['Digital health tools (DHIS2, KenyaEMR)', 'Social media management and analytics', 'Data visualization and dashboards', 'e-Learning content development', 'Telemedicine and digital counselling', 'Cybersecurity and data protection'],
+        tags: ['Digital','Technology','Data','Health Systems'], type: 'free', url: ''
+      },
+      {
+        title: 'Resource Mobilisation',
+        org: 'Fundraising',
+        category: 'FUNDRAISING',
+        desc: 'Secure the resources your SRHR programming needs to thrive.',
+        bullets: ['Proposal writing and concept note development', 'Donor landscape mapping', 'Budget development and financial projections', 'Consortium building and partner coordination', 'Reporting and donor relationship management', 'Social enterprise and income diversification'],
+        tags: ['Fundraising','Proposals','Donors','Finance'], type: 'free', url: ''
+      }
     ]
   },
   tools: {
     name: 'Tools Station',
     icon: '🔧',
     color: 'linear-gradient(135deg,#1A2A3A,#2A4A6B)',
-    desc: 'Practical tools, instruments and frameworks your organization can deploy immediately.',
+    desc: 'Assessment, delivery, advocacy and monitoring tools for SRHR programming.',
     items: [
-      { title: 'SRHR Community Needs Assessment Tool', org: 'AfyAfrika', desc: 'KoboToolbox-ready assessment covering FP, maternal health, GBV and youth SRHR. 45 questions, skip logic, offline capable.', tags: ['Assessment','KoboToolbox','Data'], type: 'free', url: 'https://www.kobotoolbox.org' },
-      { title: 'Youth-Friendly Services Assessment Checklist', org: 'CYAN', desc: 'Standardized checklist for assessing whether a health facility meets MoH youth-friendly service standards. 62 criteria.', tags: ['YFS','Assessment','Quality'], type: 'free', url: '' },
-      { title: 'GBV Referral Pathway Mapping Template', org: 'Men Engage Kenya', desc: 'Excel-based tool for mapping GBV service referral pathways at county level. Includes service directory template.', tags: ['GBV','Referral','Mapping'], type: 'free', url: '' },
-      { title: 'SRHR Budget Tracking Scorecard', org: 'SRHR Alliance', desc: 'Tool for tracking county SRHR budget allocations and expenditures. Aligned with Programme Based Budgeting formats.', tags: ['Budget','Advocacy','County'], type: 'free', url: '' },
-      { title: 'Community Dialogue Facilitation Guide', org: 'NAYA', desc: 'Step-by-step guide for facilitating community dialogues on SRHR topics. Includes icebreakers, discussion questions and wrap-up techniques.', tags: ['Community','Dialogue','Facilitation'], type: 'free', url: '' },
-      { title: 'M&E Framework for SRHR Programmes', org: 'Zamara Foundation', desc: 'Results framework template aligned with Kenya SRHR indicators. Includes indicator definitions, data sources and reporting schedule.', tags: ['M&E','Results','Indicators'], type: 'partner_rate', url: '' }
+      {
+        title: 'KAP Survey Framework',
+        org: 'Assessment & Design',
+        category: 'BASELINE',
+        desc: 'Knowledge, Attitudes and Practices survey — the foundation for measuring project change and impact across the lifecycle.',
+        bullets: ['Pre-designed SRHR question banks', 'Household and community sampling protocols', 'Enumerator training guides', 'Disaggregated data by gender, age, disability'],
+        tags: ['KAP','Baseline','Assessment','Data'], type: 'free', url: ''
+      },
+      {
+        title: 'Theory of Change (ToC)',
+        org: 'Assessment & Design',
+        category: 'STRATEGY',
+        desc: 'Map your pathway from inputs to long-term SRHR impact with a robust, evidence-based ToC.',
+        bullets: ['Awareness → Access → Norms → Policy → Movement', 'Participatory ToC workshops with communities', 'Assumption testing and risk mapping', 'Donor-ready visualisation formats'],
+        tags: ['ToC','Strategy','Planning','Impact'], type: 'free', url: ''
+      },
+      {
+        title: 'LogFrame & Results Framework',
+        org: 'Assessment & Design',
+        category: 'PLANNING',
+        desc: 'Structured planning tools for goal-setting, indicator tracking and accountability.',
+        bullets: ['SMART indicator development', 'Output, outcome and impact levels', 'Means of verification for each indicator', 'Quarterly milestone tracking'],
+        tags: ['LogFrame','Results','Indicators','Planning'], type: 'free', url: ''
+      },
+      {
+        title: 'Community Health Scorecard',
+        org: 'Service Delivery',
+        category: 'ACCOUNTABILITY',
+        desc: 'Citizen-led tool for rating SRHR service quality at facility level and driving improvements.',
+        bullets: ['Facility assessment criteria (12 domains)', 'Community-provider interface dialogue', 'Action planning and follow-up protocols', 'Linked to KHIS facility data'],
+        tags: ['Scorecard','Accountability','Community','Quality'], type: 'free', url: ''
+      },
+      {
+        title: 'GBV Case Management System',
+        org: 'Service Delivery',
+        category: 'GBV',
+        desc: 'Structured system for documenting, tracking and following up GBV cases through the response pathway.',
+        bullets: ['Intake and risk assessment forms', 'Referral pathway tracker', 'Survivor consent and confidentiality protocols', 'Aggregate reporting for advocacy'],
+        tags: ['GBV','Case Management','Referral','Survivors'], type: 'free', url: ''
+      },
+      {
+        title: 'Advocacy Campaign Toolkit',
+        org: 'Advocacy',
+        category: 'ADVOCACY',
+        desc: 'End-to-end toolkit for planning and executing SRHR advocacy campaigns at county and national level.',
+        bullets: ['Power analysis and stakeholder mapping', 'Policy brief and position paper templates', 'Media engagement and messaging guides', 'Campaign evaluation framework'],
+        tags: ['Advocacy','Campaign','Policy','Media'], type: 'free', url: ''
+      }
     ]
   },
   resources: {
     name: 'Resource Counter',
     icon: '📚',
     color: 'linear-gradient(135deg,#2A1A3A,#4A2A6B)',
-    desc: 'Knowledge resources, publications and information materials from across the network and beyond.',
+    desc: 'Human, financial and infrastructure resources for SRHR programming in Kenya.',
     items: [
-      { title: 'Kenya National SRHR Policy 2022', org: 'MoH Kenya', desc: 'Official national policy framework for SRHR programming. Essential reference for all advocacy and programme design.', tags: ['Policy','National','MoH'], type: 'free', url: 'https://www.health.go.ke' },
-      { title: 'MHM Facilitator Guide & Student Workbooks', org: 'Zana Africa', desc: 'School-ready MHM toolkit including facilitator guide, student workbooks in English and Swahili, and reusable pad patterns.', tags: ['MHM','Schools','IEC'], type: 'partner_rate', url: '' },
-      { title: 'HIV Prevention IEC Materials — Swahili Pack', org: 'MMAAK', desc: 'Print-ready posters, flipcharts and social media graphics for HIV prevention among men and partners. Swahili and English.', tags: ['HIV','IEC','Print'], type: 'free', url: '' },
-      { title: 'SRHR Rights Charter — Kenya Version', org: 'SRHR Alliance', desc: 'Adapted IPPF sexual rights charter contextualized for Kenya. Available in English and Swahili. Print and digital formats.', tags: ['Rights','Charter','Advocacy'], type: 'free', url: 'https://www.ippf.org/resource/ippf-sexual-rights-declaration' },
-      { title: 'Adolescent SRHR Fact Sheets (10-pack)', org: 'NAYA', desc: '10 topic fact sheets covering FP, HIV, GBV, pregnancy, CSE and more. Youth-friendly language. Print-ready A5 format.', tags: ['Youth','IEC','Fact Sheets'], type: 'free', url: '' },
-      { title: 'KDHS 2022 — SRHR Key Findings Brief', org: 'SRHR Alliance', desc: '4-page brief summarizing key SRHR findings from the 2022 Kenya Demographic & Health Survey. Ideal for advocacy.', tags: ['Data','KDHS','Brief'], type: 'free', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { title: 'Disability & SRHR Resource Pack', org: 'This Ability Trust', desc: 'Collection of adapted IEC materials for persons with disabilities. Includes large print, pictorial and easy-read versions.', tags: ['Disability','IEC','Accessible'], type: 'free', url: '' },
-      { title: 'County SRHR Budget Brief Template', org: 'CYAN', desc: 'Template for producing county-level SRHR budget briefs for advocacy. Includes data sources and sample language.', tags: ['Budget','County','Template'], type: 'free', url: '' },
-      { title: 'GBV Legal Framework — Kenya Summary', org: 'Beyond Initiative', desc: 'Plain-language summary of Kenya laws on GBV including Sexual Offences Act, Protection Against Domestic Violence Act.', tags: ['GBV','Legal','Kenya'], type: 'free', url: '' }
+      {
+        title: 'Programme Team — Core Roles',
+        org: 'Human Resources',
+        category: 'LEADERSHIP',
+        desc: 'The leadership team structure required to deliver a robust SRHR programme.',
+        bullets: ['Project Manager — SRHR & public health background', 'Project Officers — public health, nursing, social science', 'MEAL Officer — data collection and reporting', 'Legal Officer — if rights litigation is a component', 'Finance & Admin Officer', 'Communications & Advocacy Officer'],
+        tags: ['HR','Team','Staffing','Management'], type: 'free', url: ''
+      },
+      {
+        title: 'Community-Level Staff',
+        org: 'Human Resources',
+        category: 'FRONTLINE',
+        desc: 'The frontline workforce that delivers SRHR services directly to communities.',
+        bullets: ['Community Health Workers (CHWs)', 'Youth Peer Providers (YPPs)', 'Community Based Distributors (CBDs)', 'Peer Educators — school and out-of-school', 'GBV case workers and psychosocial counsellors', 'Community radio presenters'],
+        tags: ['CHW','Frontline','Community','Peer Education'], type: 'free', url: ''
+      },
+      {
+        title: 'IPPF — EmpowHER Project',
+        org: 'Key Funders',
+        category: 'MAJOR DONOR',
+        desc: '$48 million project across Kenya and 13 countries focused on marginalised communities — one of the largest active SRHR investments in Kenya right now.',
+        bullets: ['Focus: adolescent girls and young women', 'Counties: Nairobi, Kisumu, Mombasa, Narok, Homa Bay', 'Sub-granting to local organizations', 'Application: through IPPF member associations'],
+        tags: ['Funding','IPPF','Adolescent','Kenya'], type: 'seeking', url: 'https://www.ippf.org'
+      },
+      {
+        title: 'AmplifyChange',
+        org: 'Key Funders',
+        category: 'GRANT OPPORTUNITY',
+        desc: 'Opportunity Grants of up to £75,000 over 18-36 months for small and medium civil society organisations doing SRHR advocacy in Kenya. Accessible for local NGOs.',
+        bullets: ['Grant range: £25,000 - £75,000', 'Duration: 18-36 months', 'Focus: SRHR advocacy and rights', 'Open to locally-registered organizations'],
+        tags: ['Funding','AmplifyChange','Grant','Advocacy'], type: 'seeking', url: 'https://amplifychange.org'
+      },
+      {
+        title: 'UNFPA Kenya',
+        org: 'Key Funders',
+        category: 'UN SYSTEM',
+        desc: 'Funds family planning, maternal health, GBV, and adolescent SRHR. Strong focus on county-level government systems strengthening and supply chain.',
+        bullets: ['Partnership modalities: sub-agreements and technical support', 'County focus: all 47 counties', 'Key areas: FP, maternal health, GBV, ASRH', 'Contact: kenya.office@unfpa.org'],
+        tags: ['Funding','UNFPA','FP','Maternal Health'], type: 'seeking', url: 'https://kenya.unfpa.org'
+      },
+      {
+        title: 'EU & Canada (Global Affairs)',
+        org: 'Key Funders',
+        category: 'BILATERAL',
+        desc: 'Both active in Kenya SRHR — EU through consortium models, Canada increasingly filling the gap left by USAID withdrawal in 2025.',
+        bullets: ['EU: SRHR integrated into health systems calls', 'Canada: feminist international assistance policy', 'Both favour consortium approaches', 'Typical grants: $500K - $5M'],
+        tags: ['Funding','EU','Canada','Bilateral'], type: 'seeking', url: ''
+      },
+      {
+        title: 'HIVOS & Planned Parenthood Global',
+        org: 'Key Funders',
+        category: 'INGO PARTNERS',
+        desc: 'HIVOS funds feminist movements and SRHR rights organisations; PPG funds clinical service delivery partners and reproductive rights advocacy.',
+        bullets: ['HIVOS: feminist and rights-based organisations', 'PPG: clinical service delivery focus', 'Both active in East Africa', 'Grant range varies by programme'],
+        tags: ['Funding','HIVOS','PPG','Feminist'], type: 'seeking', url: 'https://hivos.org'
+      },
+      {
+        title: 'Center for Reproductive Rights & Segal Family Foundation',
+        org: 'Key Funders',
+        category: 'RIGHTS-FOCUSED',
+        desc: 'CRR focuses on litigation and policy; Segal Family Foundation funds smaller grassroots African-led SRHR organisations in East Africa.',
+        bullets: ['CRR: strategic litigation and policy reform', 'Segal: grassroots African-led organizations', 'Segal grants: $25K - $150K', 'Strong preference for locally-led work'],
+        tags: ['Funding','Rights','Litigation','Grassroots'], type: 'seeking', url: 'https://reproductiverights.org'
+      },
+      {
+        title: 'Infrastructure Resources',
+        org: 'Facilities & Systems',
+        category: 'INFRASTRUCTURE',
+        desc: 'Physical and digital infrastructure needed for effective SRHR programme delivery.',
+        bullets: ['Mobile clinics and outreach vehicles', 'SRHR commodity supply chain (KEMSA/USAID GHSC-PSM)', 'Digital health systems (KoboToolbox, DHIS2, CommCare)', 'Community health worker kits', 'Cold chain for vaccines', 'Telemedicine platforms'],
+        tags: ['Infrastructure','Supply Chain','Digital Health','Facilities'], type: 'free', url: ''
+      }
     ]
   },
   processes: {
     name: 'Process Kitchen',
     icon: '⚙️',
     color: 'linear-gradient(135deg,#2A1A1A,#6B2A2A)',
-    desc: 'Proven processes, protocols and operational frameworks ready to adopt or adapt.',
+    desc: 'Proven processes, frameworks and implementation recipes for SRHR programming.',
     items: [
-      { title: 'Disability-Inclusive SRHR Service Protocol', org: 'This Ability Trust', desc: 'Step-by-step protocol for adapting clinical and community SRHR services for PWDs. Endorsed by MoH Kenya. Available in print.', tags: ['Disability','Protocol','Clinical'], type: 'free', url: '' },
-      { title: 'Community Social Accountability Framework', org: 'Beyond Initiative', desc: 'Community-led monitoring process for SRHR service quality. Includes data collection tools and facility engagement protocols.', tags: ['Accountability','Monitoring','Community'], type: 'partner_rate', url: '' },
-      { title: 'Youth Engagement in Programme Design Protocol', org: 'NAYA', desc: 'Structured process for meaningfully engaging young people in SRHR programme design, implementation and evaluation.', tags: ['Youth','Participation','Design'], type: 'free', url: '' },
-      { title: 'Network Coordination & Governance Framework', org: 'SRHR Alliance', desc: 'Governance framework for multi-stakeholder SRHR networks. Covers decision-making, communication protocols and accountability mechanisms.', tags: ['Governance','Network','Coordination'], type: 'free', url: '' },
-      { title: 'Rapid Response Disinformation Protocol', org: 'Activate Action', desc: 'Step-by-step process for identifying, verifying and responding to SRHR disinformation. Includes social media monitoring guidance.', tags: ['Disinformation','Response','Digital'], type: 'free', url: '' }
+      {
+        title: 'Community Entry & Mobilisation',
+        org: 'Implementation Process',
+        category: 'COMMUNITY',
+        desc: 'Step-by-step process for entering a new community context with trust and legitimacy.',
+        bullets: ['Stakeholder mapping and power analysis', 'Community gatekeepers identification', 'Introductory dialogues and needs assessment', 'Community advisory structure formation', 'MOU and consent processes', 'Timeline: 4-8 weeks before programme activities begin'],
+        tags: ['Community','Entry','Mobilisation','Trust'], type: 'free', url: ''
+      },
+      {
+        title: 'SRHR Integrated Service Delivery Model',
+        org: 'Service Delivery',
+        category: 'CLINICAL',
+        desc: 'Framework for integrating FP, maternal health, HIV, GBV and adolescent SRHR at a single service point.',
+        bullets: ['Needs assessment and service mapping', 'Staff training and role clarification', 'Referral pathway establishment', 'Quality assurance mechanism', 'Commodity forecasting and supply', 'M&E and routine data collection'],
+        tags: ['Integration','Service Delivery','FP','HIV'], type: 'free', url: ''
+      },
+      {
+        title: 'Policy Advocacy Cycle',
+        org: 'Advocacy Process',
+        category: 'ADVOCACY',
+        desc: 'Structured cycle for moving from evidence to policy change on SRHR issues.',
+        bullets: ['Issue identification and evidence synthesis', 'Stakeholder analysis and coalition building', 'Policy brief and position paper development', 'Engagement strategy — legislators, media, communities', 'Monitoring policy response and documenting change', 'Adaptive learning and cycle review'],
+        tags: ['Advocacy','Policy','Coalition','Evidence'], type: 'free', url: ''
+      },
+      {
+        title: 'GBV Prevention-Response Continuum',
+        org: 'GBV Process',
+        category: 'GBV',
+        desc: 'Comprehensive process covering both GBV prevention and survivor response in community settings.',
+        bullets: ['Community norm change programming', 'Safe space establishment and facilitation', 'Case identification and intake protocols', 'Multi-sector referral pathway activation', 'Survivor follow-up and monitoring', 'Perpetrator accountability mechanisms'],
+        tags: ['GBV','Prevention','Response','Survivors'], type: 'free', url: ''
+      },
+      {
+        title: 'Youth Participation Framework',
+        org: 'Youth Process',
+        category: 'YOUTH',
+        desc: 'Structured approach for meaningfully engaging young people across the programme cycle.',
+        bullets: ['Youth advisory group formation', 'Co-design workshops with young people', 'Youth-led data collection', 'Youth representation in decision-making', 'Mentorship and capacity building', 'Intergenerational dialogue facilitation'],
+        tags: ['Youth','Participation','Co-design','Adolescent'], type: 'free', url: ''
+      }
     ]
   },
   partners: {
     name: 'Partners Corner',
     icon: '🤝',
     color: 'linear-gradient(135deg,#1A2A1A,#2A5A2A)',
-    desc: 'Partnership opportunities, collaboration calls and strategic connections across the network.',
+    desc: 'Strategic partnership opportunities, collaboration calls and Kenya SRHR ecosystem connections.',
     items: [
-      { title: 'Seeking: County Government Health Partners', org: 'CYAN', desc: 'CYAN seeks county health department partnerships for youth-friendly SRHR integration in Nairobi, Narok and Homa Bay. County health officers welcome.', tags: ['County','Government','Youth-Friendly'], type: 'seeking', url: '' },
-      { title: 'Seeking: FP Commodity Supply Partners', org: 'AfyAfrika', desc: 'AfyAfrika seeks partners for FP commodity supply chain to remote Narok communities. KEMSA-linked or USAID GHSC-PSM partners preferred.', tags: ['FP','Supply Chain','Narok'], type: 'seeking', url: '' },
-      { title: 'Seeking: Co-Implementation Partner — Digital Health', org: 'SRHR Alliance', desc: 'SRHR Alliance seeks a digital health partner to co-develop an SRHR data dashboard linked to KHIS/DHIS2 for the hub.', tags: ['Digital Health','DHIS2','Co-implementation'], type: 'seeking', url: '' },
-      { title: 'Offering: Joint Fundraising Consortium', org: 'Zamara Foundation', desc: 'Zamara Foundation is forming a joint fundraising consortium for a FCDO/Gates call on FP+SRHR. 3 more members needed.', tags: ['Funding','Consortium','FCDO'], type: 'offering', url: '' },
-      { title: 'Seeking: Research Partnership — Safe Abortion Access', org: 'SRHR Alliance', desc: 'Seeking an academic or research partner for a study on safe abortion access in Narok and Homa Bay counties.', tags: ['Research','Abortion','Partnership'], type: 'seeking', url: '' },
-      { title: 'Offering: Media & Communications Support', org: 'Activate Action', desc: 'Activate Action offers media and communications support to member organizations — press releases, social media, documentary shorts.', tags: ['Media','Communications','Advocacy'], type: 'offering', url: '' },
-      { title: 'Seeking: Grassroots CBO Partners — Homa Bay', org: 'Secny CBO', desc: 'Secny seeks grassroots CBOs in Homa Bay and Narok for last-mile SRHR service delivery partnerships. Small grants available.', tags: ['CBO','Grassroots','Homa Bay'], type: 'seeking', url: '' }
+      {
+        title: 'Government & County Health Partnerships',
+        org: 'Government',
+        category: 'GOVERNMENT',
+        desc: 'Key government actors for SRHR programming partnerships at national and county level.',
+        bullets: ['Ministry of Health — Division of Reproductive & Maternal Health', 'County Health Management Teams (CHMTs)', 'Kenya Medical Supplies Authority (KEMSA)', 'National AIDS & STI Control Programme (NASCOP)', 'Kenya National Bureau of Statistics (KNBS)', 'County Commissioners and Ward Administrators'],
+        tags: ['Government','MoH','County','KEMSA'], type: 'seeking', url: 'https://www.health.go.ke'
+      },
+      {
+        title: 'UN System & Multilateral Partners',
+        org: 'Multilateral',
+        category: 'UN SYSTEM',
+        desc: 'UN agencies and multilateral bodies active in Kenya SRHR.',
+        bullets: ['UNFPA Kenya — lead UN agency for SRHR', 'WHO Kenya — clinical standards and guidelines', 'UNICEF Kenya — adolescent and child health', 'UN Women Kenya — GBV and gender equality', 'UNAIDS Kenya — HIV response coordination', 'World Bank Kenya — health systems financing'],
+        tags: ['UN','UNFPA','WHO','UNICEF'], type: 'seeking', url: 'https://kenya.unfpa.org'
+      },
+      {
+        title: 'Academic & Research Institutions',
+        org: 'Research',
+        category: 'RESEARCH',
+        desc: 'Kenyan academic and research partners for evidence generation and programme evaluation.',
+        bullets: ['University of Nairobi — School of Public Health', 'Kenya Medical Research Institute (KEMRI)', 'African Population & Health Research Centre (APHRC)', 'Strathmore University — health policy research', 'Moi University — western Kenya catchment', 'Aga Khan University Hospital — clinical research'],
+        tags: ['Research','Academic','Evidence','Evaluation'], type: 'seeking', url: ''
+      },
+      {
+        title: 'Media & Communications Partners',
+        org: 'Media',
+        category: 'MEDIA',
+        desc: 'Media and communications channels for SRHR messaging and advocacy at scale.',
+        bullets: ['Nation Media Group — print and digital reach', 'Standard Group — TV, radio, digital', 'Kenya Broadcasting Corporation (KBC) — public broadcaster', 'Ghetto Radio — youth and urban audiences', 'Community radio stations — 47 counties', 'Social media influencers — SRHR champions network'],
+        tags: ['Media','Communications','Radio','Digital'], type: 'seeking', url: ''
+      },
+      {
+        title: 'Faith & Community Leaders Network',
+        org: 'Community',
+        category: 'FAITH & COMMUNITY',
+        desc: 'Faith-based and community leader partners for norm change and community acceptance of SRHR.',
+        bullets: ['National Council of Churches of Kenya (NCCK)', 'Supreme Council of Kenya Muslims (SUPKEM)', 'Kenya Conference of Catholic Bishops (KCCB)', 'Interfaith Standing Committee on Economic & Social Issues', 'Traditional and cultural leader networks', 'Women of Faith networks — county level'],
+        tags: ['Faith','Community','Norms','Leaders'], type: 'seeking', url: ''
+      },
+      {
+        title: 'Private Sector & Social Enterprise Partners',
+        org: 'Private Sector',
+        category: 'PRIVATE SECTOR',
+        desc: 'Private sector actors with SRHR alignment for innovation, financing and scale.',
+        bullets: ['Marie Stopes Kenya — clinical service delivery', 'Equity Bank Foundation — health financing', 'Safaricom Foundation — digital health and reach', 'AAR Healthcare — private facility network', 'East African Breweries SRHR workplace programme', 'Kenya Private Sector Alliance (KEPSA)'],
+        tags: ['Private Sector','Enterprise','Innovation','Finance'], type: 'seeking', url: ''
+      },
+      {
+        title: 'East Africa & Pan-African Networks',
+        org: 'Regional',
+        category: 'REGIONAL',
+        desc: 'Regional networks for learning, solidarity and cross-border SRHR advocacy.',
+        bullets: ['East African Community — health cluster', 'ECSA Health Community — regional health standards', 'African Union Commission — Agenda 2063 health goals', 'SADC SRHR Coalition', 'Pan African SRHR Consortium (PASC)', 'East African Legislative Assembly (EALA) health committee'],
+        tags: ['Regional','East Africa','Pan-African','Networks'], type: 'seeking', url: ''
+      }
     ]
   }
 };
