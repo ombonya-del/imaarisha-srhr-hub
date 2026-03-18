@@ -6073,6 +6073,38 @@ var orgProfileData = {"AfyAfrika": {"icon": "\ud83c\udf0d", "programs": ["Commun
 
 var currentUserRsvps = {};
 
+var eventDetails = {
+  'SRHR Data Symposium': {
+    description: 'A full-day convening bringing together data experts, programme officers and policy advocates to review Q1 2026 SRHR indicators, identify gaps and align on evidence-based advocacy priorities for the year.',
+    agenda: ['08:30 — Registration & Networking', '09:00 — Opening: State of SRHR Data in Kenya', '10:30 — Panel: Using KHIS Data for Advocacy', '12:00 — Lunch & Networking', '13:00 — County Data Showcases (Nairobi, Narok, Homa Bay)', '15:00 — Working Groups: Data Gaps & Solutions', '16:30 — Closing: Commitments & Next Steps'],
+    speakers: ['Dr. Grace Maina — Director, Division of Reproductive Health', 'Dr. James Oloo — KHIS Data Analytics', 'Prof. Sarah Njoroge — APHRC'],
+    registration: 'https://forms.gle/srhr-data-symposium'
+  },
+  'Digital Health': {
+    description: 'A 2-hour interactive webinar exploring DHIS2 and KenyaEMR integration challenges in SRHR programmes, with live demos from organizations that have successfully navigated interoperability.',
+    agenda: ['14:00 — Welcome & Introductions', '14:10 — DHIS2 SRHR Module Deep Dive', '14:45 — KenyaEMR Integration Demo', '15:15 — Q&A and Troubleshooting', '15:45 — Resource Sharing & Wrap-up'],
+    speakers: ['Tech Lead, LVCT Health', 'DHIS2 Kenya National Team', 'AMREF Digital Health'],
+    registration: 'https://zoom.us/j/srhr-digital-health'
+  },
+  'Youth SRHR Champions': {
+    description: 'A 3-day residential workshop for peer educators and youth champions from across the network. Participants will be equipped with facilitation skills, SRHR content knowledge and digital advocacy tools.',
+    agenda: ['Day 1 — SRHR Rights & Legal Framework', 'Day 2 — Facilitation Skills & Community Entry', 'Day 3 — Digital Advocacy & Campaign Planning'],
+    speakers: ['AMREF Kenya Trainers', 'FPAK Youth Programme', 'Activate Action Digital Team'],
+    registration: 'https://forms.gle/youth-champions-mombasa'
+  },
+  'Quarterly Convening': {
+    description: 'The flagship quarterly gathering of all 12 ImaarishaSRHR member organizations. A full day of network business, knowledge sharing, coordination and celebration of wins across the hub.',
+    agenda: ['08:30 — Registration & Exhibition', '09:00 — Opening Plenary: Q1 Review', '10:30 — Marketplace Showcase', '12:00 — Lunch & Networking', '13:00 — Working Groups by Thematic Area', '15:00 — Resource Mobilization Session', '16:00 — AOB & Closing'],
+    speakers: ['All 12 Member Organizations', 'Hub Administrator', 'Guest: County Health Director'],
+    registration: null
+  }
+};
+
+function getEventDetails(title) {
+  var key = Object.keys(eventDetails).find(function(k) { return title.includes(k.split(' ')[0]); });
+  return key ? eventDetails[key] : null;
+}
+
 async function loadEvents() {
   const { data } = await _supabase.from('events').select('*').gte('event_date', '2026-01-01').order('event_date');
   if (!data) return;
@@ -6093,6 +6125,12 @@ async function loadEvents() {
     var myRsvp = currentUserRsvps[e.id];
     var rsvpStatus = myRsvp ? '<span style="color:var(--accent2);font-size:0.72rem;">✓ ' + (myRsvp === 'going' ? 'Going' : myRsvp === 'maybe' ? 'Maybe' : 'Not going') + '</span>' : '';
 
+    var det = getEventDetails(e.title);
+    var descHtml = det ? '<div style="font-size:0.78rem;color:var(--muted);line-height:1.6;margin:10px 0;">' + det.description + '</div>' : '';
+    var agendaHtml = det && det.agenda ? '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin:10px 0 6px;">Programme</div>' + det.agenda.map(function(a) { return '<div style="font-size:0.75rem;color:var(--muted);padding:3px 0;display:flex;gap:8px;"><span style="color:var(--gold);">→</span>' + a + '</div>'; }).join('') : '';
+    var speakersHtml = det && det.speakers ? '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin:10px 0 6px;">Speakers / Facilitators</div>' + det.speakers.map(function(s) { return '<span class="resource-tag">' + s + '</span>'; }).join(' ') : '';
+    var regBtn = det && det.registration ? '<a href="' + det.registration + '" target="_blank" class="mkt-action-btn mkt-action-primary" style="text-decoration:none;display:inline-block;margin-top:10px;">📝 Register Now →</a>' : '<span style="font-size:0.75rem;color:var(--accent2);margin-top:10px;display:inline-block;">✓ Open to all member organizations</span>';
+
     var card = document.createElement('div');
     card.className = 'event-card';
     card.dataset.eventId = e.id;
@@ -6103,7 +6141,8 @@ async function loadEvents() {
         '<div class="event-details">📍 ' + (e.location||'TBC') + (e.start_time ? ' &nbsp;·&nbsp; ' + e.start_time : '') + '<br/>🏛 ' + hosts + '<br/>👥 ' + (e.rsvp_count||0) + ' registered ' + rsvpStatus + '</div>' +
         '<div class="event-tags">' + tags + '</div>' +
         '<div class="event-detail" id="event-detail-' + e.id + '">' +
-          '<div class="event-rsvp-bar">' +
+          descHtml + agendaHtml + speakersHtml +
+          '<div class="event-rsvp-bar" style="margin-top:14px;">' +
             '<div class="event-attendees">Your RSVP: <strong id="rsvp-label-' + e.id + '">' + (myRsvp || 'Not responded') + '</strong></div>' +
             '<div class="rsvp-btn-group">' +
               '<button class="rsvp-btn' + (myRsvp==='going'?' going':'') + '" data-event="' + e.id + '" data-status="going">✓ Going</button>' +
@@ -6111,6 +6150,7 @@ async function loadEvents() {
               '<button class="rsvp-btn' + (myRsvp==='not_going'?' not-going':'') + '" data-event="' + e.id + '" data-status="not_going">✗ Not going</button>' +
             '</div>' +
           '</div>' +
+          regBtn +
         '</div>' +
       '</div>';
 
