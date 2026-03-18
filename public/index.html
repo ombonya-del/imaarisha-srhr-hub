@@ -3380,20 +3380,6 @@ async function loadEvents() {
   });
 }
 
-async function loadTracker() {
-  const { data } = await _supabase.from('tracker_indicators').select('*').order('sort_order');
-  if (!data) return;
-  const grid = document.querySelector('.tracker-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  data.forEach(function(ind) {
-    const pct = ind.progress_pct || Math.round((ind.current_value / ind.target_value) * 100);
-    const card = document.createElement('div');
-    card.className = 'tracker-card';
-    card.innerHTML = '<div class="tracker-header"><div><div class="tracker-name">' + ind.name + '</div><div style="font-size:0.72rem;color:var(--muted)">' + (ind.subtitle || '') + '</div></div><div class="tracker-val">' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div></div><div style="font-size:0.75rem;color:var(--muted)">Progress toward ' + ind.target_value + ' ' + ind.unit + ' target</div><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div><div class="tracker-legend"><div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Current: ' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div><div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Target: ' + ind.target_value + (ind.unit === '%' ? '%' : '') + '</div></div>';
-    grid.appendChild(card);
-  });
-}
 
 async function loadCampaigns() {
   const { data } = await _supabase.from('campaigns').select('*').eq('status', 'active').order('created_at', { ascending: false });
