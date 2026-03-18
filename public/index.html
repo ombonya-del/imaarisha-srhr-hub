@@ -1458,6 +1458,59 @@ flex; justify-content: space-between; }
 .request-box .auth-field input:focus,
 .request-box .auth-field textarea:focus { border-color: var(--gold); }
 
+
+/* FORUM MARKETPLACE TABS */
+.mkt-panel-tabs {
+  display: flex; gap: 0; margin-bottom: 28px;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  width: fit-content;
+}
+.mkt-panel-tab {
+  padding: 10px 24px; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; color: var(--muted); background: transparent;
+  border: none; font-family: "DM Sans", sans-serif; transition: all 0.2s;
+}
+.mkt-panel-tab.active { background: var(--gold); color: var(--dark); font-weight: 600; }
+.forum-mkt-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+  margin-bottom: 28px;
+}
+.forum-station {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 14px; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.forum-station:hover, .forum-station.active {
+  border-color: var(--gold); background: var(--gold-dim);
+  transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.12);
+}
+.forum-station-icon { font-size: 2rem; margin-bottom: 10px; }
+.forum-station-name {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 0.95rem; font-weight: 600; margin-bottom: 4px;
+}
+.forum-station-count { font-size: 0.68rem; color: var(--muted); }
+.forum-station-detail { display: none; }
+.forum-station-detail.open { display: block; }
+.forum-item-card {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px; margin-bottom: 12px;
+  cursor: pointer; transition: all 0.2s;
+}
+.forum-item-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+.forum-item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.forum-item-title { font-size: 0.9rem; font-weight: 600; }
+.forum-item-org { font-size: 0.7rem; color: var(--gold); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.forum-item-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+.forum-item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.forum-back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; color: var(--muted); cursor: pointer;
+  margin-bottom: 20px; transition: color 0.2s;
+  background: none; border: none; font-family: "DM Sans", sans-serif;
+}
+.forum-back-btn:hover { color: var(--gold); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2463,6 +2516,16 @@ Trust ---</span>
 
 <div class="panel" id="panel-marketplace">
 
+<!-- MARKETPLACE TABS -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <div class="mkt-panel-tabs">
+    <button class="mkt-panel-tab active" id="tab-exchange" onclick="switchMktTab('exchange')">🔄 Hub Exchange</button>
+    <button class="mkt-panel-tab" id="tab-forum" onclick="switchMktTab('forum')">🏪 Forum Marketplace</button>
+  </div>
+</div>
+
+<!-- HUB EXCHANGE (existing content) -->
+<div id="mkt-exchange-content">
 <div class="marketplace-hero">
 
 <div>
@@ -2479,7 +2542,7 @@ organizations offer and need.</p>
 
 </div>
 
-<div style="font-family:'Cormorant Garamond',serif; font-size:1rem;
+<div style="font-family:Cormorant Garamond,serif; font-size:1rem;
 font-weight:600; margin-bottom:14px; color:var(--muted);
 text-transform:uppercase; letter-spacing:0.1em;">Browse by
 Category</div>
@@ -2764,7 +2827,48 @@ color:var(--muted)">Beyond Initiative</span>
 
 </div>
 
+</div><!-- end mkt-exchange-content -->
+
+<!-- FORUM MARKETPLACE -->
+<div id="mkt-forum-content" style="display:none">
+  <div id="forum-stations-view">
+    <div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;font-weight:600;margin-bottom:6px;">ImaarishaSRHR <span style="color:var(--gold)">Forum Marketplace</span></div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:24px;line-height:1.5;">The physical marketplace from our Stakeholders Forum — now live and accessible to all hub members. Browse by station, download resources, and connect with offering organizations.</div>
+    <div class="forum-mkt-grid" id="forum-stations-grid">
+      <div class="forum-station" onclick="openStation('skills')">
+        <div class="forum-station-icon">☕</div>
+        <div class="forum-station-name">Skills Café</div>
+        <div class="forum-station-count">8 offerings</div>
+      </div>
+      <div class="forum-station" onclick="openStation('tools')">
+        <div class="forum-station-icon">🔧</div>
+        <div class="forum-station-name">Tools Station</div>
+        <div class="forum-station-count">6 offerings</div>
+      </div>
+      <div class="forum-station" onclick="openStation('resources')">
+        <div class="forum-station-icon">📚</div>
+        <div class="forum-station-name">Resource Counter</div>
+        <div class="forum-station-count">9 offerings</div>
+      </div>
+      <div class="forum-station" onclick="openStation('processes')">
+        <div class="forum-station-icon">⚙️</div>
+        <div class="forum-station-name">Process Kitchen</div>
+        <div class="forum-station-count">5 offerings</div>
+      </div>
+      <div class="forum-station" onclick="openStation('partners')">
+        <div class="forum-station-icon">🤝</div>
+        <div class="forum-station-name">Partners Corner</div>
+        <div class="forum-station-count">7 offerings</div>
+      </div>
+    </div>
+  </div>
+  <div id="forum-station-detail" style="display:none">
+    <button class="forum-back-btn" onclick="closeStation()">← Back to all stations</button>
+    <div id="forum-station-content"></div>
+  </div>
 </div>
+
+</div><!-- end panel-marketplace -->
 
 <!-- DIGITAL CAMPAIGNS -->
 
@@ -2784,7 +2888,7 @@ network-wide advocacy · share assets · track reach</div>
 
 </div>
 
-<div style="font-family:'Cormorant Garamond',serif;
+<div style="font-family:Cormorant Garamond,serif;
 font-size:1.05rem; font-weight:600; margin-bottom:16px;">Active <span
 style="color:var(--gold)">Campaigns</span></div>
 
@@ -2891,7 +2995,7 @@ track network-wide reach across member organizations.</div>
 
 </div>
 
-<div style="font-family:'Cormorant Garamond',serif;
+<div style="font-family:Cormorant Garamond,serif;
 font-size:1.05rem; font-weight:600; margin-bottom:16px;">Advocacy
 <span style="color:var(--gold)">Toolkit</span></div>
 
@@ -2995,7 +3099,7 @@ a Claim</button>
 
 </div>
 
-<div style="font-family:'Cormorant Garamond',serif;
+<div style="font-family:Cormorant Garamond,serif;
 font-size:1.05rem; font-weight:600; margin-bottom:16px;">Active <span
 style="color:#E74C3C">Alerts</span></div>
 
@@ -5441,6 +5545,174 @@ window.addEventListener('DOMContentLoaded', function() {
   if (requestModal) requestModal.addEventListener('click', function(e) { if (e.target === this) closeRequestModal(); });
 });
 
+
+// ============================================================
+// FORUM MARKETPLACE - 5 STATIONS
+// ============================================================
+
+var forumStationsData = {
+  skills: {
+    name: 'Skills Cafe',
+    icon: '☕',
+    color: 'linear-gradient(135deg,#1A3A2A,#2A6B5E)',
+    desc: 'A curated menu of skills, expertise and capacity-building offers from across the ImaarishaSRHR network.',
+    items: [
+      { title: 'Peer Educator Training — ASRH Module', org: 'NAYA', desc: '3-day facilitator-led training on adolescent SRHR peer education. Adaptable to county contexts. Certificates provided.', tags: ['ASRH','Youth','Training'], type: 'free', url: '' },
+      { title: 'Male Engagement Facilitation', org: 'Men Engage Kenya', desc: '2-day coaching on facilitating male engagement in SRHR programming. Available online or in-person for up to 20 participants.', tags: ['GBV','Male Engagement','Facilitation'], type: 'partner_rate', url: '' },
+      { title: 'Community Health Worker Training', org: 'AfyAfrika', desc: 'Structured CHW training curriculum covering FP counselling, maternal health referrals, and SRHR rights. 5-day residential programme.', tags: ['CHW','FP','Maternal Health'], type: 'free', url: '' },
+      { title: 'Digital Advocacy & Campaign Skills', org: 'Activate Action', desc: 'Workshop on social media advocacy, counter-narrative development, and digital campaign management for SRHR advocates.', tags: ['Digital','Advocacy','Social Media'], type: 'free', url: '' },
+      { title: 'GBV Response & Survivor Support', org: 'Beyond Initiative', desc: 'Training on trauma-informed approaches to GBV survivor support at community level. Includes referral pathway mapping.', tags: ['GBV','Survivor Support','Trauma'], type: 'partner_rate', url: '' },
+      { title: 'MHM School Programme Facilitation', org: 'Zana Africa', desc: 'Train-the-trainer programme for school teachers and CHWs on delivering menstrual health education in school settings.', tags: ['MHM','Schools','Teachers'], type: 'free', url: '' },
+      { title: 'Disability-Inclusive Service Delivery', org: 'This Ability Trust', desc: 'Training health workers on adapting SRHR services for persons with disabilities. Online or in-person. CME accredited.', tags: ['Disability','Inclusion','Health Workers'], type: 'free', url: '' },
+      { title: 'Social Accountability Facilitation', org: 'Beyond Initiative', desc: 'Skills for facilitating community scorecards and social accountability processes at health facilities.', tags: ['Accountability','Community','Facilitation'], type: 'partner_rate', url: '' }
+    ]
+  },
+  tools: {
+    name: 'Tools Station',
+    icon: '🔧',
+    color: 'linear-gradient(135deg,#1A2A3A,#2A4A6B)',
+    desc: 'Practical tools, instruments and frameworks your organization can deploy immediately.',
+    items: [
+      { title: 'SRHR Community Needs Assessment Tool', org: 'AfyAfrika', desc: 'KoboToolbox-ready assessment covering FP, maternal health, GBV and youth SRHR. 45 questions, skip logic, offline capable.', tags: ['Assessment','KoboToolbox','Data'], type: 'free', url: 'https://www.kobotoolbox.org' },
+      { title: 'Youth-Friendly Services Assessment Checklist', org: 'CYAN', desc: 'Standardized checklist for assessing whether a health facility meets MoH youth-friendly service standards. 62 criteria.', tags: ['YFS','Assessment','Quality'], type: 'free', url: '' },
+      { title: 'GBV Referral Pathway Mapping Template', org: 'Men Engage Kenya', desc: 'Excel-based tool for mapping GBV service referral pathways at county level. Includes service directory template.', tags: ['GBV','Referral','Mapping'], type: 'free', url: '' },
+      { title: 'SRHR Budget Tracking Scorecard', org: 'SRHR Alliance', desc: 'Tool for tracking county SRHR budget allocations and expenditures. Aligned with Programme Based Budgeting formats.', tags: ['Budget','Advocacy','County'], type: 'free', url: '' },
+      { title: 'Community Dialogue Facilitation Guide', org: 'NAYA', desc: 'Step-by-step guide for facilitating community dialogues on SRHR topics. Includes icebreakers, discussion questions and wrap-up techniques.', tags: ['Community','Dialogue','Facilitation'], type: 'free', url: '' },
+      { title: 'M&E Framework for SRHR Programmes', org: 'Zamara Foundation', desc: 'Results framework template aligned with Kenya SRHR indicators. Includes indicator definitions, data sources and reporting schedule.', tags: ['M&E','Results','Indicators'], type: 'partner_rate', url: '' }
+    ]
+  },
+  resources: {
+    name: 'Resource Counter',
+    icon: '📚',
+    color: 'linear-gradient(135deg,#2A1A3A,#4A2A6B)',
+    desc: 'Knowledge resources, publications and information materials from across the network and beyond.',
+    items: [
+      { title: 'Kenya National SRHR Policy 2022', org: 'MoH Kenya', desc: 'Official national policy framework for SRHR programming. Essential reference for all advocacy and programme design.', tags: ['Policy','National','MoH'], type: 'free', url: 'https://www.health.go.ke' },
+      { title: 'MHM Facilitator Guide & Student Workbooks', org: 'Zana Africa', desc: 'School-ready MHM toolkit including facilitator guide, student workbooks in English and Swahili, and reusable pad patterns.', tags: ['MHM','Schools','IEC'], type: 'partner_rate', url: '' },
+      { title: 'HIV Prevention IEC Materials — Swahili Pack', org: 'MMAAK', desc: 'Print-ready posters, flipcharts and social media graphics for HIV prevention among men and partners. Swahili and English.', tags: ['HIV','IEC','Print'], type: 'free', url: '' },
+      { title: 'SRHR Rights Charter — Kenya Version', org: 'SRHR Alliance', desc: 'Adapted IPPF sexual rights charter contextualized for Kenya. Available in English and Swahili. Print and digital formats.', tags: ['Rights','Charter','Advocacy'], type: 'free', url: 'https://www.ippf.org/resource/ippf-sexual-rights-declaration' },
+      { title: 'Adolescent SRHR Fact Sheets (10-pack)', org: 'NAYA', desc: '10 topic fact sheets covering FP, HIV, GBV, pregnancy, CSE and more. Youth-friendly language. Print-ready A5 format.', tags: ['Youth','IEC','Fact Sheets'], type: 'free', url: '' },
+      { title: 'KDHS 2022 — SRHR Key Findings Brief', org: 'SRHR Alliance', desc: '4-page brief summarizing key SRHR findings from the 2022 Kenya Demographic & Health Survey. Ideal for advocacy.', tags: ['Data','KDHS','Brief'], type: 'free', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
+      { title: 'Disability & SRHR Resource Pack', org: 'This Ability Trust', desc: 'Collection of adapted IEC materials for persons with disabilities. Includes large print, pictorial and easy-read versions.', tags: ['Disability','IEC','Accessible'], type: 'free', url: '' },
+      { title: 'County SRHR Budget Brief Template', org: 'CYAN', desc: 'Template for producing county-level SRHR budget briefs for advocacy. Includes data sources and sample language.', tags: ['Budget','County','Template'], type: 'free', url: '' },
+      { title: 'GBV Legal Framework — Kenya Summary', org: 'Beyond Initiative', desc: 'Plain-language summary of Kenya laws on GBV including Sexual Offences Act, Protection Against Domestic Violence Act.', tags: ['GBV','Legal','Kenya'], type: 'free', url: '' }
+    ]
+  },
+  processes: {
+    name: 'Process Kitchen',
+    icon: '⚙️',
+    color: 'linear-gradient(135deg,#2A1A1A,#6B2A2A)',
+    desc: 'Proven processes, protocols and operational frameworks ready to adopt or adapt.',
+    items: [
+      { title: 'Disability-Inclusive SRHR Service Protocol', org: 'This Ability Trust', desc: 'Step-by-step protocol for adapting clinical and community SRHR services for PWDs. Endorsed by MoH Kenya. Available in print.', tags: ['Disability','Protocol','Clinical'], type: 'free', url: '' },
+      { title: 'Community Social Accountability Framework', org: 'Beyond Initiative', desc: 'Community-led monitoring process for SRHR service quality. Includes data collection tools and facility engagement protocols.', tags: ['Accountability','Monitoring','Community'], type: 'partner_rate', url: '' },
+      { title: 'Youth Engagement in Programme Design Protocol', org: 'NAYA', desc: 'Structured process for meaningfully engaging young people in SRHR programme design, implementation and evaluation.', tags: ['Youth','Participation','Design'], type: 'free', url: '' },
+      { title: 'Network Coordination & Governance Framework', org: 'SRHR Alliance', desc: 'Governance framework for multi-stakeholder SRHR networks. Covers decision-making, communication protocols and accountability mechanisms.', tags: ['Governance','Network','Coordination'], type: 'free', url: '' },
+      { title: 'Rapid Response Disinformation Protocol', org: 'Activate Action', desc: 'Step-by-step process for identifying, verifying and responding to SRHR disinformation. Includes social media monitoring guidance.', tags: ['Disinformation','Response','Digital'], type: 'free', url: '' }
+    ]
+  },
+  partners: {
+    name: 'Partners Corner',
+    icon: '🤝',
+    color: 'linear-gradient(135deg,#1A2A1A,#2A5A2A)',
+    desc: 'Partnership opportunities, collaboration calls and strategic connections across the network.',
+    items: [
+      { title: 'Seeking: County Government Health Partners', org: 'CYAN', desc: 'CYAN seeks county health department partnerships for youth-friendly SRHR integration in Nairobi, Narok and Homa Bay. County health officers welcome.', tags: ['County','Government','Youth-Friendly'], type: 'seeking', url: '' },
+      { title: 'Seeking: FP Commodity Supply Partners', org: 'AfyAfrika', desc: 'AfyAfrika seeks partners for FP commodity supply chain to remote Narok communities. KEMSA-linked or USAID GHSC-PSM partners preferred.', tags: ['FP','Supply Chain','Narok'], type: 'seeking', url: '' },
+      { title: 'Seeking: Co-Implementation Partner — Digital Health', org: 'SRHR Alliance', desc: 'SRHR Alliance seeks a digital health partner to co-develop an SRHR data dashboard linked to KHIS/DHIS2 for the hub.', tags: ['Digital Health','DHIS2','Co-implementation'], type: 'seeking', url: '' },
+      { title: 'Offering: Joint Fundraising Consortium', org: 'Zamara Foundation', desc: 'Zamara Foundation is forming a joint fundraising consortium for a FCDO/Gates call on FP+SRHR. 3 more members needed.', tags: ['Funding','Consortium','FCDO'], type: 'offering', url: '' },
+      { title: 'Seeking: Research Partnership — Safe Abortion Access', org: 'SRHR Alliance', desc: 'Seeking an academic or research partner for a study on safe abortion access in Narok and Homa Bay counties.', tags: ['Research','Abortion','Partnership'], type: 'seeking', url: '' },
+      { title: 'Offering: Media & Communications Support', org: 'Activate Action', desc: 'Activate Action offers media and communications support to member organizations — press releases, social media, documentary shorts.', tags: ['Media','Communications','Advocacy'], type: 'offering', url: '' },
+      { title: 'Seeking: Grassroots CBO Partners — Homa Bay', org: 'Secny CBO', desc: 'Secny seeks grassroots CBOs in Homa Bay and Narok for last-mile SRHR service delivery partnerships. Small grants available.', tags: ['CBO','Grassroots','Homa Bay'], type: 'seeking', url: '' }
+    ]
+  }
+};
+
+function switchMktTab(tab) {
+  document.getElementById('tab-exchange').classList.toggle('active', tab === 'exchange');
+  document.getElementById('tab-forum').classList.toggle('active', tab === 'forum');
+  document.getElementById('mkt-exchange-content').style.display = tab === 'exchange' ? 'block' : 'none';
+  document.getElementById('mkt-forum-content').style.display = tab === 'forum' ? 'block' : 'none';
+}
+
+var currentStation = null;
+
+function openStation(stationKey) {
+  currentStation = stationKey;
+  var station = forumStationsData[stationKey];
+  if (!station) return;
+
+  document.getElementById('forum-stations-view').style.display = 'none';
+  document.getElementById('forum-station-detail').style.display = 'block';
+
+  // Mark active station
+  document.querySelectorAll('.forum-station').forEach(function(s) { s.classList.remove('active'); });
+
+  var content = document.getElementById('forum-station-content');
+  var typeLabel = { free: 'Free', partner_rate: 'Partner Rate', seeking: 'Seeking', offering: 'Offering', paid: 'Paid' };
+  var typeCss = { free: 'background:rgba(61,158,138,0.15);color:var(--accent2)', partner_rate: 'background:var(--gold-dim);color:var(--gold-light)', seeking: 'background:rgba(61,158,138,0.15);color:var(--accent2)', offering: 'background:var(--gold-dim);color:var(--gold)', paid: 'background:rgba(201,168,76,0.15);color:var(--gold)' };
+
+  var itemsHtml = station.items.map(function(item) {
+    var tags = (item.tags || []).map(function(t) { return '<span class="resource-tag">' + t + '</span>'; }).join('');
+    var typeStyle = typeCss[item.type] || '';
+    var actionBtn = item.url
+      ? '<a href="' + item.url + '" target="_blank" class="mkt-action-btn mkt-action-primary" style="text-decoration:none;display:inline-block;">🔗 Access Resource</a>'
+      : '<button class="mkt-action-btn mkt-action-primary" data-forum-req="1" data-title="' + item.title + '" data-org="' + item.org + '">📩 ' + (item.type === 'seeking' ? 'Respond to Call' : 'Request Access') + '</button>';
+
+    return '<div class="forum-item-card">' +
+      '<div class="forum-item-header">' +
+        '<div>' +
+          '<div class="forum-item-title">' + item.title + '</div>' +
+          '<div class="forum-item-org">' + item.org + '</div>' +
+        '</div>' +
+        '<span style="font-size:0.68rem;font-weight:600;padding:3px 10px;border-radius:10px;white-space:nowrap;' + typeStyle + '">' + (typeLabel[item.type] || item.type) + '</span>' +
+      '</div>' +
+      '<div class="forum-item-desc">' + item.desc + '</div>' +
+      '<div style="margin-bottom:10px;">' + tags + '</div>' +
+      '<div class="forum-item-actions">' + actionBtn + '<button class="mkt-action-btn mkt-action-share" data-forum-share="1" data-title="' + item.title + '">🔗 Share</button></div>' +
+    '</div>';
+  }).join('');
+
+  content.onclick = function(e) {
+    var btn = e.target.closest('[data-forum-req]');
+    if (btn) { openForumRequest(btn.getAttribute('data-title'), btn.getAttribute('data-org')); return; }
+    var shareBtn = e.target.closest('[data-forum-share]');
+    if (shareBtn) { copyForumLink(shareBtn.getAttribute('data-title')); return; }
+  };
+  content.innerHTML =
+    '<div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px;background:' + station.color + ';border-radius:14px;">' +
+      '<div style="font-size:2.5rem;">' + station.icon + '</div>' +
+      '<div>' +
+        '<div style="font-family:Cormorant Garamond,serif;font-size:1.4rem;font-weight:700;">' + station.name + '</div>' +
+        '<div style="font-size:0.78rem;color:rgba(245,240,232,0.7);margin-top:4px;">' + station.desc + '</div>' +
+        '<div style="font-size:0.7rem;color:rgba(245,240,232,0.5);margin-top:6px;">' + station.items.length + ' offerings from ImaarishaSRHR network members</div>' +
+      '</div>' +
+    '</div>' +
+    itemsHtml;
+}
+
+function closeStation() {
+  currentStation = null;
+  document.getElementById('forum-stations-view').style.display = 'block';
+  document.getElementById('forum-station-detail').style.display = 'none';
+}
+
+function openForumRequest(title, org) {
+  var fakeItem = { title: title, organizations: { short_name: org }, price_type: 'free', icon: '🏪' };
+  openRequestModal(fakeItem);
+}
+
+function copyForumLink(title) {
+  navigator.clipboard.writeText(window.location.href + ' — Forum Marketplace: ' + title).then(function() {
+    var toast = document.getElementById('copied-toast');
+    if (toast) {
+      toast.textContent = '🔗 Link copied!';
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); toast.textContent = '✓ Response copied to clipboard!'; }, 2000);
+    }
+  });
+}
+
 async function handleLogout() { await _supabase.auth.signOut(); }
 
 </script>
@@ -5471,7 +5743,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <!-- NEW THREAD MODAL -->
 <div class="modal-overlay hidden" id="new-thread-modal">
   <div class="new-thread-box">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;margin-bottom:20px;">Start a New <span style="color:var(--gold)">Discussion</span></div>
+    <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;margin-bottom:20px;">Start a New <span style="color:var(--gold)">Discussion</span></div>
     <div class="auth-error" id="thread-error"></div>
     <div class="auth-field">
       <label>Subject</label>
@@ -5506,7 +5778,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="upload-modal">
   <div class="upload-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Add to <span style="color:var(--gold)">Resource Library</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Add to <span style="color:var(--gold)">Resource Library</span></div>
       <button class="modal-close" onclick="closeUploadModal()">✕</button>
     </div>
 
@@ -5595,7 +5867,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="report-modal">
   <div class="report-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Report <span style="color:#E74C3C">Disinformation</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Report <span style="color:#E74C3C">Disinformation</span></div>
       <button class="modal-close" onclick="closeReportModal()">✕</button>
     </div>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Spotted a false or misleading SRHR claim circulating in your community or online? Report it here and the network will coordinate a response.</div>
@@ -5708,7 +5980,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="rapid-modal">
   <div class="rapid-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Network Alert</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Network Alert</span></div>
       <button class="modal-close" onclick="closeRapidModal()">✕</button>
     </div>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Send an urgent alert to all 12 member organizations when a new SRHR claim is going viral and needs a coordinated response.</div>
@@ -5772,7 +6044,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="rapid-modal">
   <div class="rapid-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Alert</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Rapid Response <span style="color:#E74C3C">Alert</span></div>
       <button class="modal-close" onclick="closeRapidModal()">✕</button>
     </div>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Send an urgent alert to member organizations when a new disinformation claim is spreading fast and needs coordinated response.</div>
@@ -5810,7 +6082,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="submit-modal">
   <div class="submit-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Submit <span style="color:var(--gold)">Tracker Data</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Submit <span style="color:var(--gold)">Tracker Data</span></div>
       <button class="modal-close" onclick="closeSubmitModal()">✕</button>
     </div>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Submit your organization's quarterly data for SRHR indicators. All submissions are aggregated to update the network tracker.</div>
@@ -5851,7 +6123,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="list-offer-modal">
   <div class="list-offer-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">List an <span style="color:var(--gold)">Offering</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">List an <span style="color:var(--gold)">Offering</span></div>
       <button class="modal-close" onclick="closeListOfferModal()">✕</button>
     </div>
     <div class="auth-error" id="list-error"></div>
@@ -5904,7 +6176,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 <div class="modal-overlay hidden" id="request-modal">
   <div class="request-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;">Request / <span style="color:var(--gold)">Connect</span></div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Request / <span style="color:var(--gold)">Connect</span></div>
       <button class="modal-close" onclick="closeRequestModal()">✕</button>
     </div>
     <div id="request-listing-info" style="background:var(--dark3);border-radius:8px;padding:12px;margin-bottom:20px;font-size:0.82rem;"></div>
