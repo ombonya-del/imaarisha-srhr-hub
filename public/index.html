@@ -2823,7 +2823,7 @@ networks.</div>
 </div>
 
 <button class="btn btn-outline" style="flex-shrink:0"
-onclick="openReportModal(event)">+ Report
+onclick="openReportModal(eventvent)">+ Report
 a Claim</button>
 
 </div>
@@ -2833,121 +2833,6 @@ font-size:1.05rem; font-weight:600; margin-bottom:16px;">Active <span
 style="color:#E74C3C">Alerts</span></div>
 
 <div class="disinfo-grid">
-
-<div class="disinfo-item">
-
-<div class="disinfo-item-header">
-
-<div style="font-size:0.72rem; color:var(--muted)">Flagged: Mar 13,
-2026</div>
-
-<div class="disinfo-verdict verdict-false">FALSE</div>
-
-</div>
-
-<div class="disinfo-claim">"Modern contraceptives cause permanent
-infertility in young women"</div>
-
-<div class="disinfo-correction">Evidence from WHO and Kenya MoH
-confirms no long-term fertility impact from modern contraceptive use.
-Fertility typically returns within weeks of stopping most
-methods.</div>
-
-<div class="disinfo-meta">
-
-<span>📍 Spreading: WhatsApp, TikTok</span>
-
-<span style="color:#E74C3C">🔥 High spread</span>
-
-</div>
-
-</div>
-
-<div class="disinfo-item">
-
-<div class="disinfo-item-header">
-
-<div style="font-size:0.72rem; color:var(--muted)">Flagged: Mar 11,
-2026</div>
-
-<div class="disinfo-verdict verdict-misleading">MISLEADING</div>
-
-</div>
-
-<div class="disinfo-claim">"Comprehensive sexuality education
-promotes promiscuity among teenagers"</div>
-
-<div class="disinfo-correction">Peer-reviewed evidence consistently
-shows CSE delays sexual debut and increases protective behaviors. The
-framing misrepresents curriculum content.</div>
-
-<div class="disinfo-meta">
-
-<span>📍 Spreading: Facebook, Community radios</span>
-
-<span style="color:#E67E22">⚡ Medium spread</span>
-
-</div>
-
-</div>
-
-<div class="disinfo-item">
-
-<div class="disinfo-item-header">
-
-<div style="font-size:0.72rem; color:var(--muted)">Flagged: Mar 10,
-2026</div>
-
-<div class="disinfo-verdict verdict-false">FALSE</div>
-
-</div>
-
-<div class="disinfo-claim">"HIV can be cured by traditional herbs
---- doctors are hiding the cure"</div>
-
-<div class="disinfo-correction">No herbal cure for HIV exists.
-Antiretroviral therapy (ART) suppresses viral load to undetectable
-levels and enables healthy lives, but is not a cure. Delaying ART is
-dangerous.</div>
-
-<div class="disinfo-meta">
-
-<span>📍 Spreading: YouTube, WhatsApp</span>
-
-<span style="color:#E74C3C">🔥 High spread</span>
-
-</div>
-
-</div>
-
-<div class="disinfo-item">
-
-<div class="disinfo-item-header">
-
-<div style="font-size:0.72rem; color:var(--muted)">Flagged: Mar 7,
-2026</div>
-
-<div class="disinfo-verdict verdict-partial">PARTIALLY FALSE</div>
-
-</div>
-
-<div class="disinfo-claim">"Safe abortion services are illegal
-everywhere in Kenya"</div>
-
-<div class="disinfo-correction">Kenya's Constitution (Article 26)
-permits abortion where life or health of the mother is at risk or an
-emergency exists. Blanket claims of total illegality are inaccurate and
-deter women from accessing legal care.</div>
-
-<div class="disinfo-meta">
-
-<span>📍 Spreading: Twitter/X, Community meetings</span>
-
-<span style="color:#F1C40F">• Low spread</span>
-
-</div>
-
-</div>
 
 </div>
 
@@ -3982,7 +3867,7 @@ async function loadDisinfo() {
         (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Verified Sources</div>' + sourcesHtml : '') +
         '<div class="disinfo-actions">' +
           '<button class="disinfo-btn disinfo-btn-copy" onclick="copyResponse(event, '' + d.id + '')">📋 Copy Response Template</button>' +
-          '<button class="disinfo-btn disinfo-btn-report" onclick="openReportModal(event)">⚠️ Report Similar Claim</button>' +
+          '<button class="disinfo-btn disinfo-btn-report" onclick="openReportModal(eventvent)">⚠️ Report Similar Claim</button>' +
         '</div>' +
       '</div>' +
       '<div class="disinfo-meta"><span>📍 ' + platforms + '</span><span style="color:' + sColor + '">' + sLabel + '</span></div>';
