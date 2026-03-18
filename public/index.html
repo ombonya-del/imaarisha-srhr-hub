@@ -2823,7 +2823,7 @@ networks.</div>
 </div>
 
 <button class="btn btn-outline" style="flex-shrink:0"
-onclick="openReportModal(eventvent)">+ Report
+onclick="openReportModal(event)">+ Report
 a Claim</button>
 
 </div>
@@ -3821,7 +3821,7 @@ var disinfoSources = {
       { label: 'WHO — Safe Abortion Care Guideline 2022', url: 'https://www.who.int/publications/i/item/9789240039483' },
       { label: 'Kenya MoH — Standards & Guidelines for Reducing Morbidity & Mortality from Unsafe Abortion', url: 'https://www.health.go.ke' },
     ],
-    response: 'FACT: Safe abortion services are NOT illegal in all circumstances in Kenya. The Constitution of Kenya (Article 26) permits abortion when the life or health of the mother is at risk, or in an emergency. Spreading misinformation about abortion legality puts women's lives at risk by deterring them from accessing legal, safe care. Women deserve accurate information. #AbortionIsHealthcare #KenyaConstitution'
+    response: 'FACT: Safe abortion services are NOT illegal in all circumstances in Kenya. The Constitution of Kenya (Article 26) permits abortion when the life or health of the mother is at risk, or in an emergency. Spreading misinformation about abortion legality puts lives at risk and deters people from accessing legal, safe care. All women deserve accurate information. #AbortionIsHealthcare #KenyaConstitution'
   }
 };
 
@@ -3866,8 +3866,8 @@ async function loadDisinfo() {
       '<div class="disinfo-sources" id="sources-' + d.id + '">' +
         (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Verified Sources</div>' + sourcesHtml : '') +
         '<div class="disinfo-actions">' +
-          '<button class="disinfo-btn disinfo-btn-copy" onclick="copyResponse(event, '' + d.id + '')">📋 Copy Response Template</button>' +
-          '<button class="disinfo-btn disinfo-btn-report" onclick="openReportModal(eventvent)">⚠️ Report Similar Claim</button>' +
+          '<button class="disinfo-btn disinfo-btn-copy" data-action="copy" data-id="' + d.id + '">📋 Copy Response Template</button>' +
+          '<button class="disinfo-btn disinfo-btn-report" data-action="report">⚠️ Report Similar Claim</button>' +
         '</div>' +
       '</div>' +
       '<div class="disinfo-meta"><span>📍 ' + platforms + '</span><span style="color:' + sColor + '">' + sLabel + '</span></div>';
@@ -3876,7 +3876,10 @@ async function loadDisinfo() {
     item.dataset.response = responseText;
 
     item.addEventListener('click', function(e) {
-      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+      var action = e.target.getAttribute('data-action');
+      if (action === 'copy') { copyResponse(e, d.id); return; }
+      if (action === 'report') { openReportModal(e); return; }
+      if (e.target.tagName === 'A') return;
       const sourcesEl = document.getElementById('sources-' + d.id);
       const hint = item.querySelector('.disinfo-expand-hint');
       if (sourcesEl.classList.contains('open')) {
