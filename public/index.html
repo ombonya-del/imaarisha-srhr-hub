@@ -6377,36 +6377,74 @@ async function handleRsvp(eventId, status, btn) {
 // ORGANIZATIONS - FULL PROFILES
 // ============================================================
 
-function openOrgProfile(orgName, orgData) {
+async function openOrgProfile(orgName, orgData) {
   var profile = orgProfileData[orgName] || orgProfileData[Object.keys(orgProfileData).find(function(k) { return orgName.includes(k.split(' ')[0]); })];
   if (!profile) return;
 
   var modal = document.getElementById('org-profile-modal');
   var banner = document.getElementById('org-profile-banner');
   banner.style.background = orgData.avatar_gradient || 'linear-gradient(135deg,#2A6B5E,#C9A84C)';
-  document.getElementById('org-profile-icon').textContent = profile.icon || orgData.avatar_emoji || '🏛';
+  document.getElementById('org-profile-icon').textContent = profile.icon || '🏛';
   document.getElementById('org-profile-name').textContent = orgName;
   document.getElementById('org-profile-focus').textContent = orgData.focus_area || '';
 
   var body = document.getElementById('org-profile-body');
-  var counties = (profile.counties || []).map(function(c) { return '<span class="county-tag high">' + c + '</span>'; }).join('');
-  var programs = (profile.programs || []).map(function(p) { return '<div class="org-program-item"><span style="color:var(--gold);flex-shrink:0;">→</span>' + p + '</div>'; }).join('');
+  body.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading profile...</div>';
+  modal.classList.remove('hidden');
+
+  // Fetch related data in parallel
+  var [eventsRes, discussionsRes, marketplaceRes] = await Promise.all([
+    _supabase.from('event_rsvps').select('events(title, event_date)').eq('status', 'going').limit(3),
+    _supabase.from('discussions').select('subject, reply_count').order('created_at', {ascending:false}).limit(3),
+    _supabase.from('marketplace_listings').select('title, category').eq('is_active', true).limit(4)
+  ]);
+
+  var counties = (profile.counties || []).map(function(c) {
+    var isFocus = ['Nairobi','Narok','Homa Bay'].indexOf(c) > -1;
+    return '<span class="county-tag high" style="' + (isFocus ? 'border-color:var(--gold);color:var(--gold-light);' : '') + '">' + c + (isFocus ? ' ★' : '') + '</span>';
+  }).join('');
+
+  var programs = (profile.programs || []).map(function(p) {
+    return '<div class="org-program-item"><span style="color:var(--gold);flex-shrink:0;">→</span>' + p + '</div>';
+  }).join('');
+
+  var indicators = (orgContributions[orgName] || orgContributions[Object.keys(orgContributions).find(function(k){return orgName.includes(k.split(' ')[0]);})]);
+  var indicatorsHtml = indicators ? indicators.indicators.map(function(ind) {
+    return '<span style="font-size:0.68rem;background:var(--dark3);border:1px solid var(--border);padding:3px 10px;border-radius:10px;margin:2px;display:inline-block;">' + ind + '</span>';
+  }).join('') : '';
+
   var tags = (orgData.tags || []).map(function(t) { return '<span class="resource-tag highlight">' + t + '</span>'; }).join('');
-  var contactBtn = profile.website ? '<a href="' + profile.website + '" target="_blank" class="org-contact-btn">🌐 Visit Website</a>' : '<a href="mailto:' + profile.contact + '" class="org-contact-btn">✉️ ' + profile.contact + '</a>';
+
+  var contactBtns =
+    (profile.website ? '<a href="' + profile.website + '" target="_blank" class="org-contact-btn" style="margin-bottom:8px;">🌐 Visit Website</a>' : '') +
+    '<a href="mailto:' + profile.contact + '" class="org-contact-btn">✉️ ' + profile.contact + '</a>';
+
+  var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+  var editBtn = isAdmin ? '<button class="btn btn-outline" style="font-size:0.72rem;padding:6px 14px;margin-top:8px;" data-org-edit="1" data-org-id="' + orgData.id + '">✏️ Edit Profile</button>' : '';
 
   body.innerHTML =
     '<div style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:16px;">' + (orgData.description || '') + '</div>' +
+
     '<div class="org-stat-row">' +
       '<div class="org-stat"><div class="org-stat-val">' + profile.founded + '</div><div class="org-stat-label">Founded</div></div>' +
       '<div class="org-stat"><div class="org-stat-val">' + profile.staff + '</div><div class="org-stat-label">Staff</div></div>' +
       '<div class="org-stat"><div class="org-stat-val">' + profile.beneficiaries + '</div><div class="org-stat-label">Beneficiaries</div></div>' +
     '</div>' +
-    '<div class="org-section-title">Key Programmes</div>' + programs +
-    '<div class="org-section-title">County Presence</div><div class="tracker-counties" style="margin-bottom:16px;">' + counties + '</div>' +
-    '<div class="org-section-title">Focus Areas</div><div style="margin-bottom:16px;">' + tags + '</div>' +
-    '<div class="org-section-title">Contact</div>' + contactBtn;
 
-  modal.classList.remove('hidden');
+    '<div class="org-section-title">Key Programmes</div>' + programs +
+
+    '<div class="org-section-title">County Presence</div>' +
+    '<div class="tracker-counties" style="margin-bottom:16px;">' + counties + '</div>' +
+
+    (indicatorsHtml ? '<div class="org-section-title">SRHR Tracker Contributions</div><div style="margin-bottom:16px;">' + indicatorsHtml + '</div>' : '') +
+
+    '<div class="org-section-title">Focus Areas</div><div style="margin-bottom:16px;">' + tags + '</div>' +
+
+    (indicators ? '<div class="org-section-title">Network Role</div><div style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:16px;">' + indicators.contribution + '</div>' : '') +
+
+    '<div class="org-section-title">Contact</div>' +
+    '<div style="display:flex;flex-direction:column;gap:6px;">' + contactBtns + '</div>' +
+    editBtn;
 }
 
 function closeOrgProfile() {
@@ -6421,15 +6459,32 @@ async function loadOrgs() {
   grid.innerHTML = '';
   data.forEach(function(o) {
     var tags = (o.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i===0?' highlight':'') + '">' + t + '</span>'; }).join('');
+    var profile = orgProfileData[o.name] || orgProfileData[Object.keys(orgProfileData).find(function(k) { return o.name.includes(k.split(' ')[0]); })];
+    var icon = profile ? profile.icon : '🏛';
+    var grad = o.avatar_gradient || 'linear-gradient(135deg,#2A6B5E,#C9A84C)';
+    var counties = profile ? (profile.counties || []).slice(0,3).join(', ') : '';
     var card = document.createElement('div');
     card.className = 'resource-card';
     card.style.cursor = 'pointer';
+    card.style.padding = '0';
+    card.style.overflow = 'hidden';
     card.innerHTML =
-      '<div class="resource-type">' + o.focus_area + '</div>' +
-      '<div class="resource-title">' + o.name + '</div>' +
-      '<div style="font-size:0.75rem;color:var(--muted);margin:8px 0;line-height:1.5">' + (o.description||'') + '</div>' +
-      '<div>' + tags + '</div>' +
-      '<div style="margin-top:10px;font-size:0.72rem;color:var(--gold);">View full profile →</div>';
+      '<div style="height:60px;background:' + grad + ';display:flex;align-items:center;padding:0 16px;gap:12px;">' +
+        '<div style="font-size:1.8rem;">' + icon + '</div>' +
+        '<div>' +
+          '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(245,240,232,0.7);">' + (o.focus_area||'') + '</div>' +
+          '<div style="font-size:0.88rem;font-weight:700;color:white;">' + o.short_name + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:14px 16px;">' +
+        '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;line-height:1.5;">' + (o.description||'').substring(0,120) + '...</div>' +
+        (counties ? '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">📍 ' + counties + '</div>' : '') +
+        '<div style="margin-bottom:10px;">' + tags + '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+          '<span style="font-size:0.72rem;color:var(--gold);font-weight:600;">View full profile →</span>' +
+          (profile ? '<span style="font-size:0.68rem;color:var(--muted);">Est. ' + profile.founded + '</span>' : '') +
+        '</div>' +
+      '</div>';
     card.addEventListener('click', function() { openOrgProfile(o.name, o); });
     grid.appendChild(card);
   });
@@ -6488,7 +6543,17 @@ function filterMembers(query) {
 
 window.addEventListener('DOMContentLoaded', function() {
   var orgModal = document.getElementById('org-profile-modal');
-  if (orgModal) orgModal.addEventListener('click', function(e) { if (e.target === this) closeOrgProfile(); });
+  if (orgModal) {
+    orgModal.addEventListener('click', function(e) { if (e.target === this) closeOrgProfile(); });
+    orgModal.addEventListener('click', function(e) {
+      var editBtn = e.target.closest('[data-org-edit]');
+      if (editBtn) {
+        var orgId = editBtn.getAttribute('data-org-id');
+        closeOrgProfile();
+        setTimeout(function() { adminOpenEdit('organizations', orgId, 'loadOrgs'); }, 100);
+      }
+    });
+  }
 });
 
 
@@ -7005,6 +7070,15 @@ var _editSchemas = {
     { id: 'hashtag', label: 'Hashtag', type: 'input' },
     { id: 'cta_url', label: 'Call to Action URL', type: 'input' },
     { id: 'platforms', label: 'Platforms (comma separated)', type: 'input', transform: 'array' }
+  ],
+  organizations: [
+    { id: 'name', label: 'Full Name', type: 'input' },
+    { id: 'short_name', label: 'Short Name', type: 'input' },
+    { id: 'description', label: 'Description', type: 'textarea' },
+    { id: 'focus_area', label: 'Focus Area', type: 'input' },
+    { id: 'website', label: 'Website URL', type: 'input' },
+    { id: 'contact_email', label: 'Contact Email', type: 'input' },
+    { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
   ],
   disinformation_claims: [
     { id: 'claim', label: 'Claim', type: 'textarea' },
