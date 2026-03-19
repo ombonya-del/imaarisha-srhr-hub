@@ -6428,6 +6428,7 @@ async function loadOrgs() {
   if (!grid) return;
   grid.innerHTML = '';
   data.forEach(function(o) {
+    try {
     var tags = (o.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i===0?' highlight':'') + '">' + t + '</span>'; }).join('');
     var profile = orgProfileData[o.name] || orgProfileData[Object.keys(orgProfileData).find(function(k) { return o.name.includes(k.split(' ')[0]); })];
     var icon = profile ? profile.icon : '🏛';
@@ -6444,7 +6445,7 @@ async function loadOrgs() {
           '<div class="resource-title" style="margin:0;">' + o.short_name + '</div>' +
         '</div>' +
       '</div>' +
-      '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;line-height:1.5;">' + (o.description||'').substring(0,100) + '...</div>' +
+      '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;line-height:1.5;">' + ((o.description||'').substring(0,100)) + '</div>' +
       (counties ? '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">📍 ' + counties + '</div>' : '') +
       '<div style="margin-bottom:8px;">' + tags + '</div>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;">' +
@@ -6453,6 +6454,7 @@ async function loadOrgs() {
       '</div>';
     card.addEventListener('click', function() { openOrgProfile(o.name, o); });
     grid.appendChild(card);
+    } catch(e) { console.error('Org card error for ' + o.name + ':', e.message); }
   });
 }
 
