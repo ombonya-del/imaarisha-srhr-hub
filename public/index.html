@@ -7242,8 +7242,24 @@ function onToolkitFileSelect(input) {
   var ext = fname.split('.').pop().toLowerCase();
   var iconMap = { pdf: '📄', zip: '📦', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬', csv: '📊', xlsx: '📊', xls: '📊' };
   var detectedIcon = iconMap[ext] || '📄';
+  console.log('Detected icon:', detectedIcon, 'for ext:', ext);
   var iconEl = document.getElementById('tk-icon');
-  iconEl.value = detectedIcon;
+  console.log('Icon element:', iconEl, 'modal visible:', document.getElementById('upload-toolkit-modal') ? document.getElementById('upload-toolkit-modal').classList.contains('hidden') : 'not found');
+  if (iconEl) {
+    iconEl.value = detectedIcon;
+    iconEl.style.fontSize = '1.4rem';
+    iconEl.style.textAlign = 'center';
+    iconEl.style.borderColor = 'var(--gold)';
+    iconEl.style.background = 'var(--gold-dim)';
+    console.log('Icon field value after set:', iconEl.value);
+  } else {
+    console.error('tk-icon element NOT FOUND in DOM');
+    // Try setting via all inputs
+    document.querySelectorAll('input[placeholder="🖼"]').forEach(function(el) {
+      console.log('Found emoji input:', el.id);
+      el.value = detectedIcon;
+    });
+  }
   // Auto-fill title if empty
   var titleEl = document.getElementById('tk-title');
   if (!titleEl.value) {
