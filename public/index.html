@@ -7223,7 +7223,6 @@ var _toolkitFile = null;
 function onToolkitFileSelect(input) {
   var file = input && input.files && input.files[0] ? input.files[0] : null;
   if (!file) { console.log('No file selected'); return; }
-  console.log('File selected:', file.name, file.type, file.size);
   var maxSize = 50 * 1024 * 1024; // 50MB
   if (file.size > maxSize) {
     alert('File too large. Maximum size is 50MB. Your file is ' + (file.size/1024/1024).toFixed(1) + 'MB.');
@@ -7242,9 +7241,7 @@ function onToolkitFileSelect(input) {
   var ext = fname.split('.').pop().toLowerCase();
   var iconMap = { pdf: '🔴', zip: '📦', pptx: '📊', ppt: '📊', docx: '📘', doc: '📘', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬', csv: '📊', xlsx: '📗', xls: '📗', mp3: '🎵', wav: '🎵' };
   var detectedIcon = iconMap[ext] || '📎';
-  console.log('Detected icon:', detectedIcon, 'for ext:', ext);
   var iconEl = document.getElementById('tk-icon');
-  console.log('Icon element:', iconEl, 'modal visible:', document.getElementById('upload-toolkit-modal') ? document.getElementById('upload-toolkit-modal').classList.contains('hidden') : 'not found');
   if (iconEl) {
     iconEl.value = detectedIcon;
     iconEl.style.borderColor = '#C9A84C';
@@ -7257,9 +7254,7 @@ function onToolkitFileSelect(input) {
       document.execCommand('selectAll', false, null);
       iconEl.blur();
     }, 50);
-    console.log('Icon field value after set:', iconEl.value);
   } else {
-    console.error('tk-icon element NOT FOUND in DOM');
     // Try setting via all inputs
     document.querySelectorAll('input[placeholder="🖼"]').forEach(function(el) {
       console.log('Found emoji input:', el.id);
