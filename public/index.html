@@ -1700,6 +1700,12 @@ flex; justify-content: space-between; }
 .edit-event-box .auth-field textarea { min-height: 80px; resize: none; }
 .edit-event-box .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+
+.cal-day.has-event { color: var(--gold-light); font-weight: 600; cursor: pointer; }
+.cal-day.has-event:hover { background: var(--gold-dim); border-radius: 4px; }
+.cal-day.today { background: var(--gold); color: var(--dark); border-radius: 4px; font-weight: 700; }
+.cal-day.today.has-event { background: var(--gold); }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -2536,106 +2542,15 @@ Open to all member organizations</div>
 </div>
 
 <!-- MINI CALENDAR -->
-
 <div>
-
-<div class="mini-calendar">
-
-<div class="cal-header">
-
-<span class="cal-nav">‹</span>
-
-<span class="cal-month">March 2026</span>
-
-<span class="cal-nav">›</span>
-
-</div>
-
-<div class="cal-grid">
-
-<div class="cal-day-header">M</div><div
-class="cal-day-header">T</div>
-
-<div class="cal-day-header">W</div><div
-class="cal-day-header">T</div>
-
-<div class="cal-day-header">F</div><div
-class="cal-day-header">S</div>
-
-<div class="cal-day-header">S</div>
-
-<!-- Week 1 -->
-
-<div class="cal-day"></div><div class="cal-day"></div><div
-class="cal-day"></div>
-
-<div class="cal-day"></div><div class="cal-day"></div><div
-class="cal-day">1</div>
-
-<div class="cal-day">2</div>
-
-<!-- Week 2 -->
-
-<div class="cal-day">3</div><div
-class="cal-day">4</div><div class="cal-day">5</div>
-
-<div class="cal-day">6</div><div
-class="cal-day">7</div><div class="cal-day">8</div>
-
-<div class="cal-day">9</div>
-
-<!-- Week 3 -->
-
-<div class="cal-day">10</div><div
-class="cal-day">11</div><div class="cal-day">12</div>
-
-<div class="cal-day">13</div><div class="cal-day">14</div>
-
-<div class="cal-day today">15</div>
-
-<div class="cal-day">16</div>
-
-<!-- Week 4 -->
-
-<div class="cal-day">17</div><div
-class="cal-day">18</div><div class="cal-day">19</div>
-
-<div class="cal-day">20</div><div class="cal-day">21</div>
-
-<div class="cal-day has-event">22</div>
-
-<div class="cal-day">23</div>
-
-<!-- Week 5 -->
-
-<div class="cal-day">24</div><div
-class="cal-day">25</div><div class="cal-day">26</div>
-
-<div class="cal-day">27</div><div class="cal-day">28</div>
-
-<div class="cal-day">29</div><div class="cal-day">30</div>
-
-<div class="cal-day">31</div>
-
-</div>
-
-</div>
-
-<div class="card" style="margin-top:16px">
-
-<div class="card-title" style="font-size:0.9rem">My
-<span>RSVPs</span></div>
-
-<div style="font-size:0.8rem; color:var(--muted); padding: 8px 0;
-border-bottom:1px solid var(--border)">SRHR Data Symposium <span
-style="float:right; color:var(--accent2)">✓ Going</span></div>
-
-<div style="font-size:0.8rem; color:var(--muted); padding: 8px
-0">Digital Health Webinar <span style="float:right;
-color:var(--gold)">? Maybe</span></div>
-
-</div>
-
+  <div class="mini-calendar">
+    <div class="cal-header">
+      <span class="cal-nav" onclick="calNav(-1)" style="cursor:pointer">‹</span>
+      <span class="cal-month" id="cal-month-label">Loading...</span>
+      <span class="cal-nav" onclick="calNav(1)" style="cursor:pointer">›</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
 </div>
 
 </div>
@@ -6241,7 +6156,15 @@ async function loadEvents() {
     card.className = 'event-card';
     card.dataset.eventId = e.id;
     card.innerHTML =
-      '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en',{month:'short'}).toUpperCase() + '</div></div>' +
+      (function() {
+      var dateBlock = '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en',{month:'short'}).toUpperCase() + '</div>';
+      if (e.end_date && e.end_date !== e.event_date) {
+        var dEnd = new Date(e.end_date + 'T00:00:00');
+        dateBlock += '<div style="font-size:0.55rem;color:var(--muted);margin-top:2px;">— ' + dEnd.getDate() + ' ' + dEnd.toLocaleString('en',{month:'short'}).toUpperCase() + '</div>';
+      }
+      dateBlock += '</div>';
+      return dateBlock;
+    })() +
       '<div class="event-body">' +
         '<div style="display:flex;align-items:flex-start;gap:8px;">' +
           '<div class="event-title" style="flex:1">' + e.title + '</div>' +
@@ -6285,6 +6208,8 @@ async function loadEvents() {
 
   // Update My RSVPs sidebar
   updateMyRsvps(data);
+  // Render dynamic calendar
+  renderCalendar(data);
 }
 
 function updateMyRsvps(events) {
@@ -6507,6 +6432,7 @@ async function submitCreateEvent() {
     is_virtual: location.toLowerCase().includes('zoom') || location.toLowerCase().includes('online'),
     host_orgs: hostArr,
     tags: tags,
+    end_date: document.getElementById('ev-end-date') ? (document.getElementById('ev-end-date').value || null) : null,
     capacity: capacity ? parseInt(capacity) : null,
     created_by: currentUser ? currentUser.id : null,
     rsvp_count: 0
@@ -6733,6 +6659,7 @@ function openEditEvent(e, eventId) {
     document.getElementById('edit-ev-desc').value = ev.description || '';
     document.getElementById('edit-ev-date').value = ev.event_date || '';
     document.getElementById('edit-ev-start').value = ev.start_time || '';
+    if (document.getElementById('edit-ev-end-date')) document.getElementById('edit-ev-end-date').value = ev.end_date || '';
     document.getElementById('edit-ev-end').value = ev.end_time || '';
     document.getElementById('edit-ev-location').value = ev.location || '';
     document.getElementById('edit-ev-hosts').value = (ev.host_orgs || []).join(', ');
@@ -6773,9 +6700,11 @@ async function submitEditEvent() {
   var btn = document.getElementById('edit-event-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
 
+  var endDate = document.getElementById('edit-ev-end-date') ? document.getElementById('edit-ev-end-date').value : null;
   var { error } = await _supabase.from('events').update({
     title: title, description: desc,
     event_date: date, event_type: type,
+    end_date: endDate || null,
     start_time: start || null, end_time: end || null,
     location: location,
     is_virtual: location.toLowerCase().includes('zoom') || location.toLowerCase().includes('online') || location.toLowerCase().includes('virtual'),
@@ -6805,6 +6734,71 @@ window.addEventListener('DOMContentLoaded', function() {
   var editModal = document.getElementById('edit-event-modal');
   if (editModal) editModal.addEventListener('click', function(e) { if (e.target === this) closeEditEvent(); });
 });
+
+
+// ============================================================
+// DYNAMIC CALENDAR
+// ============================================================
+
+var _calYear = new Date().getFullYear();
+var _calMonth = new Date().getMonth();
+var _calEvents = [];
+
+function calNav(dir) {
+  _calMonth += dir;
+  if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+  if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+  renderCalendar(_calEvents);
+}
+
+function renderCalendar(events) {
+  _calEvents = events || _calEvents;
+  var grid = document.getElementById('cal-grid');
+  var label = document.getElementById('cal-month-label');
+  if (!grid || !label) return;
+
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  label.textContent = monthNames[_calMonth] + ' ' + _calYear;
+
+  // Build set of event dates (including ranges)
+  var eventDays = {};
+  _calEvents.forEach(function(ev) {
+    var start = new Date(ev.event_date + 'T00:00:00');
+    var end = ev.end_date ? new Date(ev.end_date + 'T00:00:00') : start;
+    var cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getFullYear() === _calYear && cur.getMonth() === _calMonth) {
+        var key = cur.getDate();
+        if (!eventDays[key]) eventDays[key] = [];
+        eventDays[key].push(ev.title);
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+
+  // Build calendar grid
+  var firstDay = new Date(_calYear, _calMonth, 1).getDay();
+  // Convert Sunday=0 to Monday=0
+  firstDay = (firstDay + 6) % 7;
+  var daysInMonth = new Date(_calYear, _calMonth + 1, 0).getDate();
+  var today = new Date();
+  var isCurrentMonth = today.getFullYear() === _calYear && today.getMonth() === _calMonth;
+
+  var html = '<div class="cal-day-header">M</div><div class="cal-day-header">T</div><div class="cal-day-header">W</div><div class="cal-day-header">T</div><div class="cal-day-header">F</div><div class="cal-day-header">S</div><div class="cal-day-header">S</div>';
+
+  // Empty cells before first day
+  for (var i = 0; i < firstDay; i++) html += '<div class="cal-day"></div>';
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var cls = 'cal-day';
+    if (isCurrentMonth && d === today.getDate()) cls += ' today';
+    if (eventDays[d]) cls += ' has-event';
+    var title = eventDays[d] ? ' title="' + eventDays[d].join(', ').replace(/"/g,'') + '"' : '';
+    html += '<div class="' + cls + '"' + title + '>' + d + (eventDays[d] ? '<div style="width:4px;height:4px;border-radius:50%;background:var(--gold);margin:1px auto 0;"></div>' : '') + '</div>';
+  }
+
+  grid.innerHTML = html;
+}
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
@@ -7332,9 +7326,15 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     </div>
     <div class="auth-field two-col">
       <div>
-        <label>Date</label>
+        <label>Start Date</label>
         <input type="date" id="ev-date" />
       </div>
+      <div>
+        <label>End Date (multi-day)</label>
+        <input type="date" id="ev-end-date" />
+      </div>
+    </div>
+    <div class="auth-field two-col">
       <div>
         <label>Event Type</label>
         <select id="ev-type">
@@ -7503,9 +7503,15 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     </div>
     <div class="auth-field two-col">
       <div>
-        <label>Date</label>
+        <label>Start Date</label>
         <input type="date" id="edit-ev-date" />
       </div>
+      <div>
+        <label>End Date (multi-day)</label>
+        <input type="date" id="edit-ev-end-date" />
+      </div>
+    </div>
+    <div class="auth-field two-col">
       <div>
         <label>Event Type</label>
         <select id="edit-ev-type">
