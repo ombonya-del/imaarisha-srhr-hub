@@ -6549,36 +6549,22 @@ async function extractEventFromUrl() {
   }, 1800);
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var supabaseUrl = 'https://uwxtqyqyrhhxqagaqelg.supabase.co';
+    var supabaseKey = 'sb_publishable_Pb0w9uNgDR_JILXFTraxDw_OHQjbsP5';
+    var response = await fetch(supabaseUrl + '/functions/v1/extract-event', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{
-          role: 'user',
-          content: 'Search for and read the event page at this URL: ' + url + '\n\nExtract the event details and return ONLY a JSON object with these exact fields (no markdown, no explanation):\n{\n  "title": "full event title",\n  "description": "2-3 sentence description of the event, who it is for and what will happen",\n  "date": "YYYY-MM-DD format if available, otherwise null",\n  "start_time": "e.g. 9:00 AM or null",\n  "location": "city and venue or Online (platform) or null",\n  "is_virtual": true or false,\n  "host_orgs": ["org1", "org2"],\n  "tags": ["tag1", "tag2", "tag3"],\n  "event_type": "one of: convening, webinar, workshop, training, symposium, other",\n  "registration_url": "registration URL if found or the original URL"\n}'
-        }]
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + supabaseKey
+      },
+      body: JSON.stringify({ url: url })
     });
 
     clearInterval(msgTimer);
-    var data = await response.json();
+    var result = await response.json();
 
-    // Extract text from response
-    var rawText = '';
-    if (data.content) {
-      data.content.forEach(function(block) {
-        if (block.type === 'text') rawText += block.text;
-      });
-    }
-
-    // Parse JSON from response
-    var jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Could not extract event data from page');
-
-    var eventData = JSON.parse(jsonMatch[0]);
+    if (!result.success) throw new Error(result.error || 'Extraction failed');
+    var eventData = result.event;
 
     // Populate form fields
     document.getElementById('feed-title').value = eventData.title || '';
