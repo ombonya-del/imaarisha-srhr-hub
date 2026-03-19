@@ -7205,7 +7205,7 @@ function openUploadToolkit() {
   document.getElementById('tk-title').value = '';
   document.getElementById('tk-sub').value = '';
   document.getElementById('tk-url').value = '';
-  document.getElementById('tk-icon').value = '📄';
+  document.getElementById('tk-icon').value = '📎';
   document.getElementById('tk-drop-label').textContent = 'Click to select a file (PDF, ZIP, PPTX, DOCX, JPG, PNG)';
   var zone = document.getElementById('tk-drop-zone');
   zone.style.borderColor = '';
@@ -7240,8 +7240,8 @@ function onToolkitFileSelect(input) {
   zone.style.background = 'var(--gold-dim)';
   // Auto-detect icon
   var ext = fname.split('.').pop().toLowerCase();
-  var iconMap = { pdf: '📄', zip: '📦', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬', csv: '📊', xlsx: '📊', xls: '📊' };
-  var detectedIcon = iconMap[ext] || '📄';
+  var iconMap = { pdf: '🔴', zip: '📦', pptx: '📊', ppt: '📊', docx: '📘', doc: '📘', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬', csv: '📊', xlsx: '📗', xls: '📗', mp3: '🎵', wav: '🎵' };
+  var detectedIcon = iconMap[ext] || '📎';
   console.log('Detected icon:', detectedIcon, 'for ext:', ext);
   var iconEl = document.getElementById('tk-icon');
   console.log('Icon element:', iconEl, 'modal visible:', document.getElementById('upload-toolkit-modal') ? document.getElementById('upload-toolkit-modal').classList.contains('hidden') : 'not found');
