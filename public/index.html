@@ -3699,7 +3699,7 @@ async function loadResources() {
     ) : '';
     const card = document.createElement('div');
     card.className = 'resource-card';
-    card.innerHTML = '<div class="resource-type">' + (icons[r.type] || '📄') + ' ' + r.type + '</div><div class="resource-title">' + r.title + '</div>' + (r.description ? '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;line-height:1.4">' + r.description + '</div>' : '') + '<div>' + tags + '</div><div class="resource-meta"><span>' + (r.source_org || '') + '</span><span>' + (r.file_type || '') + (r.file_size ? ' · ' + r.file_size : '') + '</span></div>' + actionBtn;
+    card.innerHTML = '<div style="display:flex;gap:6px;align-items:flex-start"><div style="flex:1"><div class="resource-type">' + (icons[r.type] || '📄') + ' ' + r.type + '</div><div class="resource-title">' + r.title + '</div></div>' + adminBtns('resources', r.id, 'loadResources') + '</div>' + (r.description ? '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;line-height:1.4">' + r.description + '</div>' : '') + '<div>' + tags + '</div><div class="resource-meta"><span>' + (r.source_org || '') + '</span><span>' + (r.file_type || '') + (r.file_size ? ' · ' + r.file_size : '') + '</span></div>' + actionBtn;
     grid.appendChild(card);
   });
   // Update badge
@@ -3723,7 +3723,7 @@ async function loadDiscussions() {
     const el = document.createElement('div');
     el.className = 'discussion-item';
     el.style.cursor = 'pointer';
-    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div></div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
+    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div>' + adminBtns('discussions', d.id, 'loadDiscussions') + '</div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
     el.addEventListener('click', function() { openDiscModal(d.id, d.subject, meta); });
     container.appendChild(el);
   });
@@ -3756,7 +3756,7 @@ async function loadCampaigns() {
   data.forEach(function(c) {
     const card = document.createElement('div');
     card.className = 'campaign-card';
-    card.innerHTML = '<div class="campaign-banner" style="background:' + c.banner_gradient + '">' + (c.banner_emoji || '📣') + '</div><div class="campaign-body"><div class="campaign-title">' + c.title + '</div><div class="campaign-desc">' + (c.description || '') + '</div><div class="campaign-stats"><span>Reach: <strong>' + formatNum(c.reach) + '</strong></span><span>Posts: <strong>' + formatNum(c.post_count) + '</strong></span><span>Orgs: <strong>' + (c.org_count || 0) + '</strong></span></div></div>';
+    card.innerHTML = '<div class="campaign-banner" style="background:' + c.banner_gradient + '">' + (c.banner_emoji || '📣') + '</div><div class="campaign-body"><div style="display:flex;gap:6px;align-items:flex-start"><div class="campaign-title" style="flex:1">' + c.title + '</div>' + adminBtns('campaigns', c.id, 'loadCampaigns') + '</div><div class="campaign-desc">' + (c.description || '') + '</div><div class="campaign-meta"><span class="campaign-hashtag">' + (c.hashtag || '') + '</span></div></div>';
     grid.appendChild(card);
   });
   grid.appendChild(placeholder);
@@ -4266,7 +4266,7 @@ async function loadDisinfo() {
     item.className = 'disinfo-item';
     item.dataset.id = d.id;
     item.innerHTML =
-      '<div class="disinfo-item-header"><div style="font-size:0.72rem;color:var(--muted)">Flagged: ' + flagged + '</div><div class="disinfo-verdict ' + vClass + '">' + vLabel + '</div></div>' +
+      '<div class="disinfo-item-header"><div style="font-size:0.72rem;color:var(--muted)">Flagged: ' + flagged + '</div><div class="disinfo-verdict ' + vClass + '">' + vLabel + '</div>' + adminBtns('disinformation_claims', d.id, 'loadDisinfo') + '</div>' +
       '<div class="disinfo-claim">' + d.claim + '</div>' +
       '<div class="disinfo-correction">' + d.correction + '</div>' +
       '<div class="disinfo-expand-hint">👆 Click to see sources & response template</div>' +
