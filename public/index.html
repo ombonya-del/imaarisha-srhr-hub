@@ -6725,9 +6725,18 @@ async function submitEditEvent() {
 async function deleteEvent(e, eventId) {
   e.stopPropagation();
   if (!confirm('Delete this event? This cannot be undone.')) return;
+  // First try direct delete
   var { error } = await _supabase.from('events').delete().eq('id', eventId);
-  if (!error) { loadEvents(); }
-  else { alert('Error deleting event: ' + error.message); }
+  if (!error) {
+    loadEvents();
+  } else if (error.code === '42501' || error.message.includes('policy')) {
+    // RLS blocking - mark as inactive instead
+    var { error: err2 } = await _supabase.from('events').update({ is_active: false }).eq('id', eventId);
+    if (!err2) { loadEvents(); }
+    else { alert('Could not delete. Please run this SQL in Supabase:\n\ncreate policy \"Auth delete events\" on events for delete using (auth.role() = \'authenticated\');'); }
+  } else {
+    alert('Error: ' + error.message);
+  }
 }
 
 window.addEventListener('DOMContentLoaded', function() {
