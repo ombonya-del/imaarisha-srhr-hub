@@ -3194,82 +3194,9 @@ track network-wide reach across member organizations.</div>
 
 </div>
 
-<div style="font-family:Cormorant Garamond,serif;
-font-size:1.05rem; font-weight:600; margin-bottom:16px;">Advocacy
-<span style="color:var(--gold)">Toolkit</span></div>
-
-<div class="toolkit-item">
-
-<div class="toolkit-icon">🖼</div>
-
-<div>
-
-<div class="toolkit-title">Social Media Asset Pack ---
-#SRHRRights254</div>
-
-<div class="toolkit-sub">20 graphics · 5 video templates · 3 story
-frames · English & Swahili</div>
-
-</div>
-
-<div class="toolkit-action">Download →</div>
-
-</div>
-
-<div class="toolkit-item">
-
-<div class="toolkit-icon">📝</div>
-
-<div>
-
-<div class="toolkit-title">Advocacy Brief --- County SRHR Budget
-Allocation 2026</div>
-
-<div class="toolkit-sub">2-page brief · Talking points · Data
-appendix</div>
-
-</div>
-
-<div class="toolkit-action">Download →</div>
-
-</div>
-
-<div class="toolkit-item">
-
-<div class="toolkit-icon">🎙</div>
-
-<div>
-
-<div class="toolkit-title">Media Engagement Guide --- SRHR
-Spokespeople</div>
-
-<div class="toolkit-sub">Key messages · Q&A prep · Interview
-tips</div>
-
-</div>
-
-<div class="toolkit-action">Download →</div>
-
-</div>
-
-<div class="toolkit-item">
-
-<div class="toolkit-icon">📊</div>
-
-<div>
-
-<div class="toolkit-title">Campaign Impact Tracker --- Shared
-Dashboard</div>
-
-<div class="toolkit-sub">Live reach metrics · Hashtag monitoring ·
-Org contribution breakdown</div>
-
-</div>
-
-<div class="toolkit-action">View Live →</div>
-
-</div>
-
+<div style="font-family:Cormorant Garamond,serif;font-size:1.05rem;font-weight:600;margin-bottom:16px;">Advocacy <span style="color:var(--gold)">Toolkit</span></div>
+<div id="campaign-toolkit-container" style="display:flex;flex-direction:column;gap:4px;">
+  <div style="color:var(--muted);font-size:0.8rem;padding:12px 0;">Loading toolkit assets...</div>
 </div>
 
 <!-- DISINFORMATION WATCH -->
@@ -3865,48 +3792,61 @@ async function loadCampaigns() {
 }
 
 async function loadCampaignToolkit() {
-  const { data } = await _supabase.from('campaign_toolkit').select('*').order('created_at', { ascending: false });
-  var toolkitContainer = document.querySelector('#panel-campaign .toolkit-item:first-of-type');
-  if (!toolkitContainer) return;
-  var parent = toolkitContainer.closest('.card, div');
+  var parent = document.getElementById('campaign-toolkit-container');
   if (!parent) return;
+  parent.innerHTML = '';
 
-  // Remove old static toolkit items
-  var items = parent.querySelectorAll('.toolkit-item');
-  items.forEach(function(item) { item.remove(); });
-
-  // Add + Upload button (admin only)
   var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+
+  // Add upload button for admin
   if (isAdmin) {
     var uploadBtn = document.createElement('button');
     uploadBtn.className = 'btn btn-outline';
-    uploadBtn.style.cssText = 'margin-bottom:12px;font-size:0.75rem;';
-    uploadBtn.textContent = '+ Upload Asset';
-    uploadBtn.addEventListener('click', function() { openUploadToolkit(); });
+    uploadBtn.style.cssText = 'margin-bottom:14px;font-size:0.75rem;width:fit-content;';
+    uploadBtn.innerHTML = '+ Upload Asset';
+    uploadBtn.onclick = function() { openUploadToolkit(); };
     parent.appendChild(uploadBtn);
   }
 
-  var toolkitItems = data && data.length ? data : [
-    { id: 'static-1', icon: '🖼', title: 'Social Media Asset Pack — #SRHRRights254', subtitle: '20 graphics · 5 video templates · English & Swahili', file_url: null },
-    { id: 'static-2', icon: '📝', title: 'Advocacy Brief — County SRHR Budget Allocation 2026', subtitle: '2-page brief · Talking points · Data appendix', file_url: null },
-    { id: 'static-3', icon: '🎙', title: 'Media Engagement Guide — SRHR Spokespeople', subtitle: 'Key messages · Q&A prep · Interview tips', file_url: null },
-    { id: 'static-4', icon: '📊', title: 'Campaign Impact Tracker — Shared Dashboard', subtitle: 'Live reach metrics · Hashtag monitoring · Org breakdown', file_url: null }
+  // Try loading from DB, fall back to static items
+  var dbItems = [];
+  try {
+    var result = await _supabase.from('campaign_toolkit').select('*').order('created_at', { ascending: false });
+    if (result.data && result.data.length > 0) dbItems = result.data;
+  } catch(e) {}
+
+  var staticItems = [
+    { id: 's1', icon: '🖼', title: 'Social Media Asset Pack — #SRHRRights254', subtitle: '20 graphics · 5 video templates · English & Swahili', file_url: null },
+    { id: 's2', icon: '📝', title: 'Advocacy Brief — County SRHR Budget Allocation 2026', subtitle: '2-page brief · Talking points · Data appendix', file_url: null },
+    { id: 's3', icon: '🎙', title: 'Media Engagement Guide — SRHR Spokespeople', subtitle: 'Key messages · Q&A prep · Interview tips', file_url: null },
+    { id: 's4', icon: '📊', title: 'Campaign Impact Tracker — Shared Dashboard', subtitle: 'Live reach metrics · Hashtag monitoring · Org breakdown', file_url: null }
   ];
 
-  toolkitItems.forEach(function(t) {
-    var item = document.createElement('div');
-    item.className = 'toolkit-item';
-    item.style.padding = '10px';
+  var items = dbItems.length > 0 ? dbItems : staticItems;
+  var isStatic = dbItems.length === 0;
+
+  items.forEach(function(t) {
+    var div = document.createElement('div');
+    div.className = 'toolkit-item';
+    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;';
+
     var actionHtml = t.file_url
-      ? '<a href="' + t.file_url + '" target="_blank" download class="toolkit-action" style="text-decoration:none;color:var(--gold)">⬇ Download →</a>'
-      : '<span class="toolkit-action" style="opacity:0.5">No file</span>';
-    var deleteHtml = (isAdmin && !t.id.toString().startsWith('static')) ? '<button class="admin-btn admin-btn-delete" data-table="campaign_toolkit" data-id="' + t.id + '" data-reload="loadCampaigns" data-admin-action="delete" style="margin-left:auto;">🗑</button>' : '';
-    item.innerHTML =
-      '<div class="toolkit-icon">' + (t.icon || '📄') + '</div>' +
-      '<div style="flex:1"><div class="toolkit-title">' + t.title + '</div>' +
-      '<div class="toolkit-sub">' + (t.subtitle || t.description || '') + '</div></div>' +
+      ? '<a href="' + t.file_url + '" target="_blank" download style="padding:6px 14px;border-radius:6px;background:var(--gold);color:var(--dark);font-size:0.72rem;font-weight:700;text-decoration:none;white-space:nowrap;">⬇ Download</a>'
+      : '<span style="font-size:0.72rem;color:var(--muted);padding:6px 14px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;">No file yet</span>';
+
+    var deleteHtml = (isAdmin && !isStatic)
+      ? '<button class="admin-btn admin-btn-delete" data-table="campaign_toolkit" data-id="' + t.id + '" data-reload="loadCampaigns" data-admin-action="delete" style="flex-shrink:0;">🗑</button>'
+      : '';
+
+    div.innerHTML =
+      '<div style="font-size:1.5rem;flex-shrink:0;">' + (t.icon || '📄') + '</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:0.82rem;font-weight:600;margin-bottom:2px;">' + t.title + '</div>' +
+        '<div style="font-size:0.72rem;color:var(--muted);">' + (t.subtitle || t.description || '') + '</div>' +
+      '</div>' +
       actionHtml + deleteHtml;
-    parent.appendChild(item);
+
+    parent.appendChild(div);
   });
 }
 
