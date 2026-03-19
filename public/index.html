@@ -7247,7 +7247,16 @@ function onToolkitFileSelect(input) {
   console.log('Icon element:', iconEl, 'modal visible:', document.getElementById('upload-toolkit-modal') ? document.getElementById('upload-toolkit-modal').classList.contains('hidden') : 'not found');
   if (iconEl) {
     iconEl.value = detectedIcon;
-    iconEl.style.borderColor = 'var(--gold)';
+    iconEl.style.borderColor = '#C9A84C';
+    // Force browser repaint
+    iconEl.blur();
+    iconEl.dispatchEvent(new Event('input'));
+    setTimeout(function() {
+      iconEl.focus();
+      iconEl.select();
+      document.execCommand('selectAll', false, null);
+      iconEl.blur();
+    }, 50);
     console.log('Icon field value after set:', iconEl.value);
   } else {
     console.error('tk-icon element NOT FOUND in DOM');
