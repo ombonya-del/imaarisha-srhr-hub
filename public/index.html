@@ -3308,6 +3308,55 @@ new claim goes viral</div>
 
 <div class="panel" id="panel-orgs">
 
+<div style="display:flex; justify-content:space-between; margin-bottom:24px; align-items:center;">
+<div style="font-size:0.78rem; color:var(--muted)">12 founding member organizations · ImaarishaSRHR Stakeholders Forum</div>
+<button class="btn btn-outline" onclick="alert('Invite organization --- full build feature')">+ Invite Organization</button>
+</div>
+
+<div class="resources-grid" id="orgs-grid"></div>
+
+</div>
+
+<div class="panel" id="panel-members">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div style="font-size:0.78rem;color:var(--muted)">Registered hub members across the 12 member organizations</div>
+    <input class="search-input" id="members-search" placeholder="🔍 Search members..." style="max-width:240px;" oninput="filterMembers(this.value)" />
+  </div>
+  <div class="members-grid" id="members-grid">
+    <div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">Loading members...</div>
+  </div>
+</div>
+
+<div class="panel" id="panel-orgs">
+
+<div style="display:flex; justify-content:space-between;
+margin-bottom:24px; align-items:center;">
+
+<div style="font-size:0.78rem; color:var(--muted)">12 founding
+member organizations · ImaarishaSRHR Stakeholders Forum</div>
+
+<button class="btn btn-outline" onclick="alert('Invite organization --- full build feature')">+ Invite Organization</button>
+
+</div>
+
+<div class="resources-grid" id="orgs-grid"></div>
+
+</div>
+
+<!-- ORGS (refined) -->
+
+<div class="panel" id="panel-members">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div style="font-size:0.78rem;color:var(--muted)">Registered hub members across the 12 member organizations</div>
+    <input class="search-input" id="members-search" placeholder="🔍 Search members..." style="max-width:240px;" oninput="filterMembers(this.value)" />
+  </div>
+  <div class="members-grid" id="members-grid">
+    <div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">Loading members...</div>
+  </div>
+</div>
+
+<div class="panel" id="panel-orgs">
+
 <div style="display:flex; justify-content:space-between;
 margin-bottom:24px; align-items:center;">
 
@@ -3685,22 +3734,6 @@ async function loadDiscussions() {
     el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div>' + adminBtns('discussions', d.id, 'loadDiscussions') + '</div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
     el.addEventListener('click', function() { openDiscModal(d.id, d.subject, meta); });
     container.appendChild(el);
-  });
-}
-
-async function loadEvents() {
-  const { data } = await _supabase.from('events').select('*').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date');
-  if (!data) return;
-  const container = document.querySelector('#panel-events .events-layout > div:first-child');
-  container.querySelectorAll('.event-card').forEach(function(el) { el.remove(); });
-  data.forEach(function(e) {
-    const d = new Date(e.event_date + 'T00:00:00');
-    const tags = (e.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
-    const hosts = (e.host_orgs || []).join(' & ');
-    const card = document.createElement('div');
-    card.className = 'event-card';
-    card.innerHTML = '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en', { month: 'short' }).toUpperCase() + '</div></div><div class="event-body"><div class="event-title">' + e.title + '</div><div class="event-details">📍 ' + (e.location || 'TBC') + (e.start_time ? ' &nbsp;·&nbsp; ' + e.start_time : '') + '<br/>🏛 ' + hosts + '<br/>👥 ' + (e.rsvp_count ? e.rsvp_count + ' registered' : 'Open to all') + '</div><div class="event-tags">' + tags + '</div></div>';
-    container.appendChild(card);
   });
 }
 
