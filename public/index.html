@@ -6422,47 +6422,27 @@ function closeOrgProfile() {
 }
 
 async function loadOrgs() {
-  const { data } = await _supabase.from('organizations').select('*').order('name');
-  if (!data || data.length === 0) return;
   const grid = document.getElementById('orgs-grid') || document.querySelector('#panel-orgs .resources-grid');
-  if (!grid) return;
+  if (!grid) { console.error('orgs grid not found'); return; }
+  
+  const { data, error } = await _supabase.from('organizations').select('*').order('name');
+  if (error) { console.error('orgs error:', error.message); return; }
+  if (!data || !data.length) { grid.innerHTML = '<p style="color:red">No data</p>'; return; }
+  
   grid.innerHTML = '';
   data.forEach(function(o) {
-    try {
-    var tags = (o.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i===0?' highlight':'') + '">' + t + '</span>'; }).join('');
-    var profile = orgProfileData[o.name] || orgProfileData[Object.keys(orgProfileData).find(function(k) { return o.name.includes(k.split(' ')[0]); })];
-    var icon = profile ? profile.icon : '🏛';
-    var grad = o.avatar_gradient || 'linear-gradient(135deg,#2A6B5E,#C9A84C)';
-    var counties = profile ? (profile.counties || []).slice(0,3).join(', ') : '';
     var card = document.createElement('div');
     card.className = 'resource-card';
     card.style.cursor = 'pointer';
-    card.innerHTML =
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-        '<div style="width:40px;height:40px;border-radius:50%;background:' + grad + ';display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">' + icon + '</div>' +
-        '<div>' +
-          '<div class="resource-type">' + (o.focus_area||'') + '</div>' +
-          '<div class="resource-title" style="margin:0;">' + o.short_name + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;line-height:1.5;">' + ((o.description||'').substring(0,100)) + '</div>' +
-      (counties ? '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">📍 ' + counties + '</div>' : '') +
-      '<div style="margin-bottom:8px;">' + tags + '</div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<span style="font-size:0.72rem;color:var(--gold);font-weight:600;">View full profile →</span>' +
-        (profile ? '<span style="font-size:0.68rem;color:var(--muted);">Est. ' + profile.founded + '</span>' : '') +
-      '</div>';
+    card.innerHTML = '<div class="resource-type">' + (o.focus_area || 'SRHR') + '</div>' +
+      '<div class="resource-title">' + (o.short_name || o.name) + '</div>' +
+      '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;">' + (o.description ? o.description.substring(0,100) + '...' : '') + '</div>' +
+      '<div style="font-size:0.72rem;color:var(--gold);margin-top:8px;">View full profile →</div>';
     card.addEventListener('click', function() { openOrgProfile(o.name, o); });
     grid.appendChild(card);
-    } catch(e) { console.error('Org card error for ' + o.name + ':', e.message); }
   });
 }
 
-// ============================================================
-// MEMBERS DIRECTORY
-// ============================================================
-
-var allMembers = [];
 
 async function loadMembers() {
   const { data } = await _supabase.from('profiles').select('*, organizations(name, short_name, avatar_gradient, focus_area)');
