@@ -6422,9 +6422,11 @@ function closeOrgProfile() {
 }
 
 async function loadOrgs() {
-  const { data } = await _supabase.from('organizations').select('*').order('name');
-  if (!data) return;
+  const { data, error } = await _supabase.from('organizations').select('*').order('name');
+  console.log('loadOrgs:', data ? data.length + ' orgs' : 'no data', error ? 'error: ' + error.message : '');
+  if (!data || data.length === 0) return;
   const grid = document.getElementById('orgs-grid') || document.querySelector('#panel-orgs .resources-grid');
+  console.log('orgs grid element:', grid ? grid.id || grid.className : 'NOT FOUND');
   if (!grid) return;
   grid.innerHTML = '';
   data.forEach(function(o) {
