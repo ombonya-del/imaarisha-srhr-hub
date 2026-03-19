@@ -6156,15 +6156,7 @@ async function loadEvents() {
     card.className = 'event-card';
     card.dataset.eventId = e.id;
     card.innerHTML =
-      (function() {
-      var dateBlock = '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en',{month:'short'}).toUpperCase() + '</div>';
-      if (e.end_date && e.end_date !== e.event_date) {
-        var dEnd = new Date(e.end_date + 'T00:00:00');
-        dateBlock += '<div style="font-size:0.55rem;color:var(--muted);margin-top:2px;">— ' + dEnd.getDate() + ' ' + dEnd.toLocaleString('en',{month:'short'}).toUpperCase() + '</div>';
-      }
-      dateBlock += '</div>';
-      return dateBlock;
-    })() +
+      '<div class="event-date-block"><div class="event-day">' + d.getDate() + '</div><div class="event-month">' + d.toLocaleString('en',{month:'short'}).toUpperCase() + '</div>' + (e.end_date && e.end_date !== e.event_date ? '<div style="font-size:0.55rem;color:var(--gold);margin-top:1px;font-weight:600;">–' + new Date(e.end_date + 'T00:00:00').getDate() + ' ' + new Date(e.end_date + 'T00:00:00').toLocaleString('en',{month:'short'}).toUpperCase() + '</div>' : '') + '</div>' +
       '<div class="event-body">' +
         '<div style="display:flex;align-items:flex-start;gap:8px;">' +
           '<div class="event-title" style="flex:1">' + e.title + '</div>' +
