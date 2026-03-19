@@ -3603,7 +3603,7 @@ async function loadDashboard() {
     _supabase.from('organizations').select('*', { count: 'exact', head: true }),
     _supabase.from('resources').select('*', { count: 'exact', head: true }),
     _supabase.from('discussions').select('*', { count: 'exact', head: true }),
-    _supabase.from('events').select('id, event_date').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date'),
+    _supabase.from('events').select('id, event_date, end_date, title').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date'),
     _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5),
     _supabase.from('organizations').select('short_name').limit(9)
   ]);
@@ -6126,7 +6126,7 @@ function getEventDetails(title) {
 }
 
 async function loadEvents() {
-  const { data } = await _supabase.from('events').select('*').gte('event_date', '2026-01-01').order('event_date');
+  const { data } = await _supabase.from('events').select('id, title, description, event_date, end_date, start_time, end_time, location, is_virtual, host_orgs, tags, event_type, rsvp_count, capacity, created_by').gte('event_date', '2026-01-01').order('event_date');
   if (!data) return;
 
   // Load current user RSVPs
@@ -6173,7 +6173,7 @@ async function loadEvents() {
             '<button class="event-admin-btn event-delete-btn" data-event-id="' + e.id + '" data-action="delete-event">🗑</button>' +
           '</div>' : '') +
         '</div>' +
-        '<div class="event-details">📍 ' + (e.location||'TBC') + (e.start_time ? ' &nbsp;·&nbsp; ' + e.start_time : '') + '<br/>🏛 ' + hosts + '<br/>👥 ' + (e.rsvp_count||0) + ' registered ' + rsvpStatus + '</div>' +
+        '<div class="event-details">📍 ' + (e.location||'TBC') + (e.start_time ? ' &nbsp;·&nbsp; ' + e.start_time : '') + (e.end_time ? ' – ' + e.end_time : '') + '<br/>📅 ' + new Date(e.event_date + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) + (e.end_date && e.end_date !== e.event_date ? ' – ' + new Date(e.end_date + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '') + '<br/>🏛 ' + hosts + '<br/>👥 ' + (e.rsvp_count||0) + ' registered ' + rsvpStatus + '</div>' +
         '<div class="event-tags">' + tags + '</div>' +
         '<div class="event-detail" id="event-detail-' + e.id + '">' +
           descHtml + agendaHtml + speakersHtml +
