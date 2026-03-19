@@ -3318,23 +3318,7 @@ member organizations · ImaarishaSRHR Stakeholders Forum</div>
 
 </div>
 
-<div class="resources-grid">
-
-<div class="resource-card">
-
-<div class="resource-type">🌍 Community Health</div>
-
-<div class="resource-title">AfyAfrika</div>
-
-<div style="font-size:0.75rem; color:var(--muted); margin: 8px 0;
-line-height:1.5">Community-based SRHR programming with focus on health
-rights, access, and equity across underserved populations.</div>
-
-<div><span class="resource-tag highlight">SRHR
-Rights</span><span class="resource-tag">Community
-Health</span><span class="resource-tag">Equity</span></div>
-
-</div>
+<div class="resources-grid" id="orgs-grid"></div>
 
 <div class="resource-card">
 
@@ -6440,7 +6424,7 @@ function closeOrgProfile() {
 async function loadOrgs() {
   const { data } = await _supabase.from('organizations').select('*').order('name');
   if (!data) return;
-  const grid = document.querySelector('#panel-orgs .resources-grid');
+  const grid = document.getElementById('orgs-grid') || document.querySelector('#panel-orgs .resources-grid');
   if (!grid) return;
   grid.innerHTML = '';
   data.forEach(function(o) {
