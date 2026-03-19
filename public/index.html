@@ -7217,7 +7217,14 @@ var _toolkitFile = null;
 
 function onToolkitFileSelect(input) {
   if (!input.files || !input.files[0]) return;
-  _toolkitFile = input.files[0];
+  var file = input.files[0];
+  var maxSize = 50 * 1024 * 1024; // 50MB
+  if (file.size > maxSize) {
+    alert('File too large. Maximum size is 50MB. Your file is ' + (file.size/1024/1024).toFixed(1) + 'MB.');
+    input.value = '';
+    return;
+  }
+  _toolkitFile = file;
   var label = document.getElementById('tk-drop-label');
   var zone = document.getElementById('tk-drop-zone');
   label.textContent = '✓ ' + _toolkitFile.name + ' (' + (_toolkitFile.size / 1024 / 1024).toFixed(1) + ' MB)';
@@ -7271,10 +7278,10 @@ async function submitToolkitAsset() {
   }
 
   var { error } = await _supabase.from('campaign_toolkit').insert({
-    title: title, subtitle: sub || null,
+    title: title,
+    subtitle: sub || null,
     file_url: fileUrl,
-    icon: icon || '📄',
-    created_by: currentUser ? currentUser.id : null
+    icon: icon || '📄'
   });
 
   btn.disabled = false; btn.textContent = 'Upload Asset';
