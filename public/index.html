@@ -3850,20 +3850,6 @@ async function loadCampaignToolkit() {
 }
 
 
-async function loadOrgs() {
-  const { data } = await _supabase.from('organizations').select('*').order('name');
-  if (!data) return;
-  const grid = document.querySelector('#panel-orgs .resources-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  data.forEach(function(o) {
-    const tags = (o.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
-    const card = document.createElement('div');
-    card.className = 'resource-card';
-    card.innerHTML = '<div class="resource-type">' + o.focus_area + '</div><div class="resource-title">' + o.name + '</div><div style="font-size:0.75rem;color:var(--muted);margin:8px 0;line-height:1.5">' + (o.description || '') + '</div><div>' + tags + '</div>';
-    grid.appendChild(card);
-  });
-}
 
 async function loadAllData() {
   await Promise.all([
