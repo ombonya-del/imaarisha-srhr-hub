@@ -7247,10 +7247,7 @@ function onToolkitFileSelect(input) {
   console.log('Icon element:', iconEl, 'modal visible:', document.getElementById('upload-toolkit-modal') ? document.getElementById('upload-toolkit-modal').classList.contains('hidden') : 'not found');
   if (iconEl) {
     iconEl.value = detectedIcon;
-    iconEl.style.fontSize = '1.4rem';
-    iconEl.style.textAlign = 'center';
     iconEl.style.borderColor = 'var(--gold)';
-    iconEl.style.background = 'var(--gold-dim)';
     console.log('Icon field value after set:', iconEl.value);
   } else {
     console.error('tk-icon element NOT FOUND in DOM');
@@ -8189,7 +8186,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     </div>
     <div class="auth-field">
       <label>Icon</label>
-      <input type="text" id="tk-icon" placeholder="🖼" maxlength="8" style="max-width:80px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+      <input type="text" id="tk-icon" placeholder="🖼" maxlength="8" style="width:80px;height:50px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:1.6rem;color:var(--white);outline:none;text-align:center;" />
     </div>
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeUploadToolkit()" style="flex:1">Cancel</button>
