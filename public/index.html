@@ -6550,7 +6550,7 @@ async function extractEventFromUrl() {
 
   try {
     var supabaseUrl = 'https://uwxtqyqyrhhxqagaqelg.supabase.co';
-    var supabaseKey = 'PASTE_YOUR_ANON_KEY_HERE';
+    var supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eHRxeXF5cmhoeHFhZ2FxZWxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTA3MTUsImV4cCI6MjA4OTIyNjcxNX0.dLa7RY6awZC4HXnyUtoIXPZ8KJV0EEpPQR8YdOQ3hdA';
     var response = await fetch(supabaseUrl + '/functions/v1/extract-event', {
       method: 'POST',
       headers: {
@@ -7342,4 +7342,3 @@ async function handleLogout() { await _supabase.auth.signOut(); }
 </body>
 
 </html>
- 
