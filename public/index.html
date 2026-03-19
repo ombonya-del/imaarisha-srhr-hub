@@ -1706,6 +1706,42 @@ flex; justify-content: space-between; }
 .cal-day.today { background: var(--gold); color: var(--dark); border-radius: 4px; font-weight: 700; }
 .cal-day.today.has-event { background: var(--gold); }
 
+
+/* ADMIN EDIT/DELETE BUTTONS - ALL PANELS */
+.admin-actions {
+  display: flex; gap: 5px; margin-left: auto; flex-shrink: 0;
+}
+.admin-btn {
+  padding: 3px 9px; border-radius: 5px; font-size: 0.65rem;
+  font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+  font-family: "DM Sans", sans-serif; transition: all 0.2s;
+  background: transparent; opacity: 0.7;
+}
+.admin-btn:hover { opacity: 1; }
+.admin-btn-edit { color: var(--gold); border-color: rgba(201,168,76,0.4); }
+.admin-btn-edit:hover { background: var(--gold-dim); border-color: var(--gold); }
+.admin-btn-delete { color: #E74C3C; border-color: rgba(231,76,60,0.3); }
+.admin-btn-delete:hover { background: rgba(231,76,60,0.1); border-color: #E74C3C; }
+
+/* GENERIC EDIT MODAL */
+.edit-generic-box {
+  background: var(--dark2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 540px; padding: 32px;
+  max-height: 85vh; overflow-y: auto;
+}
+.edit-generic-box .auth-field input,
+.edit-generic-box .auth-field textarea,
+.edit-generic-box .auth-field select {
+  width: 100%; background: var(--dark3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: "DM Sans", sans-serif; font-size: 0.85rem;
+  color: var(--white); outline: none; transition: border 0.2s;
+}
+.edit-generic-box .auth-field input:focus,
+.edit-generic-box .auth-field textarea:focus,
+.edit-generic-box .auth-field select:focus { border-color: var(--gold); }
+.edit-generic-box .auth-field textarea { min-height: 80px; resize: none; }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -5518,7 +5554,10 @@ async function loadMarketplace() {
     el.innerHTML =
       '<div class="mkt-item-icon">' + (item.icon || '📦') + '</div>' +
       '<div style="flex:1">' +
-        '<div class="mkt-item-title">' + item.title + '</div>' +
+        '<div style="display:flex;align-items:flex-start;gap:6px;">' +
+          '<div class="mkt-item-title" style="flex:1">' + item.title + '</div>' +
+          adminBtns('marketplace_listings', item.id, 'loadMarketplace') +
+        '</div>' +
         '<div class="mkt-item-desc">' + (item.description || '') + '</div>' +
         '<div class="mkt-item-footer">' + badges.join('') + '<span style="margin-left:auto;font-size:0.7rem;color:var(--muted)">' + orgName + '</span></div>' +
         '<div class="mkt-item-detail" id="mkt-detail-' + item.id + '">' +
@@ -6691,24 +6730,38 @@ async function submitEditEvent() {
 
   var btn = document.getElementById('edit-event-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
+  errEl.style.display = 'none';
 
-  var endDate = document.getElementById('edit-ev-end-date') ? document.getElementById('edit-ev-end-date').value : null;
-  var { error } = await _supabase.from('events').update({
+  var endDateEl = document.getElementById('edit-ev-end-date');
+  var endDate = endDateEl && endDateEl.value ? endDateEl.value : null;
+  
+  var updatePayload = {
     title: title, description: desc,
     event_date: date, event_type: type,
-    end_date: endDate || null,
+    end_date: endDate,
     start_time: start || null, end_time: end || null,
     location: location,
     is_virtual: location.toLowerCase().includes('zoom') || location.toLowerCase().includes('online') || location.toLowerCase().includes('virtual'),
     host_orgs: hostsRaw ? hostsRaw.split(',').map(function(h){return h.trim();}) : [],
     tags: tagsRaw ? tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean) : []
-  }).eq('id', id);
+  };
+
+  var { data: updated, error } = await _supabase.from('events').update(updatePayload).eq('id', id).select();
 
   btn.disabled = false; btn.textContent = 'Save Changes';
 
-  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
-  else {
-    successEl.textContent = '✓ Event updated successfully!';
+  if (error) { 
+    errEl.textContent = '⚠ ' + error.message + ' (code: ' + (error.code||'unknown') + ')'; 
+    errEl.style.display = 'block';
+    errEl.style.color = '#E74C3C';
+    errEl.style.background = 'rgba(231,76,60,0.1)';
+    errEl.style.padding = '10px';
+    errEl.style.borderRadius = '6px';
+  } else if (!updated || updated.length === 0) {
+    errEl.textContent = '⚠ Update blocked — no rows affected. Check Supabase RLS update policy for events table.';
+    errEl.style.display = 'block';
+  } else {
+    successEl.textContent = '✓ Event updated! end_date: ' + (endDate || 'none');
     successEl.style.display = 'block';
     setTimeout(function() { closeEditEvent(); loadEvents(); }, 1500);
   }
@@ -6800,6 +6853,161 @@ function renderCalendar(events) {
 
   grid.innerHTML = html;
 }
+
+
+// ============================================================
+// ADMIN EDIT/DELETE — ALL PANELS
+// ============================================================
+
+var _genericEditContext = null; // { table, id, reloadFn }
+
+function adminBtns(table, id, reloadFn) {
+  var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+  if (!isAdmin) return '';
+  return '<div class="admin-actions">' +
+    '<button class="admin-btn admin-btn-edit" data-table="' + table + '" data-id="' + id + '" data-reload="' + reloadFn + '" data-admin-action="edit">✏️</button>' +
+    '<button class="admin-btn admin-btn-delete" data-table="' + table + '" data-id="' + id + '" data-reload="' + reloadFn + '" data-admin-action="delete">🗑</button>' +
+  '</div>';
+}
+
+// Global delegated click handler for all admin buttons
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-admin-action]');
+  if (!btn) return;
+  e.stopPropagation();
+  var action = btn.getAttribute('data-admin-action');
+  var table = btn.getAttribute('data-table');
+  var id = btn.getAttribute('data-id');
+  var reloadFn = btn.getAttribute('data-reload');
+  if (action === 'delete') adminDelete(table, id, reloadFn);
+  else if (action === 'edit') adminOpenEdit(table, id, reloadFn);
+});
+
+async function adminDelete(table, id, reloadFn) {
+  if (!confirm('Delete this item? This cannot be undone.')) return;
+  var { error } = await _supabase.from(table).delete().eq('id', id);
+  if (!error) { if (window[reloadFn]) window[reloadFn](); }
+  else { alert('Delete error: ' + error.message); }
+}
+
+var _editSchemas = {
+  resources: [
+    { id: 'title', label: 'Title', type: 'input' },
+    { id: 'description', label: 'Description', type: 'textarea' },
+    { id: 'resource_type', label: 'Type', type: 'select', options: ['report','guide','tool','dataset','policy','training','other'] },
+    { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
+  ],
+  discussions: [
+    { id: 'title', label: 'Thread Title', type: 'input' },
+    { id: 'body', label: 'Content', type: 'textarea' },
+    { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
+  ],
+  discussion_replies: [
+    { id: 'body', label: 'Reply Content', type: 'textarea' }
+  ],
+  marketplace_listings: [
+    { id: 'title', label: 'Title', type: 'input' },
+    { id: 'description', label: 'Description', type: 'textarea' },
+    { id: 'category', label: 'Category', type: 'select', options: ['skills','resources','tools','processes','partners'] },
+    { id: 'price_type', label: 'Availability', type: 'select', options: ['free','partner_rate','seeking','paid'] },
+    { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
+  ],
+  campaigns: [
+    { id: 'title', label: 'Campaign Title', type: 'input' },
+    { id: 'description', label: 'Description', type: 'textarea' },
+    { id: 'status', label: 'Status', type: 'select', options: ['active','draft','completed','paused'] },
+    { id: 'hashtag', label: 'Hashtag', type: 'input' }
+  ],
+  disinformation_claims: [
+    { id: 'claim', label: 'Claim', type: 'textarea' },
+    { id: 'correction', label: 'Correction / Fact Check', type: 'textarea' },
+    { id: 'verdict', label: 'Verdict', type: 'select', options: ['false','misleading','missing_context','true'] },
+    { id: 'spread_level', label: 'Spread Level', type: 'select', options: ['low','medium','high','viral'] }
+  ]
+};
+
+async function adminOpenEdit(table, id, reloadFn) {
+  var schema = _editSchemas[table];
+  if (!schema) { alert('No edit schema for: ' + table); return; }
+
+  var { data, error } = await _supabase.from(table).select('*').eq('id', id).single();
+  if (error || !data) { alert('Could not load item: ' + (error ? error.message : 'Not found')); return; }
+
+  _genericEditContext = { table: table, id: id, reloadFn: reloadFn, schema: schema };
+
+  var titleMap = { resources: 'Resource', discussions: 'Discussion', discussion_replies: 'Reply',
+    marketplace_listings: 'Marketplace Listing', campaigns: 'Campaign', disinformation_claims: 'Disinformation Claim' };
+  document.getElementById('edit-generic-title').innerHTML = 'Edit <span style="color:var(--gold)">' + (titleMap[table] || 'Item') + '</span>';
+  document.getElementById('edit-generic-error').style.display = 'none';
+  document.getElementById('edit-generic-success').style.display = 'none';
+
+  var fieldsHtml = '';
+  schema.forEach(function(field) {
+    var val = data[field.id];
+    if (field.transform === 'array') val = Array.isArray(val) ? val.join(', ') : (val || '');
+    else val = val || '';
+
+    fieldsHtml += '<div class="auth-field"><label>' + field.label + '</label>';
+    if (field.type === 'textarea') {
+      fieldsHtml += '<textarea id="eg-' + field.id + '">' + val + '</textarea>';
+    } else if (field.type === 'select') {
+      fieldsHtml += '<select id="eg-' + field.id + '">';
+      field.options.forEach(function(opt) {
+        fieldsHtml += '<option value="' + opt + '"' + (val === opt ? ' selected' : '') + '>' + opt + '</option>';
+      });
+      fieldsHtml += '</select>';
+    } else {
+      fieldsHtml += '<input type="text" id="eg-' + field.id + '" value="' + val.toString().replace(/"/g,'&quot;') + '" />';
+    }
+    fieldsHtml += '</div>';
+  });
+
+  document.getElementById('edit-generic-fields').innerHTML = fieldsHtml;
+  document.getElementById('edit-generic-modal').classList.remove('hidden');
+}
+
+function closeGenericEdit() {
+  document.getElementById('edit-generic-modal').classList.add('hidden');
+  _genericEditContext = null;
+}
+
+async function submitGenericEdit() {
+  if (!_genericEditContext) return;
+  var { table, id, reloadFn, schema } = _genericEditContext;
+  var errEl = document.getElementById('edit-generic-error');
+  var successEl = document.getElementById('edit-generic-success');
+  var btn = document.getElementById('edit-generic-btn');
+
+  var payload = {};
+  schema.forEach(function(field) {
+    var el = document.getElementById('eg-' + field.id);
+    if (!el) return;
+    var val = el.value.trim();
+    if (field.transform === 'array') {
+      payload[field.id] = val ? val.split(',').map(function(t){return t.trim();}).filter(Boolean) : [];
+    } else {
+      payload[field.id] = val || null;
+    }
+  });
+
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  var { error } = await _supabase.from(table).update(payload).eq('id', id);
+
+  btn.disabled = false; btn.textContent = 'Save Changes';
+
+  if (error) {
+    errEl.textContent = '⚠ ' + error.message; errEl.style.display = 'block';
+  } else {
+    successEl.textContent = '✓ Saved successfully!'; successEl.style.display = 'block';
+    setTimeout(function() { closeGenericEdit(); if (window[reloadFn]) window[reloadFn](); }, 1200);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var genericModal = document.getElementById('edit-generic-modal');
+  if (genericModal) genericModal.addEventListener('click', function(e) { if (e.target === this) closeGenericEdit(); });
+});
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
@@ -7550,6 +7758,24 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeEditEvent()" style="flex:1">Cancel</button>
       <button class="btn btn-gold" id="edit-event-btn" onclick="submitEditEvent()" style="flex:2">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- GENERIC EDIT MODAL -->
+<div class="modal-overlay hidden" id="edit-generic-modal">
+  <div class="edit-generic-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;" id="edit-generic-title">Edit <span style="color:var(--gold)">Item</span></div>
+      <button class="modal-close" onclick="closeGenericEdit()">✕</button>
+    </div>
+    <div class="auth-error" id="edit-generic-error"></div>
+    <div class="auth-success" id="edit-generic-success"></div>
+    <div id="edit-generic-fields"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-outline" onclick="closeGenericEdit()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="edit-generic-btn" onclick="submitGenericEdit()" style="flex:2">Save Changes</button>
     </div>
   </div>
 </div>
