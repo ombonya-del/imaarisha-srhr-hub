@@ -3798,53 +3798,52 @@ async function loadCampaignToolkit() {
 
   var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
 
-  // Add upload button for admin
+  // Always show upload button for admin
   if (isAdmin) {
     var uploadBtn = document.createElement('button');
     uploadBtn.className = 'btn btn-outline';
     uploadBtn.style.cssText = 'margin-bottom:14px;font-size:0.75rem;width:fit-content;';
-    uploadBtn.innerHTML = '+ Upload Asset';
+    uploadBtn.innerHTML = '+ Upload Toolkit Asset';
     uploadBtn.onclick = function() { openUploadToolkit(); };
     parent.appendChild(uploadBtn);
   }
 
-  // Try loading from DB, fall back to static items
-  var dbItems = [];
-  try {
-    var result = await _supabase.from('campaign_toolkit').select('*').order('created_at', { ascending: false });
-    if (result.data && result.data.length > 0) dbItems = result.data;
-  } catch(e) {}
-
+  // Always show these static items + any from DB
   var staticItems = [
     { id: 's1', icon: '🖼', title: 'Social Media Asset Pack — #SRHRRights254', subtitle: '20 graphics · 5 video templates · English & Swahili', file_url: null },
     { id: 's2', icon: '📝', title: 'Advocacy Brief — County SRHR Budget Allocation 2026', subtitle: '2-page brief · Talking points · Data appendix', file_url: null },
     { id: 's3', icon: '🎙', title: 'Media Engagement Guide — SRHR Spokespeople', subtitle: 'Key messages · Q&A prep · Interview tips', file_url: null },
-    { id: 's4', icon: '📊', title: 'Campaign Impact Tracker — Shared Dashboard', subtitle: 'Live reach metrics · Hashtag monitoring · Org breakdown', file_url: null }
+    { id: 's4', icon: '📊', title: 'Campaign Impact Tracker', subtitle: 'Live reach metrics · Hashtag monitoring · Org breakdown', file_url: null }
   ];
 
-  var items = dbItems.length > 0 ? dbItems : staticItems;
-  var isStatic = dbItems.length === 0;
+  // Try loading DB items
+  var dbItems = [];
+  try {
+    var result = await _supabase.from('campaign_toolkit').select('*').order('created_at', { ascending: false });
+    if (result.data) dbItems = result.data;
+  } catch(e) { console.log('Toolkit DB not available, using static items'); }
 
-  items.forEach(function(t) {
+  var allItems = dbItems.length > 0 ? dbItems : staticItems;
+
+  allItems.forEach(function(t) {
     var div = document.createElement('div');
-    div.className = 'toolkit-item';
-    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;';
+    div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--dark2);transition:all 0.2s;';
 
     var actionHtml = t.file_url
-      ? '<a href="' + t.file_url + '" target="_blank" download style="padding:6px 14px;border-radius:6px;background:var(--gold);color:var(--dark);font-size:0.72rem;font-weight:700;text-decoration:none;white-space:nowrap;">⬇ Download</a>'
-      : '<span style="font-size:0.72rem;color:var(--muted);padding:6px 14px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;">No file yet</span>';
+      ? '<a href="' + t.file_url + '" target="_blank" download style="flex-shrink:0;padding:7px 14px;border-radius:6px;background:var(--gold);color:var(--dark);font-size:0.72rem;font-weight:700;text-decoration:none;white-space:nowrap;">⬇ Download</a>'
+      : '<span style="flex-shrink:0;font-size:0.72rem;color:var(--muted);padding:7px 14px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;">No file</span>';
 
-    var deleteHtml = (isAdmin && !isStatic)
+    var adminHtml = (isAdmin && t.id && !t.id.toString().startsWith('s'))
       ? '<button class="admin-btn admin-btn-delete" data-table="campaign_toolkit" data-id="' + t.id + '" data-reload="loadCampaigns" data-admin-action="delete" style="flex-shrink:0;">🗑</button>'
       : '';
 
     div.innerHTML =
       '<div style="font-size:1.5rem;flex-shrink:0;">' + (t.icon || '📄') + '</div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-size:0.82rem;font-weight:600;margin-bottom:2px;">' + t.title + '</div>' +
+        '<div style="font-size:0.82rem;font-weight:600;color:var(--white);margin-bottom:2px;">' + t.title + '</div>' +
         '<div style="font-size:0.72rem;color:var(--muted);">' + (t.subtitle || t.description || '') + '</div>' +
       '</div>' +
-      actionHtml + deleteHtml;
+      actionHtml + adminHtml;
 
     parent.appendChild(div);
   });
@@ -7194,40 +7193,97 @@ async function submitNewCampaign() {
 }
 
 function openUploadToolkit() {
+  _toolkitFile = null;
   document.getElementById('upload-toolkit-modal').classList.remove('hidden');
   document.getElementById('toolkit-error').style.display = 'none';
   document.getElementById('toolkit-success').style.display = 'none';
+  document.getElementById('tk-title').value = '';
+  document.getElementById('tk-sub').value = '';
+  document.getElementById('tk-url').value = '';
+  document.getElementById('tk-icon').value = '';
+  document.getElementById('tk-drop-label').textContent = 'Click to select a file (PDF, ZIP, PPTX, DOCX, JPG, PNG)';
+  var zone = document.getElementById('tk-drop-zone');
+  zone.style.borderColor = '';
+  zone.style.background = '';
+  var progressWrap = document.getElementById('tk-progress-wrap');
+  if (progressWrap) progressWrap.style.display = 'none';
 }
 
 function closeUploadToolkit() {
   document.getElementById('upload-toolkit-modal').classList.add('hidden');
 }
 
+var _toolkitFile = null;
+
+function onToolkitFileSelect(input) {
+  if (!input.files || !input.files[0]) return;
+  _toolkitFile = input.files[0];
+  var label = document.getElementById('tk-drop-label');
+  var zone = document.getElementById('tk-drop-zone');
+  label.textContent = '✓ ' + _toolkitFile.name + ' (' + (_toolkitFile.size / 1024 / 1024).toFixed(1) + ' MB)';
+  zone.style.borderColor = 'var(--gold)';
+  zone.style.background = 'var(--gold-dim)';
+  // Auto-detect icon
+  var ext = _toolkitFile.name.split('.').pop().toLowerCase();
+  var iconMap = { pdf: '📄', zip: '📦', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬' };
+  var iconEl = document.getElementById('tk-icon');
+  if (!iconEl.value) iconEl.value = iconMap[ext] || '📄';
+  // Auto-fill title if empty
+  var titleEl = document.getElementById('tk-title');
+  if (!titleEl.value) titleEl.value = _toolkitFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+}
+
 async function submitToolkitAsset() {
   var title = document.getElementById('tk-title').value.trim();
   var sub = document.getElementById('tk-sub').value.trim();
-  var url = document.getElementById('tk-url').value.trim();
+  var urlInput = document.getElementById('tk-url').value.trim();
   var icon = document.getElementById('tk-icon').value.trim();
   var errEl = document.getElementById('toolkit-error');
   var successEl = document.getElementById('toolkit-success');
+  var progressWrap = document.getElementById('tk-progress-wrap');
+  var progressFill = document.getElementById('tk-progress-fill');
 
   if (!title) { errEl.textContent = 'Please add a title.'; errEl.style.display = 'block'; return; }
 
   var btn = document.getElementById('upload-toolkit-btn');
   btn.disabled = true; btn.textContent = 'Uploading...';
+  errEl.style.display = 'none';
+
+  var fileUrl = urlInput || null;
+
+  // Upload file if selected
+  if (_toolkitFile) {
+    progressWrap.style.display = 'block';
+    progressFill.style.width = '30%';
+    var ext = _toolkitFile.name.split('.').pop();
+    var filePath = 'toolkit/' + Date.now() + '-' + _toolkitFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    var { data: uploadData, error: storageError } = await _supabase.storage.from('imaarisha-resources').upload(filePath, _toolkitFile);
+    if (storageError) {
+      errEl.textContent = 'Upload failed: ' + storageError.message; errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Upload Asset';
+      progressWrap.style.display = 'none';
+      return;
+    }
+    progressFill.style.width = '80%';
+    var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
+    fileUrl = urlData.publicUrl;
+    progressFill.style.width = '100%';
+  }
 
   var { error } = await _supabase.from('campaign_toolkit').insert({
     title: title, subtitle: sub || null,
-    file_url: url || null,
+    file_url: fileUrl,
     icon: icon || '📄',
     created_by: currentUser ? currentUser.id : null
   });
 
   btn.disabled = false; btn.textContent = 'Upload Asset';
+  progressWrap.style.display = 'none';
+  _toolkitFile = null;
 
   if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; }
   else {
-    successEl.textContent = '✓ Asset uploaded! Now available to all hub members.';
+    successEl.textContent = '✓ Asset uploaded! Now available to all hub members for download.';
     successEl.style.display = 'block';
     setTimeout(function() { closeUploadToolkit(); loadCampaigns(); }, 1500);
   }
@@ -8082,8 +8138,20 @@ async function handleLogout() { await _supabase.auth.signOut(); }
       <input type="text" id="tk-sub" placeholder="e.g. 20 graphics · English & Swahili" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
     </div>
     <div class="auth-field">
-      <label>File or URL</label>
-      <input type="url" id="tk-url" placeholder="Paste Google Drive / Dropbox / direct link" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+      <label>Upload File</label>
+      <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;" id="tk-drop-zone" onclick="document.getElementById('tk-file-input').click()">
+        <div style="font-size:1.5rem;margin-bottom:6px;">📁</div>
+        <div style="font-size:0.8rem;color:var(--muted);" id="tk-drop-label">Click to select a file (PDF, ZIP, PPTX, DOCX, JPG, PNG)</div>
+        <input type="file" id="tk-file-input" style="display:none;" accept=".pdf,.zip,.pptx,.ppt,.docx,.doc,.jpg,.jpeg,.png,.mp4,.gif" onchange="onToolkitFileSelect(this)" />
+      </div>
+    </div>
+    <div class="auth-field">
+      <label>Or paste a URL instead</label>
+      <input type="url" id="tk-url" placeholder="Google Drive / Dropbox / direct link" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+    </div>
+    <div class="auth-field" id="tk-progress-wrap" style="display:none;">
+      <label>Upload Progress</label>
+      <div style="height:6px;background:var(--dark3);border-radius:3px;"><div id="tk-progress-fill" style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width 0.3s;"></div></div>
     </div>
     <div class="auth-field">
       <label>Icon</label>
