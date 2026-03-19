@@ -7195,6 +7195,11 @@ async function submitNewCampaign() {
 function openUploadToolkit() {
   _toolkitFile = null;
   document.getElementById('upload-toolkit-modal').classList.remove('hidden');
+  // Wire file input
+  var fileInput = document.getElementById('tk-file-input');
+  if (fileInput) {
+    fileInput.onchange = function() { onToolkitFileSelect(this); };
+  }
   document.getElementById('toolkit-error').style.display = 'none';
   document.getElementById('toolkit-success').style.display = 'none';
   document.getElementById('tk-title').value = '';
@@ -8154,7 +8159,7 @@ async function handleLogout() { await _supabase.auth.signOut(); }
       <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;" id="tk-drop-zone" onclick="document.getElementById('tk-file-input').click()">
         <div style="font-size:1.5rem;margin-bottom:6px;">📁</div>
         <div style="font-size:0.8rem;color:var(--muted);" id="tk-drop-label">Click to select a file (PDF, ZIP, PPTX, DOCX, JPG, PNG)</div>
-        <input type="file" id="tk-file-input" style="display:none;" accept=".pdf,.zip,.pptx,.ppt,.docx,.doc,.jpg,.jpeg,.png,.mp4,.gif" onchange="onToolkitFileSelect(this)" />
+        <input type="file" id="tk-file-input" style="display:none;" accept=".pdf,.zip,.pptx,.ppt,.docx,.doc,.jpg,.jpeg,.png,.mp4,.gif"  />
       </div>
     </div>
     <div class="auth-field">
