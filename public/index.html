@@ -7227,17 +7227,22 @@ function onToolkitFileSelect(input) {
   _toolkitFile = file;
   var label = document.getElementById('tk-drop-label');
   var zone = document.getElementById('tk-drop-zone');
-  label.textContent = '✓ ' + _toolkitFile.name + ' (' + (_toolkitFile.size / 1024 / 1024).toFixed(1) + ' MB)';
+  var fname = _toolkitFile.name;
+  var fsize = (_toolkitFile.size / 1024 / 1024).toFixed(1);
+  label.textContent = '✓ ' + fname + ' (' + fsize + ' MB)';
   zone.style.borderColor = 'var(--gold)';
   zone.style.background = 'var(--gold-dim)';
   // Auto-detect icon
-  var ext = _toolkitFile.name.split('.').pop().toLowerCase();
-  var iconMap = { pdf: '📄', zip: '📦', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬' };
+  var ext = fname.split('.').pop().toLowerCase();
+  var iconMap = { pdf: '📄', zip: '📦', pptx: '📊', ppt: '📊', docx: '📝', doc: '📝', jpg: '🖼', jpeg: '🖼', png: '🖼', mp4: '🎬', gif: '🎬', csv: '📊', xlsx: '📊', xls: '📊' };
+  var detectedIcon = iconMap[ext] || '📄';
   var iconEl = document.getElementById('tk-icon');
-  if (!iconEl.value) iconEl.value = iconMap[ext] || '📄';
+  iconEl.value = detectedIcon;
   // Auto-fill title if empty
   var titleEl = document.getElementById('tk-title');
-  if (!titleEl.value) titleEl.value = _toolkitFile.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+  if (!titleEl.value) {
+    titleEl.value = fname.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+  }
 }
 
 async function submitToolkitAsset() {
