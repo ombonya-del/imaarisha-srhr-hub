@@ -3596,6 +3596,11 @@ function showPanel(id, el) {
   if (el) el.classList.add('active');
   const t = titles[id] || ['', ''];
   document.getElementById('topbar-title').innerHTML = t[0] + ' <span>' + t[1] + '</span>';
+  // Reload panel data when switching to it
+  if (id === 'orgs') loadOrgs();
+  if (id === 'members') loadMembers();
+  if (id === 'tracker') loadTracker();
+  if (id === 'disinfo') loadDisinfo();
 }
 
 function filterMkt(cat, el) {
