@@ -1851,7 +1851,6 @@ flex; justify-content: space-between; }
 
 </style>
 
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </head>
 
 <body>
@@ -6259,11 +6258,7 @@ async function openOrgProfile(orgName, orgData) {
   var body = document.getElementById('org-profile-body');
   body.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading profile...</div>';
   modal.classList.remove('hidden');
-  setTimeout(function() {
-    if (window.twttr && window.twttr.widgets) {
-      window.twttr.widgets.load(document.getElementById('org-profile-modal'));
-    }
-  }, 500);
+  // X timeline loaded on demand
 
   // Fetch org marketplace listings
   var orgListingsRes = await _supabase
@@ -6948,8 +6943,6 @@ var _editSchemas = {
     { id: 'short_name', label: 'Short Name', type: 'input' },
     { id: 'description', label: 'Description', type: 'textarea' },
     { id: 'focus_area', label: 'Focus Area', type: 'input' },
-    { id: 'website', label: 'Website URL', type: 'input' },
-    { id: 'contact_email', label: 'Contact Email', type: 'input' },
     { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
   ],
   disinformation_claims: [
@@ -6970,7 +6963,8 @@ async function adminOpenEdit(table, id, reloadFn) {
   _genericEditContext = { table: table, id: id, reloadFn: reloadFn, schema: schema };
 
   var titleMap = { resources: 'Resource', discussions: 'Discussion', discussion_replies: 'Reply',
-    marketplace_listings: 'Marketplace Listing', campaigns: 'Campaign', disinformation_claims: 'Disinformation Claim' };
+    marketplace_listings: 'Marketplace Listing', campaigns: 'Campaign', disinformation_claims: 'Disinformation Claim',
+    organizations: 'Organization Profile' };
   document.getElementById('edit-generic-title').innerHTML = 'Edit <span style="color:var(--gold)">' + (titleMap[table] || 'Item') + '</span>';
   document.getElementById('edit-generic-error').style.display = 'none';
   document.getElementById('edit-generic-success').style.display = 'none';
@@ -7319,21 +7313,17 @@ function buildXFeedSection(profile, orgName) {
   }
   return '<div class="x-feed-section">' +
     '<div class="x-feed-header">' +
-      '<div class="x-feed-title"><span class="x-logo">&#120143;</span>&nbsp;Latest from @' + handle + '</div>' +
+      '<div class="x-feed-title"><span class="x-logo">&#120143;</span>&nbsp;@' + handle + ' on X</div>' +
       '<a href="https://twitter.com/' + handle + '" target="_blank" class="x-follow-btn">Follow</a>' +
     '</div>' +
-    '<div class="x-timeline-wrap" id="x-timeline-' + handle + '">' +
-      '<a class="twitter-timeline"' +
-        ' data-theme="dark"' +
-        ' data-chrome="noheader nofooter noborders transparent"' +
-        ' data-tweet-limit="3"' +
-        ' data-height="300"' +
-        ' href="https://twitter.com/' + handle + '">' +
-        'Loading posts from @' + handle + '...' +
-      '</a>' +
-    '</div>' +
+    '<a href="https://twitter.com/' + handle + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--white);background:var(--dark3);margin-bottom:8px;transition:all 0.2s;">' +
+      '<span style="font-size:1.4rem;">&#120143;</span>' +
+      '<div><div style="font-size:0.82rem;font-weight:600;">View @' + handle + ' on X</div>' +
+      '<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">See their latest posts and updates</div></div>' +
+      '<span style="margin-left:auto;color:var(--gold);font-size:0.8rem;">→</span>' +
+    '</a>' +
     '<button class="x-discuss-btn" data-x-handle="' + handle + '" data-x-org="' + safeOrg + '">' +
-      '&#128172; Bring latest post to Hub Discussion' +
+      '&#128172; Bring their latest post to Hub Discussion' +
     '</button>' +
   '</div>';
 }
