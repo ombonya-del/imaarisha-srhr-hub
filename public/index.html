@@ -6259,7 +6259,11 @@ async function openOrgProfile(orgName, orgData) {
   var body = document.getElementById('org-profile-body');
   body.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading profile...</div>';
   modal.classList.remove('hidden');
-  setTimeout(loadXTimeline, 500);
+  setTimeout(function() {
+    if (window.twttr && window.twttr.widgets) {
+      window.twttr.widgets.load(document.getElementById('org-profile-modal'));
+    }
+  }, 500);
 
   // Fetch org marketplace listings
   var orgListingsRes = await _supabase
@@ -6352,14 +6356,7 @@ async function loadOrgs() {
       '<div class="resource-title">' + (o.short_name || o.name) + '</div>' +
       '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;">' + (o.description ? o.description.substring(0,100) + '...' : '') + '</div>' +
       '<div style="font-size:0.72rem;color:var(--gold);margin-top:8px;">View full profile →</div>';
-    card.addEventListener('click', function() {
-      console.log('Card clicked:', o.name, o.id);
-      try {
-        openOrgProfile(o.name, o);
-      } catch(e) {
-        console.error('openOrgProfile error:', e.message, e.stack);
-      }
-    });
+    card.addEventListener('click', function() { openOrgProfile(o.name, o); });
     grid.appendChild(card);
   });
 }
