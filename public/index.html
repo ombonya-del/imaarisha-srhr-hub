@@ -1790,6 +1790,47 @@ flex; justify-content: space-between; }
 }
 .gradient-swatch.selected { border-color: var(--gold); transform: scale(1.1); }
 
+
+/* X / TWITTER FEED */
+.x-feed-section { margin-top: 20px; }
+.x-feed-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.x-feed-title {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.x-logo { font-size: 1rem; color: var(--white); }
+.x-follow-btn {
+  font-size: 0.68rem; padding: 4px 12px; border-radius: 20px;
+  background: var(--white); color: var(--dark);
+  font-weight: 700; text-decoration: none; font-family: "DM Sans", sans-serif;
+  transition: opacity 0.2s;
+}
+.x-follow-btn:hover { opacity: 0.8; }
+.x-timeline-wrap {
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; max-height: 320px;
+  background: var(--dark3);
+}
+.x-timeline-wrap iframe { border-radius: 10px; }
+.x-discuss-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; margin-top: 10px; padding: 10px 16px;
+  background: var(--gold-dim); border: 1px solid var(--gold);
+  border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  font-size: 0.78rem; font-weight: 600; color: var(--gold);
+  font-family: "DM Sans", sans-serif;
+}
+.x-discuss-btn:hover { background: rgba(201,168,76,0.2); }
+.x-no-handle {
+  padding: 20px; text-align: center;
+  font-size: 0.75rem; color: var(--muted);
+  border: 1px dashed var(--border); border-radius: 10px;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -1810,6 +1851,7 @@ flex; justify-content: space-between; }
 
 </style>
 
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </head>
 
 <body>
@@ -2311,6 +2353,15 @@ class="resource-tag">Restricted</span></div>
 <!-- DISCUSSIONS -->
 
 <div class="panel" id="panel-discussions">
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;" id="disc-filters">
+  <span class="filter-chip active" onclick="filterDiscussions('all',this)">All</span>
+  <span class="filter-chip" onclick="filterDiscussions('Social Updates',this)">📣 Social Updates</span>
+  <span class="filter-chip" onclick="filterDiscussions('Youth',this)">Youth</span>
+  <span class="filter-chip" onclick="filterDiscussions('Funding',this)">Funding</span>
+  <span class="filter-chip" onclick="filterDiscussions('Policy',this)">Policy</span>
+  <span class="filter-chip" onclick="filterDiscussions('Clinical',this)">Clinical</span>
+</div>
 
 <div style="display:flex; gap:10px; margin-bottom:24px;">
 
@@ -3500,26 +3551,37 @@ async function loadResources(filterType) {
   const badges = document.querySelectorAll('.nav-item .badge');
   badges.forEach(function(b) { if (b.textContent === '34' || parseInt(b.textContent) > 0) b.textContent = data.length; });
 }
-async function loadDiscussions() {
+async function loadDiscussions(filterCategory) {
   const { data } = await _supabase.from('discussions').select('*, profiles(full_name), organizations(short_name)').order('created_at', { ascending: false });
   if (!data) return;
+  var filtered = (filterCategory && filterCategory !== 'all')
+    ? data.filter(function(d) { return d.category === filterCategory; })
+    : data;
   const container = document.querySelector('#panel-discussions');
   container.querySelectorAll('.discussion-item').forEach(function(el) { el.remove(); });
-  // Update badge count
-  const badge = document.querySelector('.nav-item [onclick*="discussions"] + .badge');
   const colors = ['linear-gradient(135deg,#2A6B5E,#3D9E8A)', 'linear-gradient(135deg,#7B3F9E,#C9A84C)', 'linear-gradient(135deg,#C0392B,#E74C3C)', 'linear-gradient(135deg,#1A5276,#2E86C1)'];
-  data.forEach(function(d, i) {
+  filtered.forEach(function(d, i) {
     const name = d.profiles ? (d.profiles.full_name || '') : '';
-    const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2) || 'UN';
+    const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2) || (d.category === 'Social Updates' ? '📣' : 'UN');
     const orgName = d.organizations ? d.organizations.short_name : '';
-    const meta = (orgName || 'Member') + ' · ' + timeAgo(d.created_at);
+    const meta = orgName ? orgName + ' · ' + timeAgo(d.created_at) : timeAgo(d.created_at);
+    const isSocial = d.category === 'Social Updates';
     const el = document.createElement('div');
     el.className = 'discussion-item';
     el.style.cursor = 'pointer';
-    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + colors[i % colors.length] + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div>' + adminBtns('discussions', d.id, 'loadDiscussions') + '</div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
-    el.addEventListener('click', function() { openDiscModal(d.id, d.subject, meta); });
+    el.innerHTML = '<div class="discussion-header"><div class="disc-avatar" style="background:' + (isSocial ? 'linear-gradient(135deg,#C9A84C,#9E7A2A)' : colors[i % colors.length]) + ';font-size:' + (isSocial ? '1rem' : '0.75rem') + '">' + initials + '</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><div class="disc-subject">' + d.subject + '</div><div class="disc-category">' + (d.category || '') + '</div>' + adminBtns('discussions', d.id, 'loadDiscussions') + '</div><div class="disc-preview">' + (d.preview || '') + '</div></div></div><div class="disc-footer"><span>💬 ' + (d.reply_count || 0) + ' replies</span><span>👁 ' + (d.view_count || 0) + ' views</span><span>' + meta + '</span></div>';
+    el.addEventListener('click', function(e) {
+      if (e.target.closest('[data-admin-action]')) return;
+      openDiscModal(d.id, d.subject, meta);
+    });
     container.appendChild(el);
   });
+  if (filtered.length === 0) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--muted);font-size:0.82rem;padding:24px;text-align:center;';
+    empty.textContent = 'No discussions in this category yet.';
+    container.appendChild(empty);
+  }
 }
 
 
@@ -6006,11 +6068,11 @@ function copyForumLink(title) {
 // ============================================================
 // ORG DATA
 // ============================================================
-var orgProfileData = {"AfyAfrika": {"icon": "\ud83c\udf0d", "programs": ["Community-based FP outreach in Nairobi, Narok & Homa Bay", "Mobile clinic network reaching remote populations", "SRHR rights education in informal settlements", "Community Health Worker training & supervision"], "counties": ["Nairobi", "Narok", "Homa Bay", "Kisumu"], "founded": "2011", "staff": "45+", "beneficiaries": "120K+", "contact": "info@afyafrika.org", "website": "https://afyafrika.org"}, "This Ability Trust": {"icon": "\u267f", "programs": ["Disability-inclusive SRHR service design & audits", "Health worker training on disability-inclusive care", "Advocacy for PWD access to SRHR services", "Adapted IEC materials development"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2014", "staff": "18", "beneficiaries": "35K+", "contact": "info@thisabilitytrust.org", "website": ""}, "Men Engage Kenya Alliance": {"icon": "\ud83d\udc68", "programs": ["Male engagement in FP & maternal health", "GBV prevention through community dialogues", "Fatherhood & healthy masculinity programming", "Male champion networks in 12 counties"], "counties": ["Nairobi", "Nakuru", "Homa Bay", "Eldoret"], "founded": "2009", "staff": "32", "beneficiaries": "80K+", "contact": "info@menengagekenya.org", "website": ""}, "SRHR Alliance": {"icon": "\ud83e\udd1d", "programs": ["National SRHR policy advocacy & monitoring", "County budget tracking for SRHR", "Network coordination & coalition building", "SRHR data synthesis & evidence generation"], "counties": ["All 47 counties", "National level"], "founded": "2016", "staff": "24", "beneficiaries": "National reach", "contact": "info@srhralliance.or.ke", "website": ""}, "Activate Action": {"icon": "\ud83d\udd25", "programs": ["Digital SRHR advocacy campaigns", "Disinformation monitoring & rapid response", "Youth-led social media mobilization", "Community radio SRHR programming"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2018", "staff": "15", "beneficiaries": "500K+ digital reach", "contact": "info@activateaction.org", "website": ""}, "Network for Adolescent and Youth of Africa": {"icon": "\ud83c\udf31", "programs": ["Peer educator training across East Africa", "Adolescent SRHR policy advocacy", "Youth-friendly service monitoring", "Pan-African youth SRHR networks"], "counties": ["Nairobi", "Kisumu", "Homa Bay", "Mombasa"], "founded": "2013", "staff": "28", "beneficiaries": "200K+", "contact": "info@nayaafrica.org", "website": "https://nayaafrica.org"}, "Zana Africa": {"icon": "\ud83d\udc67", "programs": ["MHM kits to 50,000+ girls annually", "School-based menstrual health education", "Reusable pad production & distribution", "Teacher & CHW training on MHM"], "counties": ["Nairobi", "Kisumu", "Homa Bay", "Siaya"], "founded": "2012", "staff": "38", "beneficiaries": "250K+ girls", "contact": "info@zanaafrica.org", "website": "https://zanaafrica.org"}, "Zamara Foundation": {"icon": "\ud83d\udc9b", "programs": ["SRHR commodity supply & health systems grants", "Facility infrastructure support", "Community resilience programming", "Health worker incentive schemes"], "counties": ["Nairobi", "Nakuru", "Machakos"], "founded": "2015", "staff": "12", "beneficiaries": "60K+", "contact": "info@zamarafoundation.org", "website": ""}, "County Youth & Adolescent Network": {"icon": "\ud83e\uddd1", "programs": ["County health department youth SRHR advocacy", "Youth-friendly facility standards monitoring", "County budget advocacy for ASRH", "Youth representation in health governance"], "counties": ["Nairobi", "Narok", "Homa Bay", "Nakuru"], "founded": "2017", "staff": "20", "beneficiaries": "90K+ youth", "contact": "info@cyan.or.ke", "website": ""}, "Movement of Men Against AIDS in Kenya": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Male HIV testing & treatment adherence", "Stigma reduction community campaigns", "Men as champions for SRHR"], "counties": ["Nairobi", "Homa Bay", "Kisumu", "Mombasa"], "founded": "2008", "staff": "22", "beneficiaries": "110K+", "contact": "info@mmaak.org", "website": ""}, "Secny Community Based Organization": {"icon": "\ud83c\udfd8", "programs": ["Last-mile SRHR services in remote areas", "Village health days & outreach clinics", "Community health education", "CHW supervision & support"], "counties": ["Homa Bay", "Narok", "Migori"], "founded": "2014", "staff": "16", "beneficiaries": "45K+", "contact": "info@secny.org", "website": ""}, "Beyond Initiative for Social Concern": {"icon": "\ud83d\udc99", "programs": ["Community-led SRHR service monitoring", "Citizen scorecards at facility level", "Social accountability & transparency", "Integrated community development"], "counties": ["Nairobi", "Homa Bay", "Narok", "Kisii"], "founded": "2013", "staff": "19", "beneficiaries": "75K+", "contact": "info@beyondinitiative.org", "website": ""},
-  "Network for Adolescent and Youth of Africa": {"icon": "\ud83c\udf31", "programs": ["Pan-African adolescent SRHR peer education", "Youth leadership & advocacy training", "Youth-friendly health services monitoring", "Adolescent sexual health campaigns"], "counties": ["Nairobi", "Mombasa", "Kisumu", "Narok"], "founded": "2009", "staff": "31", "beneficiaries": "85K+", "contact": "info@nayakenya.org", "website": "https://nayakenya.org"},
-  "NAYA": {"icon": "\ud83c\udf31", "programs": ["Pan-African adolescent SRHR peer education", "Youth leadership & advocacy training", "Youth-friendly health services monitoring", "Adolescent sexual health campaigns"], "counties": ["Nairobi", "Mombasa", "Kisumu", "Narok"], "founded": "2009", "staff": "31", "beneficiaries": "85K+", "contact": "info@nayakenya.org", "website": "https://nayakenya.org"},
-  "Movement of Men Against AIDS in Kenya": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Stigma reduction community campaigns", "Male champion networks for HIV testing", "Partner & family SRHR support programmes"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2008", "staff": "18", "beneficiaries": "45K+", "contact": "info@mmaak.org", "website": ""},
-  "MMAAK": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Stigma reduction community campaigns", "Male champion networks for HIV testing", "Partner & family SRHR support programmes"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2008", "staff": "18", "beneficiaries": "45K+", "contact": "info@mmaak.org", "website": ""}};
+var orgProfileData = {"AfyAfrika": {"icon": "\ud83c\udf0d", "programs": ["Community-based FP outreach in Nairobi, Narok & Homa Bay", "Mobile clinic network reaching remote populations", "SRHR rights education in informal settlements", "Community Health Worker training & supervision"], "counties": ["Nairobi", "Narok", "Homa Bay", "Kisumu"], "founded": "2011", "staff": "45+", "beneficiaries": "120K+", "contact": "info@afyafrika.org", "website": "https://afyafrika.org", "twitter": "AfyAfrikaKE"}, "This Ability Trust": {"icon": "\u267f", "programs": ["Disability-inclusive SRHR service design & audits", "Health worker training on disability-inclusive care", "Advocacy for PWD access to SRHR services", "Adapted IEC materials development"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2014", "staff": "18", "beneficiaries": "35K+", "contact": "info@thisabilitytrust.org", "website": "", "twitter": "ThisAbilityKE"}, "Men Engage Kenya Alliance": {"icon": "\ud83d\udc68", "programs": ["Male engagement in FP & maternal health", "GBV prevention through community dialogues", "Fatherhood & healthy masculinity programming", "Male champion networks in 12 counties"], "counties": ["Nairobi", "Nakuru", "Homa Bay", "Eldoret"], "founded": "2009", "staff": "32", "beneficiaries": "80K+", "contact": "info@menengagekenya.org", "website": "", "twitter": "MenEngageKenya"}, "SRHR Alliance": {"icon": "\ud83e\udd1d", "programs": ["National SRHR policy advocacy & monitoring", "County budget tracking for SRHR", "Network coordination & coalition building", "SRHR data synthesis & evidence generation"], "counties": ["All 47 counties", "National level"], "founded": "2016", "staff": "24", "beneficiaries": "National reach", "contact": "info@srhralliance.or.ke", "website": "", "twitter": "SRHRAllianceKE"}, "Activate Action": {"icon": "\ud83d\udd25", "programs": ["Digital SRHR advocacy campaigns", "Disinformation monitoring & rapid response", "Youth-led social media mobilization", "Community radio SRHR programming"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2018", "staff": "15", "beneficiaries": "500K+ digital reach", "contact": "info@activateaction.org", "website": "", "twitter": "ActivateActionKE"}, "Network for Adolescent and Youth of Africa": {"icon": "\ud83c\udf31", "programs": ["Peer educator training across East Africa", "Adolescent SRHR policy advocacy", "Youth-friendly service monitoring", "Pan-African youth SRHR networks"], "counties": ["Nairobi", "Kisumu", "Homa Bay", "Mombasa"], "founded": "2013", "staff": "28", "beneficiaries": "200K+", "contact": "info@nayaafrica.org", "website": "https://nayaafrica.org", "twitter": "NAYAAfrica"}, "Zana Africa": {"icon": "\ud83d\udc67", "programs": ["MHM kits to 50,000+ girls annually", "School-based menstrual health education", "Reusable pad production & distribution", "Teacher & CHW training on MHM"], "counties": ["Nairobi", "Kisumu", "Homa Bay", "Siaya"], "founded": "2012", "staff": "38", "beneficiaries": "250K+ girls", "contact": "info@zanaafrica.org", "website": "https://zanaafrica.org", "twitter": "ZanaAfrica"}, "Zamara Foundation": {"icon": "\ud83d\udc9b", "programs": ["SRHR commodity supply & health systems grants", "Facility infrastructure support", "Community resilience programming", "Health worker incentive schemes"], "counties": ["Nairobi", "Nakuru", "Machakos"], "founded": "2015", "staff": "12", "beneficiaries": "60K+", "contact": "info@zamarafoundation.org", "website": "", "twitter": "ZamaraFdn"}, "County Youth & Adolescent Network": {"icon": "\ud83e\uddd1", "programs": ["County health department youth SRHR advocacy", "Youth-friendly facility standards monitoring", "County budget advocacy for ASRH", "Youth representation in health governance"], "counties": ["Nairobi", "Narok", "Homa Bay", "Nakuru"], "founded": "2017", "staff": "20", "beneficiaries": "90K+ youth", "contact": "info@cyan.or.ke", "website": "", "twitter": "CYANKenya"}, "Movement of Men Against AIDS in Kenya": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Male HIV testing & treatment adherence", "Stigma reduction community campaigns", "Men as champions for SRHR"], "counties": ["Nairobi", "Homa Bay", "Kisumu", "Mombasa"], "founded": "2008", "staff": "22", "beneficiaries": "110K+", "contact": "info@mmaak.org", "website": "", "twitter": "MAAKKenya"}, "Secny Community Based Organization": {"icon": "\ud83c\udfd8", "programs": ["Last-mile SRHR services in remote areas", "Village health days & outreach clinics", "Community health education", "CHW supervision & support"], "counties": ["Homa Bay", "Narok", "Migori"], "founded": "2014", "staff": "16", "beneficiaries": "45K+", "contact": "info@secny.org", "website": "", "twitter": "SecnyCBO"}, "Beyond Initiative for Social Concern": {"icon": "\ud83d\udc99", "programs": ["Community-led SRHR service monitoring", "Citizen scorecards at facility level", "Social accountability & transparency", "Integrated community development"], "counties": ["Nairobi", "Homa Bay", "Narok", "Kisii"], "founded": "2013", "staff": "19", "beneficiaries": "75K+", "contact": "info@beyondinitiative.org", "website": "", "twitter": "BeyondInitKE"},
+  "Network for Adolescent and Youth of Africa": {"icon": "\ud83c\udf31", "programs": ["Pan-African adolescent SRHR peer education", "Youth leadership & advocacy training", "Youth-friendly health services monitoring", "Adolescent sexual health campaigns"], "counties": ["Nairobi", "Mombasa", "Kisumu", "Narok"], "founded": "2009", "staff": "31", "beneficiaries": "85K+", "contact": "info@nayakenya.org", "website": "https://nayakenya.org", "twitter": "NAYAAfrica"},
+  "NAYA": {"icon": "\ud83c\udf31", "programs": ["Pan-African adolescent SRHR peer education", "Youth leadership & advocacy training", "Youth-friendly health services monitoring", "Adolescent sexual health campaigns"], "counties": ["Nairobi", "Mombasa", "Kisumu", "Narok"], "founded": "2009", "staff": "31", "beneficiaries": "85K+", "contact": "info@nayakenya.org", "website": "https://nayakenya.org", "twitter": "NAYAAfrica"},
+  "Movement of Men Against AIDS in Kenya": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Stigma reduction community campaigns", "Male champion networks for HIV testing", "Partner & family SRHR support programmes"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2008", "staff": "18", "beneficiaries": "45K+", "contact": "info@mmaak.org", "website": "", "twitter": "MAAKKenya"},
+  "MMAAK": {"icon": "\ud83c\udf97", "programs": ["HIV prevention among men & partners", "Stigma reduction community campaigns", "Male champion networks for HIV testing", "Partner & family SRHR support programmes"], "counties": ["Nairobi", "Mombasa", "Kisumu"], "founded": "2008", "staff": "18", "beneficiaries": "45K+", "contact": "info@mmaak.org", "website": "", "twitter": "MAAKKenya"}};
 
 // ============================================================
 // EVENTS - INTERACTIVE
@@ -6197,6 +6259,7 @@ async function openOrgProfile(orgName, orgData) {
   var body = document.getElementById('org-profile-body');
   body.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading profile...</div>';
   modal.classList.remove('hidden');
+  setTimeout(loadXTimeline, 500);
 
   // Fetch org marketplace listings
   var orgListingsRes = await _supabase
@@ -6263,8 +6326,9 @@ async function openOrgProfile(orgName, orgData) {
       }).join('') + '</div>'
       : '') +
     '<div class="org-section-title">Contact</div>' +
-    '<div style="display:flex;flex-direction:column;gap:6px;">' + contactBtns + '</div>' +
-    editBtn;
+    '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">' + contactBtns + '</div>' +
+    editBtn +
+    buildXFeedSection(profile, orgName);
 }
 
 function closeOrgProfile() {
@@ -6349,6 +6413,12 @@ window.addEventListener('DOMContentLoaded', function() {
         var orgId = editBtn.getAttribute('data-org-id');
         closeOrgProfile();
         setTimeout(function() { adminOpenEdit('organizations', orgId, 'loadOrgs'); }, 100);
+      }
+      var discussBtn = e.target.closest('[data-x-handle]');
+      if (discussBtn) {
+        var handle = discussBtn.getAttribute('data-x-handle');
+        var orgName = discussBtn.getAttribute('data-x-org');
+        bringToHub(handle, orgName);
       }
     });
   }
@@ -7207,6 +7277,13 @@ window.addEventListener('DOMContentLoaded', function() {
 // ============================================================
 // RESOURCES - FILTER & SEARCH
 // ============================================================
+
+function filterDiscussions(category, el) {
+  document.querySelectorAll('#disc-filters .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  loadDiscussions(category);
+}
+
 function filterResources(type, el) {
   document.querySelectorAll('#panel-resources .filter-chip').forEach(function(c) { c.classList.remove('active'); });
   if (el) el.classList.add('active');
@@ -7224,6 +7301,80 @@ window.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+
+// ============================================================
+// X / TWITTER FEED IN ORG PROFILES
+// ============================================================
+
+function buildXFeedSection(profile, orgName) {
+  var handle = profile.twitter;
+  var safeOrg = (orgName || '').replace(/"/g, '&quot;');
+  if (!handle) {
+    return '<div class="x-feed-section"><div class="x-no-handle">No X account linked yet.</div></div>';
+  }
+  return '<div class="x-feed-section">' +
+    '<div class="x-feed-header">' +
+      '<div class="x-feed-title"><span class="x-logo">&#120143;</span>&nbsp;Latest from @' + handle + '</div>' +
+      '<a href="https://twitter.com/' + handle + '" target="_blank" class="x-follow-btn">Follow</a>' +
+    '</div>' +
+    '<div class="x-timeline-wrap" id="x-timeline-' + handle + '">' +
+      '<a class="twitter-timeline"' +
+        ' data-theme="dark"' +
+        ' data-chrome="noheader nofooter noborders transparent"' +
+        ' data-tweet-limit="3"' +
+        ' data-height="300"' +
+        ' href="https://twitter.com/' + handle + '">' +
+        'Loading posts from @' + handle + '...' +
+      '</a>' +
+    '</div>' +
+    '<button class="x-discuss-btn" data-x-handle="' + handle + '" data-x-org="' + safeOrg + '">' +
+      '&#128172; Bring latest post to Hub Discussion' +
+    '</button>' +
+  '</div>';
+}
+
+
+async function bringToHub(handle, orgName) {
+  var subject = orgName + ': Latest update from @' + handle + ' — ' + new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  var preview = 'Shared from @' + handle + ' on X. Click to view the full post and join the discussion on the hub.';
+  var body = 'This discussion was brought to the hub from @' + handle + ' on X.\n\nView the original post: https://twitter.com/' + handle + '\n\nShare your thoughts, questions or responses below. What does this mean for your work?';
+
+  var errMsg = '';
+  var { data, error } = await _supabase.from('discussions').insert({
+    subject: subject,
+    preview: preview,
+    body: body,
+    category: 'Social Update',
+    reply_count: 0,
+    view_count: 0
+  }).select().single();
+
+  if (error) {
+    alert('Could not create discussion: ' + error.message);
+    return;
+  }
+
+  // Log activity
+  await _supabase.from('activity_log').insert({
+    activity_type: 'discussion_start',
+    description: orgName + ' brought a post from X to the hub discussions',
+    dot_color: 'gold'
+  });
+
+  // Close modal and jump to discussions
+  closeOrgProfile();
+  setTimeout(function() {
+    showPanel('discussions', document.querySelector('[onclick*="discussions"]'));
+    loadDiscussions();
+    // Show success
+    var successMsg = document.createElement('div');
+    successMsg.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--gold);color:var(--dark);padding:12px 20px;border-radius:8px;font-weight:600;font-size:0.82rem;z-index:9999;';
+    successMsg.textContent = '✓ Post brought to Discussions!';
+    document.body.appendChild(successMsg);
+    setTimeout(function() { successMsg.remove(); }, 3000);
+  }, 300);
+}
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
