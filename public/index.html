@@ -7329,46 +7329,76 @@ function buildXFeedSection(profile, orgName) {
 }
 
 
-async function bringToHub(handle, orgName) {
-  var subject = orgName + ': Latest update from @' + handle + ' — ' + new Date().toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-  var preview = 'Shared from @' + handle + ' on X. Click to view the full post and join the discussion on the hub.';
-  var body = 'This discussion was brought to the hub from @' + handle + ' on X.\n\nView the original post: https://twitter.com/' + handle + '\n\nShare your thoughts, questions or responses below. What does this mean for your work?';
+var _pasteTweetContext = null;
 
-  var errMsg = '';
+function bringToHub(handle, orgName) {
+  _pasteTweetContext = { handle: handle, orgName: orgName };
+  document.getElementById('paste-tweet-modal').classList.remove('hidden');
+  document.getElementById('paste-tweet-text').value = '';
+  document.getElementById('paste-tweet-url').value = 'https://twitter.com/' + handle;
+  document.getElementById('paste-tweet-error').style.display = 'none';
+  document.getElementById('paste-tweet-org').innerHTML = 
+    'From <strong style="color:var(--gold)">@' + handle + '</strong> · ' + orgName;
+  setTimeout(function() { document.getElementById('paste-tweet-text').focus(); }, 100);
+}
+
+function closePasteTweet() {
+  document.getElementById('paste-tweet-modal').classList.add('hidden');
+  _pasteTweetContext = null;
+}
+
+async function submitPasteTweet() {
+  if (!_pasteTweetContext) return;
+  var handle = _pasteTweetContext.handle;
+  var orgName = _pasteTweetContext.orgName;
+  var text = document.getElementById('paste-tweet-text').value.trim();
+  var url = document.getElementById('paste-tweet-url').value.trim();
+  var errEl = document.getElementById('paste-tweet-error');
+  var btn = document.getElementById('paste-tweet-btn');
+
+  if (!text) { errEl.textContent = 'Please paste the post content.'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true; btn.textContent = 'Posting...';
+
+  var subject = orgName + ' on X: ' + text.substring(0, 80) + (text.length > 80 ? '...' : '');
+  var body = text + (url ? '\n\n🔗 Original post: ' + url : '') + '\n\n— Shared from @' + handle + ' on X. What does this mean for your work?';
+
   var { data, error } = await _supabase.from('discussions').insert({
     subject: subject,
-    preview: preview,
+    preview: text.substring(0, 150),
     body: body,
     category: 'Social Update',
     reply_count: 0,
     view_count: 0
   }).select().single();
 
-  if (error) {
-    alert('Could not create discussion: ' + error.message);
-    return;
-  }
+  btn.disabled = false; btn.textContent = '💬 Post to Hub Discussions';
 
-  // Log activity
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+
   await _supabase.from('activity_log').insert({
     activity_type: 'discussion_start',
-    description: orgName + ' brought a post from X to the hub discussions',
+    description: orgName + ' shared a post from X to the hub',
     dot_color: 'gold'
   });
 
-  // Close modal and jump to discussions
+  closePasteTweet();
   closeOrgProfile();
   setTimeout(function() {
-    showPanel('discussions', document.querySelector('[onclick*="discussions"]'));
+    showPanel('discussions', document.querySelector(".nav-item[onclick*='discussions']"));
     loadDiscussions();
-    // Show success
-    var successMsg = document.createElement('div');
-    successMsg.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--gold);color:var(--dark);padding:12px 20px;border-radius:8px;font-weight:600;font-size:0.82rem;z-index:9999;';
-    successMsg.textContent = '✓ Post brought to Discussions!';
-    document.body.appendChild(successMsg);
-    setTimeout(function() { successMsg.remove(); }, 3000);
+    var msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--gold);color:var(--dark);padding:12px 20px;border-radius:8px;font-weight:600;font-size:0.82rem;z-index:9999;';
+    msg.textContent = '✓ Post is now live in Discussions!';
+    document.body.appendChild(msg);
+    setTimeout(function() { msg.remove(); }, 3000);
   }, 300);
 }
+
+window.addEventListener('DOMContentLoaded', function() {
+  var ptModal = document.getElementById('paste-tweet-modal');
+  if (ptModal) ptModal.addEventListener('click', function(e) { if (e.target === this) closePasteTweet(); });
+});
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
@@ -8238,6 +8268,31 @@ async function handleLogout() { await _supabase.auth.signOut(); }
   </div>
 </div>
 
+
+
+<!-- PASTE TWEET MODAL -->
+<div class="modal-overlay hidden" id="paste-tweet-modal">
+  <div class="request-box" style="max-width:520px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.2rem;font-weight:600;">Bring <span style="color:var(--gold)">Post to Hub</span></div>
+      <button class="modal-close" onclick="closePasteTweet()">✕</button>
+    </div>
+    <div id="paste-tweet-org" style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;"></div>
+    <div class="auth-field">
+      <label>Paste the post content here</label>
+      <textarea id="paste-tweet-text" style="width:100%;min-height:120px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;resize:none;" placeholder="Copy the tweet/post text and paste it here..."></textarea>
+    </div>
+    <div class="auth-field">
+      <label>Link to original post (optional)</label>
+      <input type="url" id="paste-tweet-url" placeholder="https://twitter.com/..." style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;" />
+    </div>
+    <div class="auth-error" id="paste-tweet-error"></div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-outline" onclick="closePasteTweet()" style="flex:1">Cancel</button>
+      <button class="btn btn-gold" id="paste-tweet-btn" onclick="submitPasteTweet()" style="flex:2">💬 Post to Hub Discussions</button>
+    </div>
+  </div>
+</div>
 
 </body>
 
