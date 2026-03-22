@@ -6352,7 +6352,14 @@ async function loadOrgs() {
       '<div class="resource-title">' + (o.short_name || o.name) + '</div>' +
       '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;">' + (o.description ? o.description.substring(0,100) + '...' : '') + '</div>' +
       '<div style="font-size:0.72rem;color:var(--gold);margin-top:8px;">View full profile →</div>';
-    card.addEventListener('click', function() { openOrgProfile(o.name, o); });
+    card.addEventListener('click', function() {
+      console.log('Card clicked:', o.name, o.id);
+      try {
+        openOrgProfile(o.name, o);
+      } catch(e) {
+        console.error('openOrgProfile error:', e.message, e.stack);
+      }
+    });
     grid.appendChild(card);
   });
 }
