@@ -2198,17 +2198,13 @@ class="progress-fill" style="width:38%"></div></div>
 <input class="search-input" placeholder="🔍 Search resources..."
 />
 
-<span class="filter-chip active">All</span>
-
-<span class="filter-chip">Guidelines</span>
-
-<span class="filter-chip">Training</span>
-
-<span class="filter-chip">Data / Reports</span>
-
-<span class="filter-chip">IEC Materials</span>
-
-<span class="filter-chip">Tools</span>
+<span class="filter-chip active" onclick="filterResources('all', this)">All</span>
+<span class="filter-chip" onclick="filterResources('Guidelines', this)">Guidelines</span>
+<span class="filter-chip" onclick="filterResources('Training', this)">Training</span>
+<span class="filter-chip" onclick="filterResources('Data / Reports', this)">Data / Reports</span>
+<span class="filter-chip" onclick="filterResources('IEC Materials', this)">IEC Materials</span>
+<span class="filter-chip" onclick="filterResources('Tools', this)">Tools</span>
+<span class="filter-chip" onclick="filterResources('Forum Content', this)">🏛 Forum Content</span>
 
 <button class="btn btn-gold" style="margin-left:auto"
 onclick="openUploadModal()">+
@@ -3449,14 +3445,46 @@ async function loadDashboard() {
 
 // loadMarketplace replaced
 
-async function loadResources() {
+async function loadResources(filterType) {
   const { data } = await _supabase.from('resources').select('*').order('created_at', { ascending: false });
   if (!data) return;
   const grid = document.querySelector('#panel-resources .resources-grid');
   if (!grid) return;
   grid.innerHTML = '';
-  const icons = { Guideline: '📄', 'Data Report': '📊', 'Training Material': '🎓', 'IEC Material': '🖼', Tool: '🔧', Other: '📁' };
-  data.forEach(function(r) {
+  const icons = { Guideline: '📄', 'Data Report': '📊', 'Training Material': '🎓', 'IEC Material': '🖼', Tool: '🔧', Other: '📁', 'Forum Content': '🏛' };
+
+  // Filter if type specified
+  var filtered = data;
+  if (filterType && filterType !== 'all') {
+    var typeMap = {
+      'Guidelines': 'Guideline',
+      'Training': 'Training Material',
+      'Data / Reports': 'Data Report',
+      'IEC Materials': 'IEC Material',
+      'Tools': 'Tool',
+      'Forum Content': 'Forum Content'
+    };
+    var matchType = typeMap[filterType] || filterType;
+    filtered = data.filter(function(r) { return r.type === matchType; });
+  }
+
+  // Search filter
+  var searchVal = document.querySelector('#panel-resources .search-input');
+  if (searchVal && searchVal.value.trim()) {
+    var q = searchVal.value.trim().toLowerCase();
+    filtered = filtered.filter(function(r) {
+      return (r.title||'').toLowerCase().includes(q) ||
+             (r.description||'').toLowerCase().includes(q) ||
+             (r.tags||[]).join(' ').toLowerCase().includes(q);
+    });
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:span 3;color:var(--muted);font-size:0.82rem;padding:24px;text-align:center;">No resources found for this filter.</div>';
+    return;
+  }
+
+  filtered.forEach(function(r) {
     const tags = (r.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
     const isLink = r.file_type === 'LINK';
     const actionBtn = r.file_url ? (isLink
@@ -3472,7 +3500,6 @@ async function loadResources() {
   const badges = document.querySelectorAll('.nav-item .badge');
   badges.forEach(function(b) { if (b.textContent === '34' || parseInt(b.textContent) > 0) b.textContent = data.length; });
 }
-
 async function loadDiscussions() {
   const { data } = await _supabase.from('discussions').select('*, profiles(full_name), organizations(short_name)').order('created_at', { ascending: false });
   if (!data) return;
@@ -7142,6 +7169,28 @@ window.addEventListener('DOMContentLoaded', function() {
   if (ncModal) ncModal.addEventListener('click', function(e) { if (e.target === this) closeNewCampaign(); });
   var tkModal = document.getElementById('upload-toolkit-modal');
   if (tkModal) tkModal.addEventListener('click', function(e) { if (e.target === this) closeUploadToolkit(); });
+});
+
+
+// ============================================================
+// RESOURCES - FILTER & SEARCH
+// ============================================================
+function filterResources(type, el) {
+  document.querySelectorAll('#panel-resources .filter-chip').forEach(function(c) { c.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  loadResources(type);
+}
+
+// Wire search
+window.addEventListener('DOMContentLoaded', function() {
+  var searchInput = document.querySelector('#panel-resources .search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      var activeChip = document.querySelector('#panel-resources .filter-chip.active');
+      var activeType = activeChip ? activeChip.textContent.replace('🏛 ', '') : 'all';
+      loadResources(activeType);
+    });
+  }
 });
 
 async function handleLogout() { await _supabase.auth.signOut(); }
