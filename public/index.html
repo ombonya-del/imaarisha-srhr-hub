@@ -7361,7 +7361,8 @@ async function submitPasteTweet() {
   btn.disabled = true; btn.textContent = 'Posting...';
 
   var subject = orgName + ' on X: ' + text.substring(0, 80) + (text.length > 80 ? '...' : '');
-  var body = text + (url ? '\n\n🔗 Original post: ' + url : '') + '\n\n— Shared from @' + handle + ' on X. What does this mean for your work?';
+  var linkHtml = url ? '<br><br><a href="' + url + '" target="_blank" style="color:var(--gold);font-weight:600;">&#128279; View original post on X &#8594;</a>' : '';
+  var body = text + linkHtml + '<br><br>&#8212; Shared from <a href="https://twitter.com/' + handle + '" target="_blank" style="color:var(--gold);">@' + handle + '</a> on X. What does this mean for your work?';
 
   var { data, error } = await _supabase.from('discussions').insert({
     subject: subject,
