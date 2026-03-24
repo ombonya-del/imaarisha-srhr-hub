@@ -1277,8 +1277,9 @@ flex; justify-content: space-between; }
 /* TRACKER - INTERACTIVE */
 .tracker-card { cursor: pointer; transition: all 0.2s; }
 .tracker-card:hover { border-color: var(--gold); transform: translateY(-1px); }
-.tracker-detail { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.tracker-detail.open { display: block; }
+.tracker-detail { display: block; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.tracker-detail .tracker-trend-section { display: none; }
+.tracker-detail.open .tracker-trend-section { display: block; }
 .tracker-expand-hint { font-size: 0.68rem; color: var(--muted); margin-top: 8px; text-align: right; }
 .tracker-trend {
   display: flex; gap: 6px; align-items: flex-end;
@@ -4895,13 +4896,14 @@ var trackerData = {
       { q: 'Q4 2025', val: 60 }, { q: 'Q1 2026', val: 61 }
     ],
     sources: [
-      { label: 'Kenya Demographic & Health Survey 2022', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'KHIS — Kenya Health Information System', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'FP2030 Kenya Commitment Dashboard', url: 'https://fp2030.org/data-hub/countries/KEN' }
+      { label: 'KDHS 2022 — Family Planning Chapter (Table 7.1)', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
+      { label: 'FP2030 — Kenya Commitment & Progress Data', url: 'https://fp2030.org/data-hub/countries/KEN' },
+      { label: 'WHO — Family Planning Fact Sheet Kenya', url: 'https://www.who.int/news-room/fact-sheets/detail/family-planning-contraception' },
+      { label: 'Kenya National SRHR Policy 2022 — MoH', url: 'https://www.health.go.ke/wp-content/uploads/2022/06/Kenya-National-Sexual-Reproductive-Health-Policy-2022.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Meru'],
     orgs: ['AfyAfrika', 'SRHR Alliance', 'Zamara Foundation', 'Men Engage Kenya'],
-    note: 'Modern contraceptive prevalence rate among women aged 15-49'
+    note: 'Modern contraceptive prevalence rate (mCPR) among women aged 15-49. National target of 70% by 2030 per FP2030 Kenya commitment.'
   },
   'Skilled Birth Attendance': {
     trend: [
@@ -4951,9 +4953,9 @@ var trackerData = {
       { q: 'Q4 2025', val: 53 }, { q: 'Q1 2026', val: 54 }
     ],
     sources: [
-      { label: 'Kenya Master Health Facility List', url: 'https://kmhfl.health.go.ke' },
-      { label: 'KNBS — Kenya Population & Housing Census 2019', url: 'https://www.knbs.or.ke' },
-      { label: 'Kenya Master Health Facility List', url: 'https://kmhfl.health.go.ke' }
+      { label: 'Kenya Master Health Facility List — MoH', url: 'https://kmhfl.health.go.ke' },
+      { label: 'KNBS — Kenya Population & Housing Census 2019', url: 'https://www.knbs.or.ke/census/' },
+      { label: 'WHO — Health Service Access Indicators', url: 'https://www.who.int/data/gho/data/themes/topics/health-services-access' }
     ],
     counties: ['Nairobi', 'Kisumu', 'Mombasa', 'Turkana', 'Mandera'],
     orgs: ['AfyAfrika', 'Secny CBO', 'Beyond Initiative', 'Zamara Foundation'],
@@ -5095,9 +5097,9 @@ async function loadTracker() {
         '<div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Current: ' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div>' +
         '<div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Target: ' + ind.target_value + (ind.unit === '%' ? '%' : '') + '</div>' +
       '</div>' +
-      '<div class="tracker-expand-hint">👆 Click for trend, sources & breakdown</div>' +
+      '<div class="tracker-expand-hint">📈 Click to expand quarterly trend</div>' +
       '<div class="tracker-detail" id="tracker-detail-' + ind.id + '">' +
-        (trend.length ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Quarterly Trend</div><div class="tracker-trend">' + trendHtml + '</div>' : '') +
+        (trend.length ? '<div class="tracker-trend-section"><div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Quarterly Trend</div><div class="tracker-trend">' + trendHtml + '</div></div>' : '') +
         (extra.note ? '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;line-height:1.5;font-style:italic;">' + extra.note + '</div>' : '') +
         (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Data Sources</div><div class="tracker-sources">' + sourcesHtml + '</div>' : '') +
         (counties.length ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Leading Counties <span style=\'font-size:0.6rem;color:var(--muted);\'>(click for breakdown)</span></div><div class="tracker-counties" data-indicator="' + ind.name + '">' + buildLeadingCountyTags(counties, ind.name, ind.id) + '</div>' : '') +
