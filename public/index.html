@@ -1969,7 +1969,7 @@ flex; justify-content: space-between; }
 
 </div>
 
-<div class="nav-item" onclick="showPanel('tracker', this)">
+<div class="nav-item" onclick="showPanel('tracker', this)" style="display:none;">
 
 <span class="icon">📊</span> SRHR Tracker
 
@@ -4566,7 +4566,7 @@ var allCountyData = {
     'Meru': { val: 55, trend: '+2%', notes: 'Mountain region. Moderate coverage.' },
     'Eldoret': { val: 59, trend: '+3%', notes: 'North Rift urban hub. FP services expanding through county hospitals.' },
   },
-  'Skilled Birth Attendance': {
+  'SRHR Disinformation Index': {
     'Nairobi': { val: 92, trend: '+1%', notes: 'Near-universal facility delivery.' },
     'Narok': { val: 54, trend: '+6%', notes: 'Remote communities still under-served.' },
     'Homa Bay': { val: 71, trend: '+4%', notes: 'County referral system improving.' },
@@ -4905,19 +4905,19 @@ var trackerData = {
     orgs: ['AfyAfrika', 'SRHR Alliance', 'Zamara Foundation', 'Men Engage Kenya'],
     note: 'Modern contraceptive prevalence rate (mCPR) among women aged 15-49. National target of 70% by 2030 per FP2030 Kenya commitment.'
   },
-  'Skilled Birth Attendance': {
+  'SRHR Disinformation Index': {
     trend: [
-      { q: 'Q2 2025', val: 74 }, { q: 'Q3 2025', val: 75 },
-      { q: 'Q4 2025', val: 77 }, { q: 'Q1 2026', val: 78 }
+      { q: 'Q2 2025', val: 21 }, { q: 'Q3 2025', val: 18 },
+      { q: 'Q4 2025', val: 15 }, { q: 'Q1 2026', val: 12 }
     ],
     sources: [
-      { label: 'KDHS 2022 — Maternal Health Chapter', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'WHO Kenya Country Profile', url: 'https://www.who.int/publications/i/item/9789240039483' },
-      { label: 'MoH Kenya — National Reproductive Health Policy', url: 'https://www.health.go.ke/wp-content/uploads/2022/06/Kenya-National-Sexual-Reproductive-Health-Policy-2022.pdf' }
+      { label: 'Piga Firimbi — Kenya Fact-Checking Network', url: 'https://www.pigafirimbi.com' },
+      { label: 'Africa Uncensored — Disinformation Tracking', url: 'https://africauncensored.online' },
+      { label: 'RPUBLC — Right-Wing Misinformation Kenya', url: 'https://rpublc.com/april-may-2025/right-wing-misinformation-kenya' }
     ],
-    counties: ['Nairobi', 'Kiambu', 'Mombasa', 'Nyeri', 'Kisii'],
-    orgs: ['SRHR Alliance', 'Zamara Foundation', 'Beyond Initiative'],
-    note: 'Percentage of deliveries attended by a skilled health worker'
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Narok', 'Homa Bay'],
+    orgs: ['Activate Action', 'SRHR Alliance', 'CYAN', 'NAYA'],
+    note: 'Number of active SRHR disinformation claims being tracked across network counties. Target is zero active uncorrected claims. Downward trend is positive.'
   },
   'Youth SRHR Services': {
     trend: [
@@ -5357,14 +5357,14 @@ var orgContributions = {
   'SRHR Alliance': {
     focus: 'Policy Advocacy & Data',
     counties: ['Nairobi', 'Homa Bay'],
-    indicators: ['Family Planning Coverage', 'Skilled Birth Attendance', 'Women Accessing Safe Abortion', 'Access to Quality SRHR Information'],
+    indicators: ['Family Planning Coverage', 'SRHR Disinformation Index', 'Women Accessing Safe Abortion', 'Access to Quality SRHR Information'],
     contribution: 'Coordinates national data collection and policy advocacy. Leads indicator reporting to MoH and KHIS. Drives the quarterly tracker data submissions across the network.',
     contact: 'srhralliance@imaarishasrhr.org'
   },
   'Zamara Foundation': {
     focus: 'Health Systems & Funding',
     counties: ['Nairobi', 'Nakuru'],
-    indicators: ['Skilled Birth Attendance', 'Access to SRHR Services', 'Family Planning Coverage'],
+    indicators: ['SRHR Disinformation Index', 'Access to SRHR Services', 'Family Planning Coverage'],
     contribution: 'Funds facility upgrades and equipment for skilled birth attendance. Supports 12 health facilities with SRHR commodities and training grants.',
     contact: 'zamara@imaarishasrhr.org'
   },
@@ -5420,7 +5420,7 @@ var orgContributions = {
   'Beyond Initiative': {
     focus: 'Social Accountability & Monitoring',
     counties: ['Nairobi', 'Homa Bay', 'Narok'],
-    indicators: ['GBV Response Coverage', 'Skilled Birth Attendance', 'Access to SRHR Services'],
+    indicators: ['GBV Response Coverage', 'SRHR Disinformation Index', 'Access to SRHR Services'],
     contribution: 'Leads community-led monitoring of SRHR service quality. Runs citizen scorecards at facility level. Key contributor to accountability data across all 3 focus counties.',
     contact: 'beyondinitiative@imaarishasrhr.org'
   },
