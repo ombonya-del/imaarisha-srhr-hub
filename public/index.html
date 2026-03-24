@@ -1860,42 +1860,61 @@ flex; justify-content: space-between; }
   <div class="auth-box">
     <div class="auth-logo">Imaarisha<span>SRHR</span></div>
     <div class="auth-sub">Community Hub · Kenya</div>
+
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" onclick="switchTab('signup')">Join Network</button>
+      <button class="auth-tab active" id="tab-magic" onclick="switchTab('magic')">Sign In</button>
+      <button class="auth-tab" id="tab-password" onclick="switchTab('password')">Use Password</button>
     </div>
+
     <div class="auth-error" id="auth-error"></div>
     <div class="auth-success" id="auth-success"></div>
 
-    <!-- LOGIN FORM -->
-    <div id="login-form">
+    <!-- MAGIC LINK FORM -->
+    <div id="magic-form">
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+        Enter your email and we will send you a one-click sign-in link. No password needed.
+      </p>
       <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="you@organization.org" />
+        <label>Email Address</label>
+        <input type="email" id="magic-email" placeholder="you@organization.org" />
       </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" />
-      </div>
-      <button class="auth-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+      <button class="auth-btn" id="magic-btn" onclick="handleMagicLink()">Send Me a Sign-In Link</button>
     </div>
 
-    <!-- SIGNUP FORM -->
-    <div id="signup-form" style="display:none">
-      <div class="auth-field">
-        <label>Full Name</label>
-        <input type="text" id="signup-name" placeholder="Your full name" />
+    <!-- PASSWORD FORM -->
+    <div id="password-form" style="display:none">
+      <div class="auth-tabs" style="margin-bottom:16px;margin-top:0;">
+        <button class="auth-tab active" id="pw-login-tab" onclick="switchPasswordTab('login')">Sign In</button>
+        <button class="auth-tab" id="pw-signup-tab" onclick="switchPasswordTab('signup')">Create Account</button>
       </div>
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="signup-email" placeholder="you@organization.org" />
+      <div id="pw-login-fields">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@organization.org" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" />
+        </div>
+        <button class="auth-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
       </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="signup-password" placeholder="Min. 8 characters" />
+      <div id="pw-signup-fields" style="display:none">
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" id="signup-name" placeholder="Your full name" />
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="you@organization.org" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="Min. 8 characters" />
+        </div>
+        <button class="auth-btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
       </div>
-      <button class="auth-btn" id="signup-btn" onclick="handleSignup()">Request Access</button>
     </div>
+
   </div>
 </div>
 
@@ -3755,12 +3774,36 @@ function showHub(user) {
 function showAuthModal() { document.getElementById('auth-overlay').classList.remove('hidden'); }
 
 function switchTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(function(t) { t.classList.remove('active'); });
-  event.target.classList.add('active');
-  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById("tab-magic").classList.toggle("active", tab === "magic");
+  document.getElementById("tab-password").classList.toggle("active", tab === "password");
+  document.getElementById("magic-form").style.display = tab === "magic" ? "block" : "none";
+  document.getElementById("password-form").style.display = tab === "password" ? "block" : "none";
   clearAuthMessages();
 }
+
+function switchPasswordTab(tab) {
+  document.getElementById("pw-login-tab").classList.toggle("active", tab === "login");
+  document.getElementById("pw-signup-tab").classList.toggle("active", tab === "signup");
+  document.getElementById("pw-login-fields").style.display = tab === "login" ? "block" : "none";
+  document.getElementById("pw-signup-fields").style.display = tab === "signup" ? "block" : "none";
+  clearAuthMessages();
+}
+
+async function handleMagicLink() {
+  var email = document.getElementById("magic-email").value.trim();
+  if (!email) return showError("Please enter your email address.");
+  var btn = document.getElementById("magic-btn");
+  btn.disabled = true; btn.textContent = "Sending...";
+  var result = await _supabase.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
+  btn.disabled = false; btn.textContent = "Send Me a Sign-In Link";
+  if (result.error) {
+    showError(result.error.message);
+  } else {
+    showSuccess("Check your email for a sign-in link! It may take a minute. Check spam if you do not see it.");
+    document.getElementById("magic-email").value = "";
+  }
+}
+
 
 function showError(msg) {
   var el = document.getElementById('auth-error');
@@ -3852,7 +3895,13 @@ async function loadReplies(discId) {
   if (disc && (disc.body || disc.preview)) {
     const op = document.createElement('div');
     op.className = 'reply-item';
-    op.innerHTML = '<div class="reply-avatar" style="background:' + colors[0] + '">OP</div><div class="reply-content"><div class="reply-author">Original Post</div><div class="reply-body">' + (disc.body || disc.preview || '') + '</div></div>';
+    var bodyHtml = (disc.body || disc.preview || '');
+    // Convert plain text URLs to clickable links if not already HTML
+    if (bodyHtml.indexOf('<a ') === -1) {
+      bodyHtml = bodyHtml.replace(/\n/g, '<br>');
+      bodyHtml = bodyHtml.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:var(--gold);font-weight:600;">$1</a>');
+    }
+    op.innerHTML = '<div class="reply-avatar" style="background:' + colors[0] + '">OP</div><div class="reply-content"><div class="reply-author">Original Post</div><div class="reply-body">' + bodyHtml + '</div></div>';
     repliesEl.appendChild(op);
   }
   if (!replies || replies.length === 0) {
