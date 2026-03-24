@@ -3754,18 +3754,39 @@ _supabase.auth.onAuthStateChange(function(event, session) {
 });
 
 function showHub(user) {
-  document.getElementById('auth-overlay').classList.add('hidden');
+  currentUser = user;
+  document.getElementById("auth-overlay").classList.add("hidden");
   var meta = user.user_metadata || {};
-  var name = meta.full_name || user.email.split('@')[0];
-  var initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
-  document.querySelector('.user-name').textContent = name;
-  document.querySelector('.user-avatar').textContent = initials;
-  var footer = document.querySelector('.sidebar-footer');
-  if (!document.getElementById('logout-btn')) {
-    var btn = document.createElement('button');
-    btn.id = 'logout-btn';
-    btn.textContent = 'Sign Out';
-    btn.style.cssText = 'width:100%;margin-top:10px;padding:7px;border-radius:6px;background:transparent;border:1px solid rgba(201,168,76,0.2);color:#7A8899;font-family:DM Sans,sans-serif;font-size:0.75rem;cursor:pointer;';
+  var name = meta.full_name || "";
+
+  // Update last_seen and login_count in profiles
+  _supabase.from("profiles").upsert({
+    id: user.id,
+    last_seen: new Date().toISOString(),
+    login_count: 1
+  }, { onConflict: "id", ignoreDuplicates: false }).then(function() {
+    // Increment login count separately
+    _supabase.rpc("increment_login_count", { user_id: user.id }).catch(function() {});
+  });
+
+  // Track session start time for time-on-hub
+  window._sessionStart = Date.now();
+
+  // Show name prompt if no name set
+  if (!name) {
+    setTimeout(function() { showNamePrompt(user); }, 800);
+    name = user.email.split("@")[0];
+  }
+
+  var initials = name.split(" ").filter(Boolean).map(function(n){ return n[0]; }).join("").toUpperCase().slice(0,2) || "HM";
+  document.querySelector(".user-name").textContent = name;
+  document.querySelector(".user-avatar").textContent = initials;
+  var footer = document.querySelector(".sidebar-footer");
+  if (!document.getElementById("logout-btn")) {
+    var btn = document.createElement("button");
+    btn.id = "logout-btn";
+    btn.textContent = "Sign Out";
+    btn.style.cssText = "width:100%;margin-top:10px;padding:7px;border-radius:6px;background:transparent;border:1px solid rgba(201,168,76,0.2);color:#7A8899;font-family:DM Sans,sans-serif;font-size:0.75rem;cursor:pointer;";
     btn.onclick = handleLogout;
     footer.appendChild(btn);
   }
@@ -6417,7 +6438,7 @@ function renderMembers(members) {
   var grid = document.getElementById('members-grid');
   if (!grid) return;
   if (!members || members.length === 0) {
-    grid.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">No members found.</div>';
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">No members yet. Invite your network!</div>';
     return;
   }
   grid.innerHTML = '';
@@ -6427,16 +6448,19 @@ function renderMembers(members) {
     var initials = name.split(' ').filter(Boolean).map(function(n){return n[0];}).join('').toUpperCase().slice(0,2) || 'HM';
     var orgName = m.organizations ? m.organizations.short_name : 'ImaarishaSRHR Hub';
     var orgGrad = m.organizations ? m.organizations.avatar_gradient : colors[i % colors.length];
-    var role = m.role === 'admin' ? 'Hub Administrator' : 'Organization Member';
+    var role = m.role === 'admin' ? '⭐ Hub Administrator' : 'Organization Member';
     var card = document.createElement('div');
     card.className = 'member-card';
+    card.style.cursor = 'pointer';
     card.innerHTML =
       '<div class="member-avatar" style="background:' + (orgGrad || colors[i%colors.length]) + '">' + initials + '</div>' +
-      '<div>' +
+      '<div style="flex:1">' +
         '<div class="member-name">' + name + '</div>' +
         '<div class="member-org">' + orgName + '</div>' +
         '<div class="member-role">' + role + '</div>' +
-      '</div>';
+      '</div>' +
+      '<div style="font-size:0.7rem;color:var(--gold);margin-left:auto;align-self:center;">View →</div>';
+    card.addEventListener('click', function() { openMemberProfile(m, orgGrad || colors[i%colors.length]); });
     grid.appendChild(card);
   });
 }
@@ -7452,6 +7476,155 @@ window.addEventListener('DOMContentLoaded', function() {
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
+
+// ============================================================
+// NAME PROMPT
+// ============================================================
+function showNamePrompt(user) {
+  document.getElementById('name-prompt-modal').classList.remove('hidden');
+  setTimeout(function() { document.getElementById('prompt-name').focus(); }, 100);
+}
+
+async function saveNamePrompt() {
+  var name = document.getElementById('prompt-name').value.trim();
+  var org = document.getElementById('prompt-org').value;
+  var errEl = document.getElementById('prompt-error');
+  var btn = document.getElementById('prompt-btn');
+  if (!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  // Update auth user metadata
+  await _supabase.auth.updateUser({ data: { full_name: name } });
+
+  // Update profiles table
+  var updateData = { full_name: name };
+  if (org) updateData.org_name = org;
+  await _supabase.from('profiles').update(updateData).eq('id', currentUser.id);
+
+  // Update sidebar display
+  var initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+  document.querySelector('.user-name').textContent = name;
+  document.querySelector('.user-avatar').textContent = initials;
+
+  btn.disabled = false;
+  document.getElementById('name-prompt-modal').classList.add('hidden');
+}
+
+// ============================================================
+// MEMBER PROFILE MODAL
+// ============================================================
+async function openMemberProfile(member, gradient) {
+  var modal = document.getElementById('member-profile-modal');
+  var name = member.full_name || 'Hub Member';
+  var initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2) || 'HM';
+  var orgName = member.organizations ? member.organizations.name : (member.org_name || 'ImaarishaSRHR Hub');
+  var role = member.role === 'admin' ? '⭐ Hub Administrator' : 'Organization Member';
+
+  document.getElementById('mp-banner').style.background = gradient;
+  document.getElementById('mp-initials').textContent = initials;
+  document.getElementById('mp-name').textContent = name;
+  document.getElementById('mp-org').textContent = orgName;
+  document.getElementById('mp-body').innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading activity...</div>';
+  modal.classList.remove('hidden');
+
+  // Fetch participation data in parallel
+  var [resourcesRes, discussionsRes, repliesRes, rsvpsRes, listingsRes] = await Promise.all([
+    _supabase.from('resources').select('id', { count: 'exact', head: true }).eq('uploaded_by', member.id),
+    _supabase.from('discussions').select('id', { count: 'exact', head: true }).eq('author_id', member.id),
+    _supabase.from('discussion_replies').select('id', { count: 'exact', head: true }).eq('author_id', member.id),
+    _supabase.from('event_rsvps').select('id, events(title, event_date)', { count: 'exact' }).eq('user_id', member.id).eq('status', 'going'),
+    _supabase.from('marketplace_listings').select('id, title, category', { count: 'exact' }).eq('posted_by', member.id).eq('is_active', true)
+  ]);
+
+  var resourceCount = resourcesRes.count || 0;
+  var discussionCount = discussionsRes.count || 0;
+  var replyCount = repliesRes.count || 0;
+  var rsvpCount = rsvpsRes.count || 0;
+  var listingCount = listingsRes.count || 0;
+
+  // Last seen
+  var lastSeen = member.last_seen ? new Date(member.last_seen).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not recorded';
+  var loginCount = member.login_count || 1;
+
+  // Time on hub (session tracking - approximate from login count)
+  var timeStr = loginCount > 1 ? loginCount + ' sessions logged' : 'First session';
+
+  // RSVPs list
+  var rsvpList = (rsvpsRes.data || []).map(function(r) {
+    if (!r.events) return '';
+    var d = new Date(r.events.event_date);
+    return '<div style="font-size:0.75rem;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">' +
+      '<span>' + r.events.title + '</span>' +
+      '<span style="color:var(--muted)">' + d.toLocaleDateString('en-GB', {day:'numeric',month:'short'}) + '</span>' +
+    '</div>';
+  }).join('');
+
+  // Listings list
+  var listingList = (listingsRes.data || []).map(function(l) {
+    return '<div style="font-size:0.75rem;padding:4px 0;border-bottom:1px solid var(--border);">' +
+      '<span style="color:var(--gold)">' + (l.category || '') + '</span> · ' + l.title +
+    '</div>';
+  }).join('');
+
+  var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+
+  document.getElementById('mp-body').innerHTML =
+    // Role badge
+    '<div style="margin-bottom:16px;"><span style="font-size:0.72rem;background:var(--gold-dim);color:var(--gold);padding:4px 12px;border-radius:20px;font-weight:600;">' + role + '</span></div>' +
+
+    // Stats row
+    '<div class="org-stat-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">' +
+      '<div class="org-stat"><div class="org-stat-val">' + resourceCount + '</div><div class="org-stat-label">Resources</div></div>' +
+      '<div class="org-stat"><div class="org-stat-val">' + (discussionCount + replyCount) + '</div><div class="org-stat-label">Discussions</div></div>' +
+      '<div class="org-stat"><div class="org-stat-val">' + rsvpCount + '</div><div class="org-stat-label">Events RSVPd</div></div>' +
+      '<div class="org-stat"><div class="org-stat-val">' + listingCount + '</div><div class="org-stat-label">Listings</div></div>' +
+    '</div>' +
+
+    // Activity
+    '<div class="org-section-title">Hub Activity</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
+      '<div style="background:var(--dark3);border-radius:8px;padding:12px;">' +
+        '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Last Seen</div>' +
+        '<div style="font-size:0.82rem;margin-top:4px;font-weight:500;">' + lastSeen + '</div>' +
+      '</div>' +
+      '<div style="background:var(--dark3);border-radius:8px;padding:12px;">' +
+        '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Sessions</div>' +
+        '<div style="font-size:0.82rem;margin-top:4px;font-weight:500;">' + timeStr + '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // RSVPs
+    (rsvpCount > 0 ?
+      '<div class="org-section-title">Events RSVPd</div>' +
+      '<div style="margin-bottom:16px;">' + rsvpList + '</div>'
+    : '') +
+
+    // Listings
+    (listingCount > 0 ?
+      '<div class="org-section-title">Marketplace Listings</div>' +
+      '<div style="margin-bottom:16px;">' + listingList + '</div>'
+    : '') +
+
+    // Email (admin only)
+    (isAdmin ?
+      '<div class="org-section-title">Admin Info</div>' +
+      '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;">📧 ' + (member.email || 'No email on record') + '</div>' +
+      '<div style="font-size:0.78rem;color:var(--muted);">🆔 ' + member.id + '</div>'
+    : '');
+}
+
+function closeMemberProfile() {
+  document.getElementById('member-profile-modal').classList.add('hidden');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  var mpModal = document.getElementById('member-profile-modal');
+  if (mpModal) mpModal.addEventListener('click', function(e) { if (e.target === this) closeMemberProfile(); });
+  var npModal = document.getElementById('name-prompt-modal');
+  if (npModal) npModal.addEventListener('click', function(e) { if (e.target === this) {} }); // don't close on outside click
+});
+
+
 </script>
 
 
@@ -8340,6 +8513,59 @@ async function handleLogout() { await _supabase.auth.signOut(); }
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closePasteTweet()" style="flex:1">Cancel</button>
       <button class="btn btn-gold" id="paste-tweet-btn" onclick="submitPasteTweet()" style="flex:2">💬 Post to Hub Discussions</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAME PROMPT MODAL -->
+<div class="modal-overlay hidden" id="name-prompt-modal">
+  <div class="request-box" style="max-width:460px;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:2rem;margin-bottom:8px;">👋</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:1.3rem;font-weight:600;">Welcome to the <span style="color:var(--gold)">Hub!</span></div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-top:6px;">Just one quick thing before you dive in.</div>
+    </div>
+    <div class="auth-field">
+      <label>Your Full Name</label>
+      <input type="text" id="prompt-name" placeholder="e.g. Amina Wanjiku" />
+    </div>
+    <div class="auth-field">
+      <label>Your Organization</label>
+      <select id="prompt-org" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--white);outline:none;">
+        <option value="">-- Select your organization --</option>
+        <option>AfyAfrika</option>
+        <option>This Ability Trust</option>
+        <option>Men Engage Kenya Alliance</option>
+        <option>SRHR Alliance</option>
+        <option>Activate Action</option>
+        <option>Network for Adolescent and Youth of Africa (NAYA)</option>
+        <option>Zana Africa</option>
+        <option>Zamara Foundation</option>
+        <option>County Youth &amp; Adolescent Network (CYAN)</option>
+        <option>Movement of Men Against AIDS in Kenya (MMAAK)</option>
+        <option>Secny Community Based Organization</option>
+        <option>Beyond Initiative for Social Concern</option>
+        <option>Other / Independent</option>
+      </select>
+    </div>
+    <div class="auth-error" id="prompt-error"></div>
+    <button class="auth-btn" id="prompt-btn" onclick="saveNamePrompt()">Save &amp; Enter Hub →</button>
+  </div>
+</div>
+
+<!-- MEMBER PROFILE MODAL -->
+<div class="modal-overlay hidden" id="member-profile-modal">
+  <div class="org-profile-box" style="max-width:560px;">
+    <div class="org-profile-banner" id="mp-banner" style="background:linear-gradient(135deg,#2A6B5E,#C9A84C);">
+      <div class="org-profile-icon" id="mp-initials" style="font-size:1.4rem;font-weight:700;"></div>
+      <div>
+        <div class="org-profile-name" id="mp-name"></div>
+        <div class="org-profile-focus" id="mp-org"></div>
+      </div>
+      <button class="modal-close" onclick="closeMemberProfile()" style="margin-left:auto;color:white;">✕</button>
+    </div>
+    <div class="org-profile-body" id="mp-body">
+      <div style="color:var(--muted);font-size:0.8rem;padding:20px;text-align:center;">Loading...</div>
     </div>
   </div>
 </div>
