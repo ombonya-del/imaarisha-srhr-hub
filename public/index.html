@@ -3767,7 +3767,7 @@ function showHub(user) {
     login_count: 1
   }, { onConflict: "id", ignoreDuplicates: false }).then(function() {
     // Increment login count separately
-    _supabase.rpc("increment_login_count", { user_id: user.id }).catch(function() {});
+    _supabase.rpc("increment_login_count", { user_id: user.id }).then(function() {}).catch(function() {});
   });
 
   // Track session start time for time-on-hub
@@ -5039,6 +5039,103 @@ var trackerData = {
     note: 'Population with access to accurate, comprehensive SRHR information. Value to be confirmed from CRR and KHRC sources.'
   }
 };
+
+// ============================================================
+// LOAD TRACKER
+// ============================================================
+async function loadTracker() {
+  const { data } = await _supabase.from('tracker_indicators').select('*').order('sort_order');
+  if (!data) return;
+  const grid = document.querySelector('.tracker-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  data.forEach(function(ind) {
+    const pct = ind.progress_pct || Math.round((ind.current_value / ind.target_value) * 100);
+    const extra = trackerData[ind.name] || {};
+    const trend = extra.trend || [];
+    const sources = extra.sources || [];
+    const counties = extra.counties || [];
+    const orgs = extra.orgs || [];
+
+    const maxVal = trend.length ? Math.max.apply(null, trend.map(function(t) { return t.val; })) : ind.target_value;
+    const trendHtml = trend.length ? trend.map(function(t) {
+      var h = Math.round((t.val / maxVal) * 50);
+      return '<div class="trend-bar-wrap"><div class="trend-value">' + t.val + (ind.unit === '%' ? '%' : '') + '</div><div class="trend-bar" style="height:' + h + 'px"></div><div class="trend-label">' + t.q + '</div></div>';
+    }).join('') : '';
+
+    const sourcesHtml = sources.length ?
+      '<div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;font-style:italic;">These are publicly available reference sources. Network members submit actual programme data via + Submit Data.</div>' +
+      sources.map(function(s) {
+        return '<a href="' + s.url + '" target="_blank" class="tracker-source-link">📎 ' + s.label + ' →</a>';
+      }).join('') : '';
+
+    const orgsHtml = orgs.map(function(o) {
+      return '<span class="tracker-org-tag" style="cursor:pointer" data-org="' + o + '">' + o + '</span>';
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'tracker-card';
+    card.innerHTML =
+      '<div class="tracker-header">' +
+        '<div>' +
+          '<div class="tracker-name">' + ind.name + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--muted)">' + (ind.subtitle || '') + '</div>' +
+        '</div>' +
+        '<div class="tracker-val">' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+      '</div>' +
+      '<div style="font-size:0.75rem;color:var(--muted)">Progress toward ' + ind.target_value + ' ' + ind.unit + ' target</div>' +
+      '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="tracker-legend">' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Current: ' + ind.current_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Target: ' + ind.target_value + (ind.unit === '%' ? '%' : '') + '</div>' +
+      '</div>' +
+      '<div class="tracker-detail" id="tracker-detail-' + ind.id + '">' +
+        (extra.note ? '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;line-height:1.5;font-style:italic;">' + extra.note + '</div>' : '') +
+        (sourcesHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Verified Sources</div><div class="tracker-sources">' + sourcesHtml + '</div>' : '') +
+        (counties.length ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Leading Counties</div><div class="tracker-counties">' + buildLeadingCountyTags(counties, ind.name, ind.id) + '</div>' : '') +
+        (orgsHtml ? '<div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin:10px 0 6px;">Contributing Organizations</div><div class="tracker-orgs">' + orgsHtml + '</div>' : '') +
+        (trend.length ? '<div class="tracker-trend-section"><div style="font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;margin-top:12px;">📈 Quarterly Trend</div><div class="tracker-trend">' + trendHtml + '</div></div>' : '') +
+      '</div>';
+
+    card.addEventListener('click', function(e) {
+      if (e.target.classList.contains('tracker-org-tag')) {
+        var orgName = e.target.getAttribute('data-org');
+        if (orgName) { showOrgContribution(e.target, orgName); return; }
+      }
+      if (e.target.classList.contains('clickable-county')) {
+        var county = e.target.getAttribute('data-county');
+        showLeadingCountyDetail(e.target, county, ind.name, ind.id);
+        return;
+      }
+      if (e.target.tagName === 'A') return;
+      var detail = document.getElementById('tracker-detail-' + ind.id);
+      if (detail) detail.classList.toggle('open');
+    });
+
+    grid.appendChild(card);
+  });
+
+  // Update contributing orgs section
+  const contribOrgs = document.querySelector('#panel-tracker .card');
+  if (contribOrgs) {
+    const { data: allOrgs } = await _supabase.from('organizations').select('short_name');
+    if (allOrgs) {
+      const pillsContainer = contribOrgs.querySelector('div[style*="flex"]');
+      if (pillsContainer) {
+        pillsContainer.innerHTML = '';
+        allOrgs.forEach(function(o, i) {
+          const span = document.createElement('span');
+          span.className = 'org-pill';
+          span.style.color = i < 4 ? 'var(--accent2)' : i < 6 ? 'var(--gold)' : 'var(--muted)';
+          if (i < 4) span.style.borderColor = 'var(--accent2)';
+          span.innerHTML = '<span class="org-dot"></span>' + o.short_name + (i < 4 ? ' ✓' : i < 6 ? ' ⏳' : '');
+          pillsContainer.appendChild(span);
+        });
+      }
+    }
+  }
+}
 
 // Submit data modal
 function openSubmitModal() {
