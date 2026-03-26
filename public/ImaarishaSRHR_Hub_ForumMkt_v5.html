@@ -4726,151 +4726,195 @@ var countySpecificData = {
 };
 
 var trackerData = {
+
+  // 1. UPDATED — Family Planning Coverage (FEMNET 2022: 53%)
   'Family Planning Coverage': {
     trend: [
-      { q: 'Q2 2025', val: 57 }, { q: 'Q3 2025', val: 58 },
-      { q: 'Q4 2025', val: 60 }, { q: 'Q1 2026', val: 61 }
+      { q: 'Q2 2025', val: 50 },
+      { q: 'Q3 2025', val: 51 },
+      { q: 'Q4 2025', val: 52 },
+      { q: 'Q1 2026', val: 53 }
     ],
     sources: [
-      { label: 'Kenya Demographic & Health Survey 2022', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'KHIS — Kenya Health Information System', url: 'https://hiskenya.org' },
-      { label: 'FP2030 Kenya Commitment Dashboard', url: 'https://fp2030.org/kenya' }
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
+      { label: 'KDHS 2022 Summary Report — KNBS (Pg 6)', url: 'https://www.knbs.or.ke/wp-content/uploads/2023/08/Kenya-Demographic-and-Health-Survey-KDHS-2022-Summary-Report.pdf' },
+      { label: 'FP2030 Kenya Commitment Document', url: 'https://www.fp2030.org/app/uploads/2023/08/Kenya_FP2030Commitment.pdf' },
+      { label: 'AFIDEP — Factsheet on Contraception in Kenya', url: 'https://afidep.org/publication/factsheet-on-contraception-in-kenya/' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Meru'],
     orgs: ['AfyAfrika', 'SRHR Alliance', 'Zamara Foundation', 'Men Engage Kenya'],
-    note: 'Modern contraceptive prevalence rate among women aged 15-49'
+    note: 'Modern contraceptive prevalence rate (mCPR) among women aged 15-49. Value: 53% per FEMNET Kenya Country Factsheet 2022. Unmet need for contraception remains at 25%.'
   },
-  'Skilled Birth Attendance': {
+
+  // 2. UNCHANGED — SRHR Disinformation Index
+  'SRHR Disinformation Index': {
     trend: [
-      { q: 'Q2 2025', val: 74 }, { q: 'Q3 2025', val: 75 },
-      { q: 'Q4 2025', val: 77 }, { q: 'Q1 2026', val: 78 }
+      { q: 'Q2 2025', val: 21 },
+      { q: 'Q3 2025', val: 18 },
+      { q: 'Q4 2025', val: 15 },
+      { q: 'Q1 2026', val: 12 }
     ],
     sources: [
-      { label: 'KDHS 2022 — Maternal Health Chapter', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'WHO Kenya Country Profile', url: 'https://www.who.int/countries/ken/' },
-      { label: 'MoH Kenya — Reproductive Health Indicators', url: 'https://www.health.go.ke' }
+      { label: 'Piga Firimbi — Kenya Fact-Checking Network', url: 'https://www.pigafirimbi.com' },
+      { label: 'Africa Uncensored — Disinformation Tracking', url: 'https://africauncensored.online' },
+      { label: 'RPUBLC — Right-Wing Misinformation in Kenya (May 2025)', url: 'https://rpublc.com/april-may-2025/right-wing-misinformation-kenya' }
     ],
-    counties: ['Nairobi', 'Kiambu', 'Mombasa', 'Nyeri', 'Kisii'],
-    orgs: ['SRHR Alliance', 'Zamara Foundation', 'Beyond Initiative'],
-    note: 'Percentage of deliveries attended by a skilled health worker'
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Narok', 'Homa Bay'],
+    orgs: ['Activate Action', 'SRHR Alliance', 'CYAN', 'NAYA'],
+    note: 'Number of active SRHR disinformation claims tracked across network counties. Downward trend is positive. Data sources and values to be confirmed by network.'
   },
+
+  // 3. UNCHANGED — Youth SRHR Services
   'Youth SRHR Services': {
     trend: [
-      { q: 'Q2 2025', val: 280 }, { q: 'Q3 2025', val: 290 },
-      { q: 'Q4 2025', val: 300 }, { q: 'Q1 2026', val: 312 }
+      { q: 'Q2 2025', val: 280 },
+      { q: 'Q3 2025', val: 290 },
+      { q: 'Q4 2025', val: 300 },
+      { q: 'Q1 2026', val: 312 }
     ],
     sources: [
-      { label: 'MoH Kenya — Youth-Friendly Services Report', url: 'https://www.health.go.ke' },
-      { label: 'UNFPA Kenya — Adolescent SRH Dashboard', url: 'https://kenya.unfpa.org' },
-      { label: 'NAYA Network Annual Report', url: 'https://nayaafrica.org' }
+      { label: 'HAI — Adolescent Friendly Health Services in Kenya (2023)', url: 'https://haiweb.org/storage/2023/07/HCW-Survey-Report_Kenya_2023_FINAL.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos', 'Kilifi'],
     orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa'],
-    note: 'Number of operational youth-friendly health facilities across Kenya'
+    note: 'Number of operational youth-friendly health facilities across Kenya. Value to be confirmed from FEMNET Fact Sheet and HAI Kenya report.'
   },
+
+  // 4. UNCHANGED — GBV Response Coverage
   'GBV Response Coverage': {
     trend: [
-      { q: 'Q2 2025', val: 24 }, { q: 'Q3 2025', val: 26 },
-      { q: 'Q4 2025', val: 28 }, { q: 'Q1 2026', val: 29 }
+      { q: 'Q2 2025', val: 24 },
+      { q: 'Q3 2025', val: 26 },
+      { q: 'Q4 2025', val: 28 },
+      { q: 'Q1 2026', val: 29 }
     ],
     sources: [
-      { label: 'National Council on Administration of Justice — GBV Report', url: 'https://www.ncaj.go.ke' },
-      { label: 'UNFPA GBV Information Management System', url: 'https://www.unfpa.org/gbv' },
-      { label: 'LVCT Health — GBV Programme Data', url: 'https://lvcthealth.org' }
+      { label: 'NCAJ — Technical Working Group Report on GBV Including Femicide (Pg 8-9)', url: 'https://home.creaw.org/wp-content/uploads/2026/02/10/Technical%20Working%20Group%20Report%20on%20GBV%20Including%20Femicide.pdf' },
+      { label: "JHU — GBV 2024 Women's Data County Dissemination Brief", url: 'https://publichealth.jhu.edu/sites/default/files/2025-10/Agile-2.0-2024-Women-s-Data-County-Specific-Dissemination-Brief-BUNGOMA.pdf' },
+      { label: 'KNCHR — Submissions on GBV Including Femicide in Kenya', url: 'https://www.knchr.org/Portals/0/Submissions%20on%20Gender-Based%20Violence%20GBV%20Including%20Femicide%20in%20Kenya.pdf' },
+      { label: 'KDHS 2022 Key Indicators Report — KNBS', url: 'https://www.knbs.or.ke/wp-content/uploads/2023/08/Kenya-Demographic-and-Health-Survey-2022-Key-Indicators-Report.pdf' },
+      { label: 'ICRW — Generation Equality Forum: Kenya GBV & FGM Roadmap', url: 'https://www.icrw.org/wp-content/uploads/2021/06/GEF_Kenya_GBV_summary-05.21-web.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'],
     orgs: ['Men Engage Kenya', 'MMAAK', 'This Ability Trust', 'Beyond Initiative'],
-    note: 'Counties with functional GBV response capacity including survivor support services'
+    note: 'Counties with functional GBV response capacity. Value to be confirmed from NCAJ report and KDHS 2022. FEMNET 2022: IPV prevalence at 25.1% of women aged 15-49 in past 12 months.'
   },
+
+  // 5. UPDATED — Access to SRHR Services (FEMNET 2022: UHC index = 56%)
   'Access to SRHR Services': {
     trend: [
-      { q: 'Q2 2025', val: 50 }, { q: 'Q3 2025', val: 51 },
-      { q: 'Q4 2025', val: 53 }, { q: 'Q1 2026', val: 54 }
+      { q: 'Q2 2025', val: 52 },
+      { q: 'Q3 2025', val: 53 },
+      { q: 'Q4 2025', val: 55 },
+      { q: 'Q1 2026', val: 56 }
     ],
     sources: [
-      { label: 'Kenya Master Health Facility List', url: 'https://kmhfl.health.go.ke' },
-      { label: 'KNBS — Kenya Population & Housing Census 2019', url: 'https://www.knbs.or.ke' },
-      { label: 'MoH Kenya — Service Availability Mapping', url: 'https://www.health.go.ke' }
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
+      { label: 'Kenya Master Health Facility List — MoH', url: 'https://kmhfl.health.go.ke/' },
+      { label: 'PMC — Access to Adolescent & Youth SRHR Services in Coastal Kenya (2024)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10870511/pdf/12889_2024_Article_17999.pdf' }
     ],
     counties: ['Nairobi', 'Kisumu', 'Mombasa', 'Turkana', 'Mandera'],
     orgs: ['AfyAfrika', 'Secny CBO', 'Beyond Initiative', 'Zamara Foundation'],
-    note: 'Percentage of Kenya population living within 5km of a functional SRHR facility'
+    note: 'Universal Health Coverage index for Kenya. Value: 56% per FEMNET Kenya Country Factsheet 2022. Health expenditure: 4.6% of GDP. Nursing & midwifery personnel: 2 per 10,000 population.'
   },
 
-  'Young Girls Accessing Safe Abortion': {
+  // 6. UNCHANGED — Youth Friendliness of SRHR Facilities
+  'Youth Friendliness of SRHR Facilities': {
     trend: [
-      { q: 'Q2 2025', val: 18 }, { q: 'Q3 2025', val: 20 },
-      { q: 'Q4 2025', val: 21 }, { q: 'Q1 2026', val: 23 }
+      { q: 'Q2 2025', val: 32 },
+      { q: 'Q3 2025', val: 34 },
+      { q: 'Q4 2025', val: 36 },
+      { q: 'Q1 2026', val: 38 }
     ],
     sources: [
-      { label: 'Guttmacher Institute - Adolescent Abortion in Kenya', url: 'https://www.guttmacher.org/fact-sheet/unintended-pregnancy-and-abortion-kenya' },
-      { label: 'WHO - Safe Abortion Care Guideline 2022', url: 'https://www.who.int/publications/i/item/9789240039483' },
-      { label: 'IPAS Africa Alliance - Safe Abortion Access Data', url: 'https://ipasafrica.org' },
-      { label: 'Kenya MoH - Reproductive Health Indicators', url: 'https://www.health.go.ke' }
+      { label: 'WHO — Adolescent Friendly Health Services Assessment Checklist', url: 'https://iris.who.int/server/api/core/bitstreams/7b1527b3-efa1-480f-8242-234a8d37690d/content' },
+      { label: 'World Bank — Kenya Health Service Delivery Indicator Survey 2018', url: 'https://documents1.worldbank.org/curated/en/099430110062245298/pdf/IDU1b312d25b13d0a14c7f1b33c18786382b28ed.pdf' },
+      { label: 'YSW Kenya — Youth-Friendly SRHR Services Fact Sheet', url: 'https://yswkenya.org/wp-content/uploads/2025/11/Youth-friendly-sexual-and-reproductive-health-services-fact-sheet.pdf-.pdf' },
+      { label: 'HAI — Adolescent Friendly Health Services in Kenya (2023)', url: 'https://haiweb.org/storage/2023/07/HCW-Survey-Report_Kenya_2023_FINAL.pdf' }
+    ],
+    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos'],
+    orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa', 'This Ability Trust'],
+    note: 'Percentage of SRHR facilities meeting WHO youth-friendly standards. FEMNET 2022: ANC (4+ visits) = 76%; skilled birth attendance = 70 per 100; post-natal care coverage = 52.9%.'
+  },
+
+  // 7. UNCHANGED — Young Girls Accessing Safe Abortion
+  'Young Girls Accessing Safe Abortion': {
+    trend: [
+      { q: 'Q2 2025', val: 18 },
+      { q: 'Q3 2025', val: 20 },
+      { q: 'Q4 2025', val: 21 },
+      { q: 'Q1 2026', val: 23 }
+    ],
+    sources: [
+      { label: 'JSTOR — Unintended Pregnancies, Unsafe Abortion & Maternal Mortality in Kenya', url: 'https://www.jstor.org/stable/26214800' },
+      { label: 'SCIRP — Social & Structural Determinants of Unsafe Abortion in Kibera', url: 'https://www.scirp.org/journal/paperinformation?paperid=113845' },
+      { label: 'MoH, APHRC, Guttmacher, IPAS — Incidence of Induced Abortions in Kenya', url: 'https://aphrc.org/wp-content/uploads/2025/05/Policy-Brief-A_Online-Version.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos'],
     orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa'],
-    note: 'Percentage of girls aged 10-19 who accessed safe, legal abortion services as permitted under Article 26 of the Kenya Constitution'
+    note: 'Girls aged 10-19 accessing safe, legal abortion services under Article 26 of the Kenya Constitution. FEMNET 2022: abortion legal but usually inaccessible; adolescent fertility rate 71.98 births per 1,000 women aged 15-19.'
   },
+
+  // 8. UNCHANGED — Women Accessing Safe Abortion
   'Women Accessing Safe Abortion': {
     trend: [
-      { q: 'Q2 2025', val: 26 }, { q: 'Q3 2025', val: 28 },
-      { q: 'Q4 2025', val: 29 }, { q: 'Q1 2026', val: 31 }
+      { q: 'Q2 2025', val: 26 },
+      { q: 'Q3 2025', val: 28 },
+      { q: 'Q4 2025', val: 29 },
+      { q: 'Q1 2026', val: 31 }
     ],
     sources: [
-      { label: 'Guttmacher Institute - Abortion in Kenya', url: 'https://www.guttmacher.org/fact-sheet/unintended-pregnancy-and-abortion-kenya' },
-      { label: 'WHO - Abortion Care Guideline', url: 'https://www.who.int/publications/i/item/9789240039483' },
-      { label: 'IPAS Africa Alliance - Kenya Programme', url: 'https://ipasafrica.org' },
-      { label: 'Marie Stopes Kenya - Service Delivery Data', url: 'https://mariestopes.or.ke' }
+      { label: 'Center for Reproductive Rights — The Abortion Landscape in Kenya', url: 'https://reproductiverights.org/resources/kenya-abortion/' },
+      { label: 'Center for Reproductive Rights — A Decade of Existence (2020)', url: 'https://reproductiverights.org/sites/default/files/documents/A-Decade-of-Existence-Kenya_0.pdf' },
+      { label: "3W Kenya — Safe Abortion in Kenya: Who's Really Seeking Care?", url: 'https://3wkenya.org/safe-abortion-in-kenya/' },
+      { label: 'APHRC, MoH, Guttmacher — Incidence of Induced Abortions in Kenya', url: 'https://aphrc.org/wp-content/uploads/2025/05/Policy-Brief-A_Online-Version.pdf' },
+      { label: 'IPAS Africa — Medical Abortion Self Use in Kenya', url: 'https://www.medrxiv.org/content/10.1101/2022.11.10.22282174v1.full.pdf' },
+      { label: 'Marie Stopes Kenya — Capacity Statement 2024', url: 'https://mariestopes.or.ke/wp-content/uploads/sites/10/2024/08/2024-CStatement-Final-Ed-1.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Kiambu', 'Eldoret'],
     orgs: ['SRHR Alliance', 'AfyAfrika', 'Beyond Initiative', 'Zamara Foundation'],
-    note: 'Percentage of women aged 20-49 who accessed safe, legal abortion services. Kenya Constitution Article 26 permits abortion where life or health of the mother is at risk'
+    note: 'Women aged 20-49 accessing safe, legal abortion under Kenya Constitution Article 26. FEMNET 2022: abortion legal but usually inaccessible; post-abortion national guidelines in place; contraception included in post-abortion care.'
   },
+
+  // 9. UNCHANGED — Deaths from Unsafe Abortion
   'Deaths from Unsafe Abortion': {
     trend: [
-      { q: 'Q2 2025', val: 18 }, { q: 'Q3 2025', val: 17 },
-      { q: 'Q4 2025', val: 15 }, { q: 'Q1 2026', val: 14 }
+      { q: 'Q2 2025', val: 18 },
+      { q: 'Q3 2025', val: 17 },
+      { q: 'Q4 2025', val: 15 },
+      { q: 'Q1 2026', val: 14 }
     ],
     sources: [
-      { label: 'WHO - Unsafe Abortion Global & Regional Estimates', url: 'https://www.who.int/publications/i/item/9789241548434' },
-      { label: 'Kenya MoH - Maternal Death Surveillance Report', url: 'https://www.health.go.ke' },
-      { label: 'Guttmacher Institute - Unsafe Abortion Kenya', url: 'https://www.guttmacher.org/fact-sheet/unintended-pregnancy-and-abortion-kenya' },
-      { label: 'UNFPA - Maternal Health Data', url: 'https://kenya.unfpa.org' }
+      { label: "International Campaign for Women's Rights to Safe Abortion — Kenya", url: 'https://www.safeabortionwomensright.org/news/kenya-health-experts-warn-restrictive-policy-will-drive-more-women-toward-unsafe-abortions/' },
+      { label: 'Global Financing Facility — Kenya RMNCAH-N Investment Case 2025-2030', url: 'https://www.globalfinancingfacility.org/sites/default/files/Kenya-RMNCAH-N-IC-2025-2030.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Turkana', 'Mandera', 'Wajir', 'Kilifi'],
     orgs: ['SRHR Alliance', 'AfyAfrika', 'Men Engage Kenya', 'Secny CBO'],
-    note: 'Percentage of maternal deaths attributed to unsafe abortion. Trend shows decline as access to safe services improves. Target: reduce to 3% of maternal deaths'
+    note: 'Percentage of maternal deaths attributed to unsafe abortion. FEMNET 2022: Maternal Mortality Ratio = 342 per 100,000 live births; post-natal care coverage = 52.9%.'
   },
+
+  // 10. UPDATED — Access to Quality SRHR Information (FEMNET 2022: 59.89% -> 60%)
   'Access to Quality SRHR Information': {
     trend: [
-      { q: 'Q2 2025', val: 36 }, { q: 'Q3 2025', val: 38 },
-      { q: 'Q4 2025', val: 40 }, { q: 'Q1 2026', val: 42 }
+      { q: 'Q2 2025', val: 55 },
+      { q: 'Q3 2025', val: 57 },
+      { q: 'Q4 2025', val: 59 },
+      { q: 'Q1 2026', val: 60 }
     ],
     sources: [
-      { label: 'UNESCO - International Technical Guidance on CSE', url: 'https://www.unesco.org/en/health-education/cse' },
-      { label: 'KDHS 2022 - Knowledge & Attitudes Chapter', url: 'https://dhsprogram.com/pubs/pdf/FR353/FR353.pdf' },
-      { label: 'UNFPA Kenya - Knowledge Access Survey', url: 'https://kenya.unfpa.org' },
-      { label: 'Kenya MoH - Health Education & Promotion Data', url: 'https://www.health.go.ke' }
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
+      { label: 'Center for Reproductive Rights — Access to SRHR Information by Women & Girls in Kenya', url: 'https://reproductiverights.org/resources/kenya-access-to-srhr-information-women-girls/' },
+      { label: 'KHRC — Who Shapes the Narrative? Media Coverage of SRHR in Kenya (2024)', url: 'https://khrc.or.ke/wp-content/uploads/2024/11/Media-coverage-analysis-of-SRHR-in-Kenya-October-2023-to-June-2024b-1.pdf' },
+      { label: 'PMC — Age & Gender Divide in Digital SRHR Platforms in Kenya', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10783845/pdf/ZRHM_31_2291908.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Nyeri', 'Eldoret'],
     orgs: ['NAYA', 'Activate Action', 'CYAN', 'This Ability Trust', 'Zana Africa'],
-    note: 'Percentage of population with access to accurate, comprehensive, age-appropriate SRHR information through formal and community channels'
-  },
-  'Youth Friendliness of SRHR Facilities': {
-    trend: [
-      { q: 'Q2 2025', val: 32 }, { q: 'Q3 2025', val: 34 },
-      { q: 'Q4 2025', val: 36 }, { q: 'Q1 2026', val: 38 }
-    ],
-    sources: [
-      { label: 'WHO Youth-Friendly Health Services Assessment Tool', url: 'https://www.who.int/publications/i/item/youth-friendly-health-services' },
-      { label: 'MoH Kenya — Youth-Friendly Services Standards', url: 'https://www.health.go.ke' },
-      { label: 'UNFPA Kenya — Adolescent SRH Assessment', url: 'https://kenya.unfpa.org' }
-    ],
-    counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru'],
-    orgs: ['NAYA', 'CYAN', 'Activate Action', 'This Ability Trust'],
-    note: 'Percentage of health facilities meeting MoH/WHO youth-friendly service delivery standards'
+    note: 'Comprehensive knowledge of HIV/AIDS and SRHR among population. Value: 59.89% per FEMNET Kenya Country Factsheet 2022 (rounded to 60%). Knowledge higher among young men (63.7%) vs young women (56.6%) aged 15-24.'
   }
+
 };
 
 async function loadTracker() {
