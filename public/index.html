@@ -2257,8 +2257,7 @@ class="progress-fill" style="width:38%"></div></div>
 
 <div class="filter-bar">
 
-<input class="search-input" placeholder="🔍 Search resources..."
-/>
+<input class="search-input" id="resources-search-input" placeholder="🔍 Search resources..." oninput="filterResources(document.querySelector('#panel-resources .filter-chip.active')?.textContent?.replace('🏛 ','') || 'all', document.querySelector('#panel-resources .filter-chip.active'))" />
 
 <span class="filter-chip active" onclick="filterResources('all', this)">All</span>
 <span class="filter-chip" onclick="filterResources('Guidelines', this)">Guidelines</span>
@@ -3558,10 +3557,13 @@ async function loadResources(filterType) {
   filtered.forEach(function(r) {
     const tags = (r.tags || []).map(function(t, i) { return '<span class="resource-tag' + (i === 0 ? ' highlight' : '') + '">' + t + '</span>'; }).join('');
     const isLink = r.file_type === 'LINK';
-    const actionBtn = r.file_url ? (isLink
-      ? '<a href="' + r.file_url + '" target="_blank" class="resource-link">🔗 Open Link →</a>'
-      : '<a href="' + r.file_url + '" target="_blank" download class="resource-link">⬇ Download ' + (r.file_type || '') + '</a>'
-    ) : '';
+    var reqBtn = '<button data-req-id="' + r.id + '" data-req-title="' + (r.title||'').replace(/"/g,'&quot;') + '" class="resource-link resource-req-btn" style="background:none;border:none;cursor:pointer;text-align:left;padding:0;font-family:inherit;">🔐 Request Access →</button>';
+    const actionBtn = r.is_restricted
+      ? reqBtn
+      : r.file_url ? (isLink
+        ? '<a href="' + r.file_url + '" target="_blank" class="resource-link">🔗 Open Link →</a>'
+        : '<a href="' + r.file_url + '" target="_blank" download class="resource-link">⬇ Download ' + (r.file_type || '') + '</a>'
+      ) : '';
     const card = document.createElement('div');
     card.className = 'resource-card';
     card.innerHTML = '<div style="display:flex;gap:6px;align-items:flex-start"><div style="flex:1"><div class="resource-type">' + (icons[r.type] || '📄') + ' ' + r.type + '</div><div class="resource-title">' + r.title + '</div></div>' + adminBtns('resources', r.id, 'loadResources') + '</div>' + (r.description ? '<div style="font-size:0.75rem;color:var(--muted);margin:6px 0;line-height:1.4">' + r.description + '</div>' : '') + '<div>' + tags + '</div><div class="resource-meta"><span>' + (r.source_org || '') + '</span><span>' + (r.file_type || '') + (r.file_size ? ' · ' + r.file_size : '') + '</span></div>' + actionBtn;
@@ -3931,58 +3933,60 @@ function renderDiscBody(body) {
 }
 
 function handleThreadMedia(input) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.size > 50 * 1024 * 1024) {
-    alert('File is too large. Maximum size is 50MB.');
-    input.value = '';
-    return;
-  }
-  window._threadMediaFile = file;
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var oversized = files.filter(function(f) { return f.size > 50 * 1024 * 1024; });
+  if (oversized.length) { alert('Some files exceed 50MB and were removed: ' + oversized.map(function(f){return f.name;}).join(', ')); files = files.filter(function(f){ return f.size <= 50 * 1024 * 1024; }); }
+  if (!files.length) return;
+  window._threadMediaFiles = files;
   var nameEl = document.getElementById('thread-media-name');
-  nameEl.textContent = '📎 ' + file.name + ' (' + (file.size/1024/1024).toFixed(1) + 'MB)';
+  nameEl.textContent = '📎 ' + files.length + ' file' + (files.length > 1 ? 's' : '') + ' selected: ' + files.map(function(f){ return f.name; }).join(', ');
   nameEl.style.display = 'block';
-  // Show preview
   var previewEl = document.getElementById('thread-media-preview');
   previewEl.style.display = 'block';
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    if (file.type.startsWith('video')) {
-      previewEl.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:200px;border-radius:8px;"></video>' +
-        '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Video preview · Will be uploaded when you post</div>';
-    } else {
-      previewEl.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:contain;" />' +
-        '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Image preview · Will be uploaded when you post</div>';
-    }
-  };
-  reader.readAsDataURL(file);
-  // Hover effect on drop zone
+  previewEl.innerHTML = '';
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var item = document.createElement('div');
+      item.style.cssText = 'margin-bottom:6px;';
+      if (file.type.startsWith('video')) {
+        item.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:160px;border-radius:8px;"></video><div style="font-size:0.68rem;color:var(--muted);">' + file.name + '</div>';
+      } else {
+        item.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;" /><div style="font-size:0.68rem;color:var(--muted);">' + file.name + '</div>';
+      }
+      previewEl.appendChild(item);
+    };
+    reader.readAsDataURL(file);
+  });
   var dropZone = document.getElementById('thread-drop-zone');
   if (dropZone) { dropZone.style.borderColor = 'var(--gold)'; dropZone.style.background = 'var(--gold-dim)'; }
 }
 
 function handleReplyMedia(input) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.size > 50 * 1024 * 1024) {
-    alert('File is too large. Maximum size is 50MB.');
-    input.value = '';
-    return;
-  }
-  window._replyMediaFile = file;
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var oversized = files.filter(function(f) { return f.size > 50 * 1024 * 1024; });
+  if (oversized.length) { alert('Some files exceed 50MB: ' + oversized.map(function(f){return f.name;}).join(', ')); files = files.filter(function(f){ return f.size <= 50 * 1024 * 1024; }); }
+  if (!files.length) return;
+  window._replyMediaFiles = files;
   var previewEl = document.getElementById('reply-media-preview');
   previewEl.style.display = 'block';
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    if (file.type.startsWith('video')) {
-      previewEl.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:160px;border-radius:8px;margin-bottom:4px;"></video>' +
-        '<div style="font-size:0.68rem;color:var(--muted);">📎 ' + file.name + ' · Will upload on reply</div>';
-    } else {
-      previewEl.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;margin-bottom:4px;" />' +
-        '<div style="font-size:0.68rem;color:var(--muted);">📎 ' + file.name + ' · Will upload on reply</div>';
-    }
-  };
-  reader.readAsDataURL(file);
+  previewEl.innerHTML = '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:4px;">📎 ' + files.length + ' file' + (files.length > 1 ? 's' : '') + ' attached</div>';
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var item = document.createElement('div');
+      item.style.marginBottom = '4px';
+      if (file.type.startsWith('video')) {
+        item.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:120px;border-radius:6px;"></video><div style="font-size:0.65rem;color:var(--muted);">' + file.name + '</div>';
+      } else {
+        item.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:120px;border-radius:6px;object-fit:contain;" /><div style="font-size:0.65rem;color:var(--muted);">' + file.name + '</div>';
+      }
+      previewEl.appendChild(item);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 async function loadReplies(discId) {
@@ -4024,32 +4028,30 @@ async function submitReply() {
   const btn = document.getElementById('reply-btn');
 
   // Allow media-only reply
-  var mediaFile = window._replyMediaFile;
-  if (!body && !mediaFile) return;
+  var replyMediaFiles = window._replyMediaFiles || [];
+  if (!body && !replyMediaFiles.length) return;
 
   btn.disabled = true; btn.textContent = 'Posting...';
 
-  // Upload media if attached
-  var mediaUrl = null;
-  var mediaType = null;
-  if (mediaFile) {
+  // Upload multiple media files if attached
+  var replyMediaTags = '';
+  var replyFiles = window._replyMediaFiles || [];
+  if (replyFiles.length > 0) {
     btn.textContent = 'Uploading...';
-    var filePath = 'discussions/' + Date.now() + '_' + mediaFile.name.replace(/\s/g, '_');
-    var { data: storageData, error: storageErr } = await _supabase.storage.from('imaarisha-resources').upload(filePath, mediaFile);
-    if (!storageErr) {
-      var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
-      mediaUrl = urlData.publicUrl;
-      mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
+    for (var rmi = 0; rmi < replyFiles.length; rmi++) {
+      var rFile = replyFiles[rmi];
+      var rPath = 'discussions/' + Date.now() + '_' + rmi + '_' + rFile.name.replace(/\s/g, '_');
+      var { data: rData, error: rErr } = await _supabase.storage.from('imaarisha-resources').upload(rPath, rFile);
+      if (!rErr) {
+        var { data: rUrl } = _supabase.storage.from('imaarisha-resources').getPublicUrl(rPath);
+        var rType = rFile.type.startsWith('video') ? 'video' : 'image';
+        replyMediaTags += (rType === 'video') ? '\n\n[VIDEO:' + rUrl.publicUrl + ']' : '\n\n[IMAGE:' + rUrl.publicUrl + ']';
+      }
     }
     btn.textContent = 'Posting...';
   }
 
-  var finalBody = body;
-  if (mediaUrl) {
-    finalBody += (mediaType === 'video')
-      ? (body ? '\n\n' : '') + '[VIDEO:' + mediaUrl + ']'
-      : (body ? '\n\n' : '') + '[IMAGE:' + mediaUrl + ']';
-  }
+  var finalBody = body + replyMediaTags;
 
   const { error } = await _supabase.from('discussion_replies').insert({
     discussion_id: currentDiscussionId,
@@ -4059,7 +4061,7 @@ async function submitReply() {
   btn.disabled = false; btn.textContent = 'Reply';
   if (!error) {
     input.value = '';
-    window._replyMediaFile = null;
+    window._replyMediaFiles = [];
     document.getElementById('reply-media-preview').style.display = 'none';
     loadReplies(currentDiscussionId);
     _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' replied to a discussion', dot_color: 'green' });
@@ -4089,33 +4091,26 @@ async function submitNewThread() {
   const btn = document.getElementById('thread-submit-btn');
   btn.disabled = true; btn.textContent = 'Posting...';
 
-  // Upload media if attached
-  var mediaUrl = null;
-  var mediaType = null;
-  var mediaFile = window._threadMediaFile;
-  if (mediaFile) {
-    btn.textContent = 'Uploading media...';
-    var filePath = 'discussions/' + Date.now() + '_' + mediaFile.name.replace(/\s/g, '_');
-    var { data: storageData, error: storageErr } = await _supabase.storage.from('imaarisha-resources').upload(filePath, mediaFile);
-    if (storageErr) {
-      errEl.textContent = 'Media upload failed: ' + storageErr.message;
-      errEl.style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Post Discussion';
-      return;
+  // Upload media files if attached
+  var mediaTags = '';
+  var mediaFiles = window._threadMediaFiles || [];
+  if (mediaFiles.length > 0) {
+    btn.textContent = 'Uploading ' + mediaFiles.length + ' file(s)...';
+    for (var mi = 0; mi < mediaFiles.length; mi++) {
+      var mediaFile = mediaFiles[mi];
+      var filePath = 'discussions/' + Date.now() + '_' + mi + '_' + mediaFile.name.replace(/\s/g, '_');
+      var { data: storageData, error: storageErr } = await _supabase.storage.from('imaarisha-resources').upload(filePath, mediaFile);
+      if (!storageErr) {
+        var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
+        var mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
+        mediaTags += (mediaType === 'video') ? '\n\n[VIDEO:' + urlData.publicUrl + ']' : '\n\n[IMAGE:' + urlData.publicUrl + ']';
+      }
     }
-    var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
-    mediaUrl = urlData.publicUrl;
-    mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
     btn.textContent = 'Posting...';
   }
 
-  // Build final body with media tag
-  var finalBody = body;
-  if (mediaUrl) {
-    finalBody += (mediaType === 'video')
-      ? '\n\n[VIDEO:' + mediaUrl + ']'
-      : '\n\n[IMAGE:' + mediaUrl + ']';
-  }
+  // Build final body with media tags
+  var finalBody = body + mediaTags;
 
   const { error } = await _supabase.from('discussions').insert({
     subject: subject,
@@ -4131,9 +4126,10 @@ async function submitNewThread() {
   } else {
     successEl.textContent = '✓ Discussion posted!';
     successEl.style.display = 'block';
+    notifyAdminNewThread(subject, category);
     document.getElementById('thread-subject').value = '';
     document.getElementById('thread-body').value = '';
-    window._threadMediaFile = null;
+    window._threadMediaFiles = [];
     document.getElementById('thread-media-name').style.display = 'none';
     document.getElementById('thread-media-preview').style.display = 'none';
     setTimeout(function() { closeNewThread(); loadDiscussions(); }, 800);
@@ -7105,7 +7101,8 @@ var _editSchemas = {
   resources: [
     { id: 'title', label: 'Title', type: 'input' },
     { id: 'description', label: 'Description', type: 'textarea' },
-    { id: 'resource_type', label: 'Type', type: 'select', options: ['report','guide','tool','dataset','policy','training','other'] },
+    { id: 'type', label: 'Type', type: 'select', options: ['Guideline','Data Report','Training Material','IEC Material','Tool','Forum Content','Other'] },
+    { id: 'source_org', label: 'Source Organization', type: 'input' },
     { id: 'tags', label: 'Tags (comma separated)', type: 'input', transform: 'array' }
   ],
   discussions: [
@@ -7477,7 +7474,7 @@ function filterDiscussions(category, el) {
 
 function filterResources(type, el) {
   document.querySelectorAll('#panel-resources .filter-chip').forEach(function(c) { c.classList.remove('active'); });
-  if (el) el.classList.add('active');
+  if (el && el.classList) el.classList.add('active');
   loadResources(type);
 }
 
@@ -7592,7 +7589,72 @@ async function submitPasteTweet() {
 window.addEventListener('DOMContentLoaded', function() {
   var ptModal = document.getElementById('paste-tweet-modal');
   if (ptModal) ptModal.addEventListener('click', function(e) { if (e.target === this) closePasteTweet(); });
+
+  // Resource request buttons (delegated)
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.resource-req-btn');
+    if (btn) {
+      requestResourceAccess(btn.getAttribute('data-req-id'), btn.getAttribute('data-req-title'));
+    }
+  });
 });
+
+
+// ============================================================
+// ADMIN EMAIL NOTIFICATIONS via Supabase Edge Function
+// ============================================================
+async function notifyAdmin(subject, body) {
+  // Log to activity_log as a notification record
+  // Email is sent via Supabase trigger or Edge Function
+  try {
+    await _supabase.from('activity_log').insert({
+      activity_type: 'resource_upload',
+      description: '🔔 ADMIN ALERT: ' + subject,
+      entity_title: body,
+      dot_color: 'red'
+    });
+    // Also try to call Edge Function if configured
+    await _supabase.functions.invoke('notify-admin', {
+      body: { subject: subject, message: body, admin_email: 'ombonya@gmail.com' }
+    }).catch(function() {}); // Silently fail if not set up
+  } catch(e) {}
+}
+
+// Notify admin when resource is requested
+async function requestResourceAccess(resourceId, resourceTitle) {
+  if (!currentUser) { alert('Please sign in to request access.'); return; }
+  var userName = (currentUser.user_metadata && currentUser.user_metadata.full_name) || currentUser.email;
+  var msg = userName + ' requested access to: ' + resourceTitle;
+
+  // Save request to DB
+  await _supabase.from('activity_log').insert({
+    activity_type: 'resource_upload',
+    description: '🔐 Access request: ' + msg,
+    entity_title: resourceTitle,
+    dot_color: 'red',
+    user_id: currentUser.id
+  });
+
+  // Notify admin
+  await notifyAdmin('Resource Access Request', msg);
+
+  // Show confirmation
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--accent);color:white;padding:12px 20px;border-radius:8px;font-weight:600;font-size:0.82rem;z-index:9999;max-width:320px;';
+  toast.textContent = '✓ Request sent! The admin will be in touch.';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 4000);
+}
+
+// Notify admin when discussion is raised (auto-called on new thread)
+async function notifyAdminNewThread(subject, category) {
+  if (!currentUser) return;
+  var userName = (currentUser.user_metadata && currentUser.user_metadata.full_name) || currentUser.email;
+  await notifyAdmin(
+    'New Discussion: ' + subject,
+    userName + ' started a new ' + category + ' discussion: "' + subject + '"'
+  );
+}
 
 async function handleLogout() { await _supabase.auth.signOut(); }
 
@@ -7768,7 +7830,7 @@ window.addEventListener('DOMContentLoaded', function() {
           <button class="btn btn-gold" id="reply-btn" onclick="submitReply()">Reply</button>
           <label title="Attach image or video" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px;border-radius:6px;background:var(--dark3);border:1px solid var(--border);font-size:0.72rem;color:var(--muted);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
             📎 <span>Media</span>
-            <input type="file" id="reply-media-input" accept="image/*,video/*" style="display:none;" onchange="handleReplyMedia(this)" />
+            <input type="file" id="reply-media-input" accept="image/*,video/*" multiple style="display:none;" onchange="handleReplyMedia(this)" />
           </label>
         </div>
       </div>
@@ -7809,7 +7871,7 @@ window.addEventListener('DOMContentLoaded', function() {
         <div style="font-size:1.4rem;margin-bottom:4px;">🖼 🎬</div>
         <div style="font-size:0.78rem;color:var(--muted);">Click to attach an image or video</div>
         <div id="thread-media-name" style="font-size:0.75rem;color:var(--gold);margin-top:6px;display:none;"></div>
-        <input type="file" id="thread-media-input" accept="image/*,video/*" style="display:none;" onchange="handleThreadMedia(this)" />
+        <input type="file" id="thread-media-input" accept="image/*,video/*" multiple style="display:none;" onchange="handleThreadMedia(this)" />
       </div>
       <div id="thread-media-preview" style="margin-top:8px;display:none;"></div>
     </div>
