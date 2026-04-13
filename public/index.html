@@ -3917,18 +3917,20 @@ function closeDiscModal() {
 function renderDiscBody(body) {
   if (!body) return '';
   var html = body;
-  // Render [IMAGE:url] tags
+  // Render [IMAGE:url] tags - use anchor wrapper, no onclick needed
   html = html.replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/g, function(match, url) {
-    return '<div style="margin:10px 0;"><img src="' + url + '" style="max-width:100%;max-height:360px;border-radius:8px;cursor:pointer;object-fit:contain;" onclick="window.open(\'' + url + '\', \'_blank\')" /></div>';
+    return '<div style="margin:10px 0;"><a href="' + url + '" target="_blank"><img src="' + url + '" style="max-width:100%;max-height:360px;border-radius:8px;cursor:pointer;object-fit:contain;display:block;" /></a></div>';
   });
   // Render [VIDEO:url] tags
   html = html.replace(/\[VIDEO:(https?:\/\/[^\]]+)\]/g, function(match, url) {
     return '<div style="margin:10px 0;"><video src="' + url + '" controls style="max-width:100%;max-height:360px;border-radius:8px;"></video></div>';
   });
-  // Convert newlines
+  // Convert newlines to <br>
   html = html.replace(/\n/g, '<br>');
-  // Convert plain URLs to links (not already in tags)
-  html = html.replace(/(?<!src="|href="|\[IMAGE:|\[VIDEO:)(https?:\/\/[^\s<"\]]+)/g, '<a href="$1" target="_blank" style="color:var(--gold);font-weight:600;">$1</a>');
+  // Convert plain URLs to links (skip ones already inside href or src)
+  html = html.replace(/(?<!href="|src=")(https?:\/\/[^\s<"\]]+)/g, function(match) {
+    return '<a href="' + match + '" target="_blank" style="color:var(--gold);font-weight:600;">' + match + '</a>';
+  });
   return html;
 }
 
