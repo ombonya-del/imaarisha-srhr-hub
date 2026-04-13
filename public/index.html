@@ -1016,6 +1016,7 @@ flex; justify-content: space-between; }
   padding: 16px 28px 20px;
   border-top: 1px solid var(--border);
 }
+.reply-media-preview { padding: 0 16px 8px; }
 .reply-input-row { display: flex; gap: 10px; align-items: flex-end; }
 .reply-textarea {
   flex: 1; background: var(--dark3); border: 1px solid var(--border);
@@ -3906,6 +3907,84 @@ function closeDiscModal() {
   loadDiscussions();
 }
 
+
+// ============================================================
+// DISCUSSION MEDIA - Upload & Render
+// ============================================================
+
+function renderDiscBody(body) {
+  if (!body) return '';
+  var html = body;
+  // Render [IMAGE:url] tags
+  html = html.replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/g, function(match, url) {
+    return '<div style="margin:10px 0;"><img src="' + url + '" style="max-width:100%;max-height:360px;border-radius:8px;cursor:pointer;object-fit:contain;" onclick="window.open(\'' + url + '\', \'_blank\')" /></div>';
+  });
+  // Render [VIDEO:url] tags
+  html = html.replace(/\[VIDEO:(https?:\/\/[^\]]+)\]/g, function(match, url) {
+    return '<div style="margin:10px 0;"><video src="' + url + '" controls style="max-width:100%;max-height:360px;border-radius:8px;"></video></div>';
+  });
+  // Convert newlines
+  html = html.replace(/\n/g, '<br>');
+  // Convert plain URLs to links (not already in tags)
+  html = html.replace(/(?<!src="|href="|\[IMAGE:|\[VIDEO:)(https?:\/\/[^\s<"\]]+)/g, '<a href="$1" target="_blank" style="color:var(--gold);font-weight:600;">$1</a>');
+  return html;
+}
+
+function handleThreadMedia(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 50 * 1024 * 1024) {
+    alert('File is too large. Maximum size is 50MB.');
+    input.value = '';
+    return;
+  }
+  window._threadMediaFile = file;
+  var nameEl = document.getElementById('thread-media-name');
+  nameEl.textContent = '📎 ' + file.name + ' (' + (file.size/1024/1024).toFixed(1) + 'MB)';
+  nameEl.style.display = 'block';
+  // Show preview
+  var previewEl = document.getElementById('thread-media-preview');
+  previewEl.style.display = 'block';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    if (file.type.startsWith('video')) {
+      previewEl.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:200px;border-radius:8px;"></video>' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Video preview · Will be uploaded when you post</div>';
+    } else {
+      previewEl.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:contain;" />' +
+        '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Image preview · Will be uploaded when you post</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+  // Hover effect on drop zone
+  var dropZone = document.getElementById('thread-drop-zone');
+  if (dropZone) { dropZone.style.borderColor = 'var(--gold)'; dropZone.style.background = 'var(--gold-dim)'; }
+}
+
+function handleReplyMedia(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 50 * 1024 * 1024) {
+    alert('File is too large. Maximum size is 50MB.');
+    input.value = '';
+    return;
+  }
+  window._replyMediaFile = file;
+  var previewEl = document.getElementById('reply-media-preview');
+  previewEl.style.display = 'block';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    if (file.type.startsWith('video')) {
+      previewEl.innerHTML = '<video src="' + e.target.result + '" controls style="max-width:100%;max-height:160px;border-radius:8px;margin-bottom:4px;"></video>' +
+        '<div style="font-size:0.68rem;color:var(--muted);">📎 ' + file.name + ' · Will upload on reply</div>';
+    } else {
+      previewEl.innerHTML = '<img src="' + e.target.result + '" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;margin-bottom:4px;" />' +
+        '<div style="font-size:0.68rem;color:var(--muted);">📎 ' + file.name + ' · Will upload on reply</div>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
 async function loadReplies(discId) {
   const repliesEl = document.getElementById('disc-modal-replies');
   repliesEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:0.82rem;">Loading...</div>';
@@ -3917,13 +3996,7 @@ async function loadReplies(discId) {
   if (disc && (disc.body || disc.preview)) {
     const op = document.createElement('div');
     op.className = 'reply-item';
-    var bodyHtml = (disc.body || disc.preview || '');
-    // Convert plain text URLs to clickable links if not already HTML
-    if (bodyHtml.indexOf('<a ') === -1) {
-      bodyHtml = bodyHtml.replace(/\n/g, '<br>');
-      bodyHtml = bodyHtml.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:var(--gold);font-weight:600;">$1</a>');
-    }
-    op.innerHTML = '<div class="reply-avatar" style="background:' + colors[0] + '">OP</div><div class="reply-content"><div class="reply-author">Original Post</div><div class="reply-body">' + bodyHtml + '</div></div>';
+    op.innerHTML = '<div class="reply-avatar" style="background:' + colors[0] + '">OP</div><div class="reply-content"><div class="reply-author">Original Post</div><div class="reply-body">' + renderDiscBody(disc.body || disc.preview || '') + '</div></div>';
     repliesEl.appendChild(op);
   }
   if (!replies || replies.length === 0) {
@@ -3938,7 +4011,7 @@ async function loadReplies(discId) {
     const initials = name.split(' ').filter(Boolean).map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
     const div = document.createElement('div');
     div.className = 'reply-item';
-    div.innerHTML = '<div class="reply-avatar" style="background:' + colors[(i+1) % colors.length] + '">' + initials + '</div><div class="reply-content"><div class="reply-author">' + name + '<span>' + timeAgo(r.created_at) + '</span></div><div class="reply-body">' + r.body + '</div></div>';
+    div.innerHTML = '<div class="reply-avatar" style="background:' + colors[(i+1) % colors.length] + '">' + initials + '</div><div class="reply-content"><div class="reply-author">' + name + '<span>' + timeAgo(r.created_at) + '</span></div><div class="reply-body">' + renderDiscBody(r.body) + '</div></div>';
     repliesEl.appendChild(div);
   });
   repliesEl.scrollTop = repliesEl.scrollHeight;
@@ -3948,19 +4021,47 @@ async function submitReply() {
   if (!currentDiscussionId) return;
   const input = document.getElementById('reply-input');
   const body = input.value.trim();
-  if (!body) return;
   const btn = document.getElementById('reply-btn');
+
+  // Allow media-only reply
+  var mediaFile = window._replyMediaFile;
+  if (!body && !mediaFile) return;
+
   btn.disabled = true; btn.textContent = 'Posting...';
+
+  // Upload media if attached
+  var mediaUrl = null;
+  var mediaType = null;
+  if (mediaFile) {
+    btn.textContent = 'Uploading...';
+    var filePath = 'discussions/' + Date.now() + '_' + mediaFile.name.replace(/\s/g, '_');
+    var { data: storageData, error: storageErr } = await _supabase.storage.from('imaarisha-resources').upload(filePath, mediaFile);
+    if (!storageErr) {
+      var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
+      mediaUrl = urlData.publicUrl;
+      mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
+    }
+    btn.textContent = 'Posting...';
+  }
+
+  var finalBody = body;
+  if (mediaUrl) {
+    finalBody += (mediaType === 'video')
+      ? (body ? '\n\n' : '') + '[VIDEO:' + mediaUrl + ']'
+      : (body ? '\n\n' : '') + '[IMAGE:' + mediaUrl + ']';
+  }
+
   const { error } = await _supabase.from('discussion_replies').insert({
     discussion_id: currentDiscussionId,
     author_id: currentUser ? currentUser.id : null,
-    body: body
+    body: finalBody
   });
   btn.disabled = false; btn.textContent = 'Reply';
   if (!error) {
     input.value = '';
+    window._replyMediaFile = null;
+    document.getElementById('reply-media-preview').style.display = 'none';
     loadReplies(currentDiscussionId);
-    // Log activity
     _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' replied to a discussion', dot_color: 'green' });
   }
 }
@@ -3979,6 +4080,7 @@ async function submitNewThread() {
   const category = document.getElementById('thread-category').value;
   const body = document.getElementById('thread-body').value.trim();
   const errEl = document.getElementById('thread-error');
+  const successEl = document.getElementById('thread-success');
   if (!subject || !body) {
     errEl.textContent = 'Please fill in the subject and message.';
     errEl.style.display = 'block';
@@ -3986,10 +4088,39 @@ async function submitNewThread() {
   }
   const btn = document.getElementById('thread-submit-btn');
   btn.disabled = true; btn.textContent = 'Posting...';
+
+  // Upload media if attached
+  var mediaUrl = null;
+  var mediaType = null;
+  var mediaFile = window._threadMediaFile;
+  if (mediaFile) {
+    btn.textContent = 'Uploading media...';
+    var filePath = 'discussions/' + Date.now() + '_' + mediaFile.name.replace(/\s/g, '_');
+    var { data: storageData, error: storageErr } = await _supabase.storage.from('imaarisha-resources').upload(filePath, mediaFile);
+    if (storageErr) {
+      errEl.textContent = 'Media upload failed: ' + storageErr.message;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Post Discussion';
+      return;
+    }
+    var { data: urlData } = _supabase.storage.from('imaarisha-resources').getPublicUrl(filePath);
+    mediaUrl = urlData.publicUrl;
+    mediaType = mediaFile.type.startsWith('video') ? 'video' : 'image';
+    btn.textContent = 'Posting...';
+  }
+
+  // Build final body with media tag
+  var finalBody = body;
+  if (mediaUrl) {
+    finalBody += (mediaType === 'video')
+      ? '\n\n[VIDEO:' + mediaUrl + ']'
+      : '\n\n[IMAGE:' + mediaUrl + ']';
+  }
+
   const { error } = await _supabase.from('discussions').insert({
     subject: subject,
     preview: body.substring(0, 200),
-    body: body,
+    body: finalBody,
     category: category,
     author_id: currentUser ? currentUser.id : null
   });
@@ -3998,10 +4129,14 @@ async function submitNewThread() {
     errEl.textContent = error.message;
     errEl.style.display = 'block';
   } else {
-    closeNewThread();
-    loadDiscussions();
+    successEl.textContent = '✓ Discussion posted!';
+    successEl.style.display = 'block';
     document.getElementById('thread-subject').value = '';
     document.getElementById('thread-body').value = '';
+    window._threadMediaFile = null;
+    document.getElementById('thread-media-name').style.display = 'none';
+    document.getElementById('thread-media-preview').style.display = 'none';
+    setTimeout(function() { closeNewThread(); loadDiscussions(); }, 800);
   }
 }
 
@@ -4890,14 +5025,10 @@ var countySpecificData = {
 };
 
 var trackerData = {
-
-  // 1. UPDATED — Family Planning Coverage (FEMNET 2022: 53%)
   'Family Planning Coverage': {
     trend: [
-      { q: 'Q2 2025', val: 50 },
-      { q: 'Q3 2025', val: 51 },
-      { q: 'Q4 2025', val: 52 },
-      { q: 'Q1 2026', val: 53 }
+      { q: 'Q2 2025', val: 55 }, { q: 'Q3 2025', val: 56 },
+      { q: 'Q4 2025', val: 56 }, { q: 'Q1 2026', val: 57 }
     ],
     sources: [
       { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
@@ -4907,16 +5038,12 @@ var trackerData = {
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Meru'],
     orgs: ['AfyAfrika', 'SRHR Alliance', 'Zamara Foundation', 'Men Engage Kenya'],
-    note: 'Modern contraceptive prevalence rate (mCPR) among women aged 15-49. Value: 53% per FEMNET Kenya Country Factsheet 2022. Unmet need for contraception remains at 25%.'
+    note: 'Modern contraceptive prevalence rate (mCPR) among women aged 15-49. Value: 57% per KDHS 2022.'
   },
-
-  // 2. UNCHANGED — SRHR Disinformation Index
   'SRHR Disinformation Index': {
     trend: [
-      { q: 'Q2 2025', val: 21 },
-      { q: 'Q3 2025', val: 18 },
-      { q: 'Q4 2025', val: 15 },
-      { q: 'Q1 2026', val: 12 }
+      { q: 'Q2 2025', val: 21 }, { q: 'Q3 2025', val: 18 },
+      { q: 'Q4 2025', val: 15 }, { q: 'Q1 2026', val: 12 }
     ],
     sources: [
       { label: 'Piga Firimbi — Kenya Fact-Checking Network', url: 'https://www.pigafirimbi.com' },
@@ -4927,14 +5054,10 @@ var trackerData = {
     orgs: ['Activate Action', 'SRHR Alliance', 'CYAN', 'NAYA'],
     note: 'Number of active SRHR disinformation claims tracked across network counties. Downward trend is positive. Data sources and values to be confirmed by network.'
   },
-
-  // 3. UNCHANGED — Youth SRHR Services
   'Youth SRHR Services': {
     trend: [
-      { q: 'Q2 2025', val: 280 },
-      { q: 'Q3 2025', val: 290 },
-      { q: 'Q4 2025', val: 300 },
-      { q: 'Q1 2026', val: 312 }
+      { q: 'Q2 2025', val: 280 }, { q: 'Q3 2025', val: 290 },
+      { q: 'Q4 2025', val: 300 }, { q: 'Q1 2026', val: 312 }
     ],
     sources: [
       { label: 'HAI — Adolescent Friendly Health Services in Kenya (2023)', url: 'https://haiweb.org/storage/2023/07/HCW-Survey-Report_Kenya_2023_FINAL.pdf' },
@@ -4944,52 +5067,40 @@ var trackerData = {
     orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa'],
     note: 'Number of operational youth-friendly health facilities across Kenya. Value to be confirmed from FEMNET Fact Sheet and HAI Kenya report.'
   },
-
-  // 4. UNCHANGED — GBV Response Coverage
   'GBV Response Coverage': {
     trend: [
-      { q: 'Q2 2025', val: 24 },
-      { q: 'Q3 2025', val: 26 },
-      { q: 'Q4 2025', val: 28 },
-      { q: 'Q1 2026', val: 29 }
+      { q: 'Q2 2025', val: 24 }, { q: 'Q3 2025', val: 26 },
+      { q: 'Q4 2025', val: 28 }, { q: 'Q1 2026', val: 29 }
     ],
     sources: [
       { label: 'NCAJ — Technical Working Group Report on GBV Including Femicide (Pg 8-9)', url: 'https://home.creaw.org/wp-content/uploads/2026/02/10/Technical%20Working%20Group%20Report%20on%20GBV%20Including%20Femicide.pdf' },
-      { label: "JHU — GBV 2024 Women's Data County Dissemination Brief", url: 'https://publichealth.jhu.edu/sites/default/files/2025-10/Agile-2.0-2024-Women-s-Data-County-Specific-Dissemination-Brief-BUNGOMA.pdf' },
+      { label: 'JHU — GBV 2024 Women\'s Data County Dissemination Brief', url: 'https://publichealth.jhu.edu/sites/default/files/2025-10/Agile-2.0-2024-Women-s-Data-County-Specific-Dissemination-Brief-BUNGOMA.pdf' },
       { label: 'KNCHR — Submissions on GBV Including Femicide in Kenya', url: 'https://www.knchr.org/Portals/0/Submissions%20on%20Gender-Based%20Violence%20GBV%20Including%20Femicide%20in%20Kenya.pdf' },
       { label: 'KDHS 2022 Key Indicators Report — KNBS', url: 'https://www.knbs.or.ke/wp-content/uploads/2023/08/Kenya-Demographic-and-Health-Survey-2022-Key-Indicators-Report.pdf' },
       { label: 'ICRW — Generation Equality Forum: Kenya GBV & FGM Roadmap', url: 'https://www.icrw.org/wp-content/uploads/2021/06/GEF_Kenya_GBV_summary-05.21-web.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'],
     orgs: ['Men Engage Kenya', 'MMAAK', 'This Ability Trust', 'Beyond Initiative'],
-    note: 'Counties with functional GBV response capacity. Value to be confirmed from NCAJ report and KDHS 2022. FEMNET 2022: IPV prevalence at 25.1% of women aged 15-49 in past 12 months.'
+    note: 'Counties with functional GBV response capacity. Value to be confirmed from NCAJ report and KDHS 2022.'
   },
-
-  // 5. UPDATED — Access to SRHR Services (FEMNET 2022: UHC index = 56%)
   'Access to SRHR Services': {
     trend: [
-      { q: 'Q2 2025', val: 52 },
-      { q: 'Q3 2025', val: 53 },
-      { q: 'Q4 2025', val: 55 },
-      { q: 'Q1 2026', val: 56 }
+      { q: 'Q2 2025', val: 50 }, { q: 'Q3 2025', val: 51 },
+      { q: 'Q4 2025', val: 53 }, { q: 'Q1 2026', val: 54 }
     ],
     sources: [
-      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
       { label: 'Kenya Master Health Facility List — MoH', url: 'https://kmhfl.health.go.ke/' },
-      { label: 'PMC — Access to Adolescent & Youth SRHR Services in Coastal Kenya (2024)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10870511/pdf/12889_2024_Article_17999.pdf' }
+      { label: 'PMC — Access to Adolescent & Youth SRHR Services in Coastal Kenya (2024)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10870511/pdf/12889_2024_Article_17999.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Kisumu', 'Mombasa', 'Turkana', 'Mandera'],
     orgs: ['AfyAfrika', 'Secny CBO', 'Beyond Initiative', 'Zamara Foundation'],
-    note: 'Universal Health Coverage index for Kenya. Value: 56% per FEMNET Kenya Country Factsheet 2022. Health expenditure: 4.6% of GDP. Nursing & midwifery personnel: 2 per 10,000 population.'
+    note: 'Access to SRHR services across Kenya. Value to be confirmed from Kenya Master Health Facility List and FEMNET Fact Sheet.'
   },
-
-  // 6. UNCHANGED — Youth Friendliness of SRHR Facilities
   'Youth Friendliness of SRHR Facilities': {
     trend: [
-      { q: 'Q2 2025', val: 32 },
-      { q: 'Q3 2025', val: 34 },
-      { q: 'Q4 2025', val: 36 },
-      { q: 'Q1 2026', val: 38 }
+      { q: 'Q2 2025', val: 32 }, { q: 'Q3 2025', val: 34 },
+      { q: 'Q4 2025', val: 36 }, { q: 'Q1 2026', val: 38 }
     ],
     sources: [
       { label: 'WHO — Adolescent Friendly Health Services Assessment Checklist', url: 'https://iris.who.int/server/api/core/bitstreams/7b1527b3-efa1-480f-8242-234a8d37690d/content' },
@@ -4999,86 +5110,69 @@ var trackerData = {
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos'],
     orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa', 'This Ability Trust'],
-    note: 'Percentage of SRHR facilities meeting WHO youth-friendly standards. FEMNET 2022: ANC (4+ visits) = 76%; skilled birth attendance = 70 per 100; post-natal care coverage = 52.9%.'
+    note: 'Percentage of SRHR facilities meeting WHO youth-friendly standards. Value to be confirmed from HAI Kenya and World Bank SDI reports.'
   },
-
-// 7. UPDATED — Young Girls Accessing Safe Abortion (AFIDEP 2023: 14.9% teenage pregnancy rate)
   'Young Girls Accessing Safe Abortion': {
     trend: [
-      { q: 'Q2 2025', val: 16 },
-      { q: 'Q3 2025', val: 16 },
-      { q: 'Q4 2025', val: 15 },
-      { q: 'Q1 2026', val: 15 }
+      { q: 'Q2 2025', val: 18 }, { q: 'Q3 2025', val: 20 },
+      { q: 'Q4 2025', val: 21 }, { q: 'Q1 2026', val: 23 }
     ],
     sources: [
-      { label: 'AFIDEP — Adolescent SRH in Kenya: Status and Trends (March 2023)', url: 'https://www.afidep.org/publication/adolescent-sexual-and-reproductive-health-in-kenya-status-and-trends/' },
-      { label: 'KNBS & ICF — Kenya Demographic and Health Survey 2022', url: 'https://www.knbs.or.ke/wp-content/uploads/2023/08/Kenya-Demographic-and-Health-Survey-KDHS-2022-Summary-Report.pdf' },
-      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
-      { label: 'MoH, APHRC, Guttmacher, IPAS — Incidence of Induced Abortions in Kenya', url: 'https://aphrc.org/wp-content/uploads/2025/05/Policy-Brief-A_Online-Version.pdf' }
+      { label: 'JSTOR — Unintended Pregnancies, Unsafe Abortion & Maternal Mortality in Kenya', url: 'https://www.jstor.org/stable/pdf/resrep54797.pdf' },
+      { label: 'SCIRP — Social & Structural Determinants of Unsafe Abortion in Kibera', url: 'https://www.scirp.org/journal/paperinformation?paperid=142187' },
+      { label: 'MoH, APHRC, Guttmacher, IPAS — Incidence of Induced Abortions in Kenya', url: 'https://aphrc.org/wp-content/uploads/2025/05/KAS-Report-_Online-Version.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Machakos'],
     orgs: ['NAYA', 'CYAN', 'Activate Action', 'Zana Africa'],
-    note: 'Teenage pregnancy rate (girls 15-19 who have begun childbearing): 14.9% in 2022 per KDHS (AFIDEP, March 2023), down from 25.4% in 1989. Highest in Samburu (50%), West Pokot (36.3%), Marsabit (29.4%). FEMNET 2022: adolescent fertility rate 71.98 births per 1,000 women aged 15-19.'
+    note: 'Girls aged 10-19 accessing safe, legal abortion services under Article 26 of the Kenya Constitution. Value to be confirmed from APHRC/Guttmacher/IPAS report.'
   },
-
-// 8. UNCHANGED — Women Accessing Safe Abortion
   'Women Accessing Safe Abortion': {
     trend: [
-      { q: 'Q2 2025', val: 26 },
-      { q: 'Q3 2025', val: 28 },
-      { q: 'Q4 2025', val: 29 },
-      { q: 'Q1 2026', val: 31 }
+      { q: 'Q2 2025', val: 26 }, { q: 'Q3 2025', val: 28 },
+      { q: 'Q4 2025', val: 29 }, { q: 'Q1 2026', val: 31 }
     ],
     sources: [
       { label: 'Center for Reproductive Rights — The Abortion Landscape in Kenya', url: 'https://reproductiverights.org/resources/kenya-abortion/' },
       { label: 'Center for Reproductive Rights — A Decade of Existence (2020)', url: 'https://reproductiverights.org/sites/default/files/documents/A-Decade-of-Existence-Kenya_0.pdf' },
-      { label: "3W Kenya — Safe Abortion in Kenya: Who's Really Seeking Care?", url: 'https://3wkenya.org/safe-abortion-in-kenya/' },
+      { label: '3W Kenya — Safe Abortion in Kenya: Who\'s Really Seeking Care?', url: 'https://3wkenya.org/safe-abortion-in-kenya/' },
       { label: 'APHRC, MoH, Guttmacher — Incidence of Induced Abortions in Kenya', url: 'https://aphrc.org/wp-content/uploads/2025/05/Policy-Brief-A_Online-Version.pdf' },
       { label: 'IPAS Africa — Medical Abortion Self Use in Kenya', url: 'https://www.medrxiv.org/content/10.1101/2022.11.10.22282174v1.full.pdf' },
       { label: 'Marie Stopes Kenya — Capacity Statement 2024', url: 'https://mariestopes.or.ke/wp-content/uploads/sites/10/2024/08/2024-CStatement-Final-Ed-1.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Kiambu', 'Eldoret'],
     orgs: ['SRHR Alliance', 'AfyAfrika', 'Beyond Initiative', 'Zamara Foundation'],
-    note: 'Women aged 20-49 accessing safe, legal abortion under Kenya Constitution Article 26. FEMNET 2022: abortion legal but usually inaccessible; post-abortion guidelines in place; contraception included in post-abortion care.'
+    note: 'Women aged 20-49 accessing safe, legal abortion under Kenya Constitution Article 26. Value to be confirmed from CRR and APHRC sources.'
   },
-
-  // 9. UNCHANGED — Deaths from Unsafe Abortion
   'Deaths from Unsafe Abortion': {
     trend: [
-      { q: 'Q2 2025', val: 18 },
-      { q: 'Q3 2025', val: 17 },
-      { q: 'Q4 2025', val: 15 },
-      { q: 'Q1 2026', val: 14 }
+      { q: 'Q2 2025', val: 18 }, { q: 'Q3 2025', val: 17 },
+      { q: 'Q4 2025', val: 15 }, { q: 'Q1 2026', val: 14 }
     ],
     sources: [
-      { label: "International Campaign for Women's Rights to Safe Abortion — Kenya", url: 'https://www.safeabortionwomensright.org/news/kenya-health-experts-warn-restrictive-policy-will-drive-more-women-toward-unsafe-abortions/' },
+      { label: 'International Campaign for Women\'s Rights to Safe Abortion — Kenya', url: 'https://www.safeabortionwomensright.org/news/kenya-health-experts-warn-restrictive-policy-will-drive-more-women-toward-unsafe-abortions/' },
       { label: 'Global Financing Facility — Kenya RMNCAH-N Investment Case 2025-2030', url: 'https://www.globalfinancingfacility.org/sites/default/files/Kenya-RMNCAH-N-IC-2025-2030.pdf' },
       { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Turkana', 'Mandera', 'Wajir', 'Kilifi'],
     orgs: ['SRHR Alliance', 'AfyAfrika', 'Men Engage Kenya', 'Secny CBO'],
-    note: 'Percentage of maternal deaths attributed to unsafe abortion. FEMNET 2022: Maternal Mortality Ratio = 342 per 100,000 live births; post-natal care coverage = 52.9%.'
+    note: 'Percentage of maternal deaths attributed to unsafe abortion. Downward trend as access improves. Value to be confirmed from GFF Kenya RMNCAH report.'
   },
-
-  // 10. UPDATED — Access to Quality SRHR Information (FEMNET 2022: 59.89% -> 60%)
   'Access to Quality SRHR Information': {
     trend: [
-      { q: 'Q2 2025', val: 55 },
-      { q: 'Q3 2025', val: 57 },
-      { q: 'Q4 2025', val: 59 },
-      { q: 'Q1 2026', val: 60 }
+      { q: 'Q2 2025', val: 36 }, { q: 'Q3 2025', val: 38 },
+      { q: 'Q4 2025', val: 40 }, { q: 'Q1 2026', val: 42 }
     ],
     sources: [
-      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' },
       { label: 'Center for Reproductive Rights — Access to SRHR Information by Women & Girls in Kenya', url: 'https://reproductiverights.org/resources/kenya-access-to-srhr-information-women-girls/' },
       { label: 'KHRC — Who Shapes the Narrative? Media Coverage of SRHR in Kenya (2024)', url: 'https://khrc.or.ke/wp-content/uploads/2024/11/Media-coverage-analysis-of-SRHR-in-Kenya-October-2023-to-June-2024b-1.pdf' },
-      { label: 'PMC — Age & Gender Divide in Digital SRHR Platforms in Kenya', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10783845/pdf/ZRHM_31_2291908.pdf' }
+      { label: 'PMC — Age & Gender Divide in Digital SRHR Platforms in Kenya', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10783845/pdf/ZRHM_31_2291908.pdf' },
+      { label: 'FEMNET — SRHR at a Glance Kenya Fact Sheet 2022', url: 'https://www.femnet.org/wp-content/uploads/2022/12/Kenya-Factsheet_2022.pdf' }
     ],
     counties: ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Nyeri', 'Eldoret'],
     orgs: ['NAYA', 'Activate Action', 'CYAN', 'This Ability Trust', 'Zana Africa'],
-    note: 'Comprehensive knowledge of HIV/AIDS and SRHR among population. Value: 59.89% per FEMNET Kenya Country Factsheet 2022 (rounded to 60%). Knowledge higher among young men (63.7%) vs young women (56.6%) aged 15-24.'
+    note: 'Population with access to accurate, comprehensive SRHR information. Value to be confirmed from CRR and KHRC sources.'
   }
-
 };
 
 // ============================================================
@@ -7670,8 +7764,15 @@ window.addEventListener('DOMContentLoaded', function() {
     <div class="modal-footer">
       <div class="reply-input-row">
         <textarea class="reply-textarea" id="reply-input" placeholder="Write a reply..."></textarea>
-        <button class="btn btn-gold" id="reply-btn" onclick="submitReply()">Reply</button>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn btn-gold" id="reply-btn" onclick="submitReply()">Reply</button>
+          <label title="Attach image or video" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px;border-radius:6px;background:var(--dark3);border:1px solid var(--border);font-size:0.72rem;color:var(--muted);transition:all 0.2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+            📎 <span>Media</span>
+            <input type="file" id="reply-media-input" accept="image/*,video/*" style="display:none;" onchange="handleReplyMedia(this)" />
+          </label>
+        </div>
       </div>
+      <div id="reply-media-preview" style="margin:6px 0;display:none;"></div>
     </div>
   </div>
 </div>
@@ -7702,6 +7803,17 @@ window.addEventListener('DOMContentLoaded', function() {
       <label>Message</label>
       <textarea id="thread-body" placeholder="Share your thoughts, questions, or updates with the network..."></textarea>
     </div>
+    <div class="auth-field">
+      <label>Attach Image or Video <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">(optional · max 50MB)</span></label>
+      <div id="thread-drop-zone" style="border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--dark3);" onclick="document.getElementById('thread-media-input').click()">
+        <div style="font-size:1.4rem;margin-bottom:4px;">🖼 🎬</div>
+        <div style="font-size:0.78rem;color:var(--muted);">Click to attach an image or video</div>
+        <div id="thread-media-name" style="font-size:0.75rem;color:var(--gold);margin-top:6px;display:none;"></div>
+        <input type="file" id="thread-media-input" accept="image/*,video/*" style="display:none;" onchange="handleThreadMedia(this)" />
+      </div>
+      <div id="thread-media-preview" style="margin-top:8px;display:none;"></div>
+    </div>
+    <div class="auth-success" id="thread-success" style="display:none;"></div>
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-outline" onclick="closeNewThread()" style="flex:1">Cancel</button>
       <button class="btn btn-gold" id="thread-submit-btn" onclick="submitNewThread()" style="flex:2">Post Discussion</button>
