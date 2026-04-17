@@ -3526,9 +3526,12 @@ async function loadDashboard() {
       if (!_isAdmin && a.description && (
         a.description.includes('ADMIN ALERT') ||
         a.description.includes('Access request') ||
+        a.description.includes('requested access to') ||
         a.description.includes('🔐') ||
         a.description.includes('Digest Subscription') ||
-        a.description.includes('subscribed to the weekly')
+        a.description.includes('subscribed to the weekly') ||
+        a.description.includes('Test -') ||
+        a.description.includes('entity_title')
       )) return;
       const dotClass = a.dot_color === 'green' ? 'green' : a.dot_color === 'red' ? 'red' : '';
       const div = document.createElement('div');
