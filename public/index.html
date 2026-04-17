@@ -1853,6 +1853,7 @@ flex; justify-content: space-between; }
 
 </style>
 
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
@@ -7605,9 +7606,25 @@ window.addEventListener('DOMContentLoaded', function() {
 // ============================================================
 // ADMIN EMAIL NOTIFICATIONS via Supabase Edge Function
 // ============================================================
+// ============================================================
+// EMAIL NOTIFICATIONS via EmailJS
+// Sign up free at emailjs.com - 200 emails/month free
+// Fill in your EmailJS credentials below
+// ============================================================
+var _emailjsServiceId = 'service_339nv6j';     // from EmailJS dashboard
+var _emailjsTemplateId = 'template_xyh9v5d';   // from EmailJS dashboard
+var _emailjsPublicKey = 'zSZHMXchuaD9qEDvU';      // from EmailJS dashboard
+var _emailjsReady = false;
+
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof emailjs !== 'undefined' && _emailjsPublicKey !== 'YOUR_PUBLIC_KEY') {
+    emailjs.init({ publicKey: _emailjsPublicKey });
+    _emailjsReady = true;
+  }
+});
+
 async function notifyAdmin(subject, body) {
-  // Log to activity_log as a notification record
-  // Email is sent via Supabase trigger or Edge Function
+  // Always log to activity feed
   try {
     await _supabase.from('activity_log').insert({
       activity_type: 'resource_upload',
@@ -7615,11 +7632,21 @@ async function notifyAdmin(subject, body) {
       entity_title: body,
       dot_color: 'red'
     });
-    // Also try to call Edge Function if configured
-    await _supabase.functions.invoke('notify-admin', {
-      body: { subject: subject, message: body, admin_email: 'ombonya@gmail.com' }
-    }).catch(function() {}); // Silently fail if not set up
   } catch(e) {}
+
+  // Send email via EmailJS if configured
+  if (_emailjsReady && _emailjsServiceId !== 'YOUR_SERVICE_ID') {
+    try {
+      await emailjs.send(_emailjsServiceId, _emailjsTemplateId, {
+        to_email: 'ombonya@gmail.com',
+        subject: '[ImaarishaSRHR Hub] ' + subject,
+        message: body,
+        hub_url: 'https://imaarishasrhr.org'
+      });
+    } catch(e) {
+      console.warn('EmailJS send failed:', e);
+    }
+  }
 }
 
 // Notify admin when resource is requested
