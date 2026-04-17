@@ -2007,41 +2007,28 @@ flex; justify-content: space-between; }
 
 </div>
 
-<div id="notif-bell-container" style="display:none;padding:8px 16px;border-top:1px solid var(--border);">
-  <div style="display:flex;align-items:center;justify-content:space-between;">
-    <button id="notif-bell" onclick="toggleNotifications()" title="Enable notifications"
-      style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);padding:4px;">🔔</button>
-    <span style="font-size:0.65rem;color:var(--muted);">Notifications</span>
-  </div>
-  <!-- Notification panel -->
-  <div id="notif-panel" class="hidden" style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;">
-    <div style="font-size:0.75rem;font-weight:600;margin-bottom:8px;">📧 Weekly Digest</div>
-    <div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">Get a weekly summary of hub activity by email</div>
-    <input type="email" id="digest-email" placeholder="Your email address"
-      style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.72rem;color:var(--white);outline:none;margin-bottom:6px;" />
-    <button onclick="subscribeDigest()" class="btn btn-gold" style="width:100%;font-size:0.72rem;padding:7px;">Subscribe to Digest</button>
-    <div id="digest-success" style="display:none;font-size:0.7rem;color:var(--accent2);margin-top:6px;text-align:center;">✓ Subscribed!</div>
-    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
-      <div style="font-size:0.75rem;font-weight:600;margin-bottom:4px;">🔔 Push Alerts</div>
-      <div style="font-size:0.7rem;color:var(--muted);">You'll get instant pop-up alerts for new discussions when the hub is open.</div>
-    </div>
-  </div>
-</div>
 <div class="sidebar-footer">
 
-<div class="user-card">
-
+<div class="user-card" style="position:relative;">
 <div class="user-avatar">VM</div>
-
 <div class="user-info">
-
 <div class="user-name">Victor M.</div>
-
 <div class="user-org">Hub Administrator</div>
-
+</div>
+<button id="notif-bell" onclick="toggleNotifications()" title="Toggle notifications"
+  style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--muted);padding:4px;margin-left:auto;flex-shrink:0;">🔔</button>
+</div>
+<!-- Notification panel - members only -->
+<div id="notif-panel" class="hidden" style="margin:0 12px 8px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px;">
+  <div style="font-size:0.72rem;color:var(--muted);">🔔 You'll receive pop-up alerts on your device when new discussions are posted — while the hub is open.</div>
+  <div style="font-size:0.65rem;color:var(--muted);margin-top:6px;">Click <strong style="color:var(--gold);">Allow</strong> when your browser asks for permission.</div>
+  <button onclick="requestPushPermission()" id="push-enable-btn"
+    style="width:100%;margin-top:8px;font-size:0.7rem;padding:5px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+    Enable Push Alerts
+  </button>
+  <div id="push-enabled-msg" style="display:none;font-size:0.7rem;color:var(--accent2);margin-top:4px;text-align:center;">✓ Push alerts active!</div>
 </div>
 
-</div>
 
 </div>
 
@@ -2291,6 +2278,7 @@ class="progress-fill" style="width:38%"></div></div>
 <button class="btn btn-gold" style="margin-left:auto"
 onclick="openUploadModal()">+
 Upload</button>
+
 
 </div>
 
@@ -3403,6 +3391,26 @@ new claim goes viral</div>
   <div class="members-grid" id="members-grid">
     <div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">Loading members...</div>
   </div>
+
+  <!-- WEEKLY DIGEST SUBSCRIBE - members only -->
+  <div id="digest-subscribe-card" class="card" style="margin-top:24px;padding:20px;display:none;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="font-size:1.4rem;">📧</div>
+      <div>
+        <div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;font-weight:600;">Subscribe to the <span style="color:var(--gold);">Weekly Digest</span></div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Get a weekly summary of new discussions, resources and upcoming events</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="email" id="digest-email" placeholder="Enter your email address"
+        style="flex:1;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--white);outline:none;" />
+      <button onclick="subscribeDigest(event)"
+        style="background:var(--gold);color:var(--dark);border:none;border-radius:8px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+        Subscribe
+      </button>
+    </div>
+    <div id="digest-success" style="display:none;font-size:0.78rem;color:var(--accent2);margin-top:10px;text-align:center;">✓ Subscribed! You'll receive your first digest next week.</div>
+  </div>
 </div>
 
 
@@ -3493,7 +3501,7 @@ async function loadDashboard() {
     _supabase.from('resources').select('*', { count: 'exact', head: true }),
     _supabase.from('discussions').select('*', { count: 'exact', head: true }),
     _supabase.from('events').select('id, event_date, end_date, title').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date'),
-    _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5),
+    _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(20),
     _supabase.from('organizations').select('short_name').limit(9)
   ]);
   const nums = document.querySelectorAll('.stat-number');
@@ -3511,12 +3519,23 @@ async function loadDashboard() {
     const titleEl = feed.querySelector('.card-title');
     feed.innerHTML = '';
     feed.appendChild(titleEl);
+    var _isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+    var _shown = 0;
     activity.forEach(function(a) {
+      if (_shown >= 5) return;
+      if (!_isAdmin && a.description && (
+        a.description.includes('ADMIN ALERT') ||
+        a.description.includes('Access request') ||
+        a.description.includes('🔐') ||
+        a.description.includes('Digest Subscription') ||
+        a.description.includes('subscribed to the weekly')
+      )) return;
       const dotClass = a.dot_color === 'green' ? 'green' : a.dot_color === 'red' ? 'red' : '';
       const div = document.createElement('div');
       div.className = 'activity-item';
       div.innerHTML = '<div class="activity-dot ' + dotClass + '"></div><div><div class="activity-text">' + a.description + '</div><div class="activity-time">' + timeAgo(a.created_at) + '</div></div>';
       feed.appendChild(div);
+      _shown++;
     });
   }
   if (orgs && orgs.length) {
@@ -3809,9 +3828,16 @@ function showHub(user) {
   document.querySelector(".user-avatar").textContent = initials;
   initMemberNotifications(user);
   // Show admin-only controls
+  // Show member-only controls
+  var digestCard = document.getElementById('digest-subscribe-card');
+  if (digestCard && user.email !== 'ombonya@gmail.com') digestCard.style.display = 'block';
+  // Show admin-only controls, hide member-only controls
   if (user.email === 'ombonya@gmail.com') {
     var digestBtn = document.getElementById('digest-send-btn');
     if (digestBtn) digestBtn.style.display = 'inline-flex';
+    // Hide bell for admin
+    var bell = document.getElementById('notif-bell');
+    if (bell) bell.style.display = 'none';
   }
   var footer = document.querySelector(".sidebar-footer");
   if (!document.getElementById("logout-btn")) {
@@ -4177,11 +4203,8 @@ var _lastDiscussionCheck = localStorage.getItem('lastDiscCheck') || new Date().t
 
 // Ask for push permission after login
 async function initMemberNotifications(user) {
+  // Bell is always visible in user card - just update state
   if (!('Notification' in window)) return;
-
-  // Show notification bell in sidebar
-  var bellContainer = document.getElementById('notif-bell-container');
-  if (bellContainer) bellContainer.style.display = 'flex';
 
   // Check if already granted
   if (Notification.permission === 'granted') {
@@ -4198,26 +4221,31 @@ function updateBellState(enabled) {
   }
 }
 
-async function toggleNotifications() {
-  if (!('Notification' in window)) {
-    alert('Your browser does not support notifications.');
-    return;
-  }
-  if (Notification.permission === 'granted') {
-    // Show manage panel
-    document.getElementById('notif-panel').classList.toggle('hidden');
-    return;
-  }
+function toggleNotifications() {
+  var panel = document.getElementById('notif-panel');
+  if (!panel) return;
+  panel.classList.toggle('hidden');
+  // Update bell colour
+  var bell = document.getElementById('notif-bell');
+  if (bell) bell.style.color = panel.classList.contains('hidden') ? 'var(--muted)' : 'var(--gold)';
+}
+
+async function requestPushPermission() {
+  if (!('Notification' in window)) { alert('Your browser does not support notifications.'); return; }
   var perm = await Notification.requestPermission();
+  var btn = document.getElementById('push-enable-btn');
+  var msg = document.getElementById('push-enabled-msg');
   if (perm === 'granted') {
     _pushEnabled = true;
+    if (btn) btn.style.display = 'none';
+    if (msg) msg.style.display = 'block';
     updateBellState(true);
-    // Show success
     new Notification('ImaarishaSRHR Hub', {
-      body: 'You will now receive notifications for new discussions and resources!',
+      body: 'Push alerts enabled! You will be notified of new discussions.',
       icon: 'https://imaarishasrhr.org/favicon.ico'
     });
-    document.getElementById('notif-panel').classList.remove('hidden');
+  } else {
+    if (btn) btn.textContent = 'Permission denied — check browser settings';
   }
 }
 
@@ -4256,32 +4284,43 @@ setInterval(function() {
 }, 5 * 60 * 1000);
 
 // Subscribe to weekly digest
-async function subscribeDigest() {
+async function subscribeDigest(evt) {
   if (!currentUser) return;
   var emailInput = document.getElementById('digest-email');
+  var btn = evt && evt.target ? evt.target : null;
   var email = emailInput ? emailInput.value.trim() : currentUser.email;
-  if (!email) return;
+  if (!email) { if (emailInput) { emailInput.style.border = '1px solid var(--red)'; } return; }
 
-  // Save digest preference to profiles table
-  await _supabase.from('profiles').update({
-    digest_subscribed: true,
-    digest_email: email
-  }).eq('id', currentUser.id);
+  if (btn) { btn.disabled = true; btn.textContent = 'Subscribing...'; }
 
-  // Notify admin
-  notifyAdmin('📧 Digest Subscription', (currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email) + ' subscribed to the weekly digest.');
+  try {
+    await _supabase.from('profiles').update({
+      digest_subscribed: true,
+      digest_email: email
+    }).eq('id', currentUser.id);
+    notifyAdmin('📧 Digest Subscription', (currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email) + ' subscribed to the weekly digest at: ' + email);
+  } catch(e) {}
 
+  // Clear and show success
+  if (emailInput) { emailInput.value = ''; emailInput.style.border = ''; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Subscribe'; }
   var successEl = document.getElementById('digest-success');
   if (successEl) { successEl.style.display = 'block'; }
   setTimeout(function() {
     document.getElementById('notif-panel').classList.add('hidden');
-  }, 2000);
+    if (successEl) successEl.style.display = 'none';
+  }, 3000);
 }
 
 // Send weekly digest (admin triggers this manually or via cron)
 // For now, admin can trigger it from the hub
 async function sendWeeklyDigest() {
-  if (!currentUser || currentUser.email !== 'ombonya@gmail.com') return;
+  if (!currentUser || currentUser.email !== 'ombonya@gmail.com') {
+    alert('Admin only.');
+    return;
+  }
+  var btn = document.getElementById('digest-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending...'; }
 
   // Get this week's activity
   var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
@@ -4339,6 +4378,8 @@ async function sendWeeklyDigest() {
       sent++;
     } catch(e) { console.warn('Failed to send to', sub.digest_email); }
   }
+  if (btn) { btn.disabled = false; btn.textContent = '📧 Send Digest'; }
+  if (typeof _dBtn !== 'undefined' && _dBtn) { _dBtn.disabled=false; _dBtn.textContent='📧 Send Digest'; }
   alert('✓ Weekly digest sent to ' + sent + ' subscriber(s)!');
 }
 
@@ -4486,8 +4527,8 @@ async function uploadFile() {
     document.getElementById('file-selected').style.display = 'none';
     setTimeout(function() { progress.style.display = 'none'; fill.style.width = '0%'; }, 500);
     loadResources();
-    _supabase.from('activity_log').insert({ activity_type: 'resource_upload', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' uploaded ' + title, entity_title: title, dot_color: 'gold' });
-    notifyAdmin('Resource Uploaded', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' uploaded a new resource: ' + title);
+    try { _supabase.from('activity_log').insert({ activity_type: 'resource_upload', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' uploaded ' + title, entity_title: title, dot_color: 'gold' }); } catch(e) {}
+    notifyAdmin('📁 Resource Uploaded', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' uploaded a new resource: ' + title);
   }
 }
 
@@ -4531,6 +4572,7 @@ async function saveLink() {
     document.getElementById('link-tags').value = '';
     loadResources();
     _supabase.from('activity_log').insert({ activity_type: 'resource_upload', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' added a link: ' + title, entity_title: title, dot_color: 'gold' });
+    notifyAdmin('📁 Resource Added', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' added a new link resource: ' + title);
   }
 }
 
@@ -9016,6 +9058,14 @@ window.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+<!-- ADMIN FLOATING DIGEST BUTTON -->
+<button id="digest-send-btn" onclick="sendWeeklyDigest()"
+  style="display:none;position:fixed;bottom:24px;right:24px;z-index:888;
+  background:var(--gold);color:var(--dark);border:none;border-radius:50px;
+  padding:8px 16px;font-size:0.72rem;font-weight:700;cursor:pointer;
+  box-shadow:0 4px 16px rgba(201,168,76,0.4);font-family:'DM Sans',sans-serif;
+  letter-spacing:0.05em;">📧 Send Digest</button>
 
 </body>
 
