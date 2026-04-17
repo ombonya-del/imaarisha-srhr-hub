@@ -2007,6 +2007,26 @@ flex; justify-content: space-between; }
 
 </div>
 
+<div id="notif-bell-container" style="display:none;padding:8px 16px;border-top:1px solid var(--border);">
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <button id="notif-bell" onclick="toggleNotifications()" title="Enable notifications"
+      style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--muted);padding:4px;">🔔</button>
+    <span style="font-size:0.65rem;color:var(--muted);">Notifications</span>
+  </div>
+  <!-- Notification panel -->
+  <div id="notif-panel" class="hidden" style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px;">
+    <div style="font-size:0.75rem;font-weight:600;margin-bottom:8px;">📧 Weekly Digest</div>
+    <div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">Get a weekly summary of hub activity by email</div>
+    <input type="email" id="digest-email" placeholder="Your email address"
+      style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:0.72rem;color:var(--white);outline:none;margin-bottom:6px;" />
+    <button onclick="subscribeDigest()" class="btn btn-gold" style="width:100%;font-size:0.72rem;padding:7px;">Subscribe to Digest</button>
+    <div id="digest-success" style="display:none;font-size:0.7rem;color:var(--accent2);margin-top:6px;text-align:center;">✓ Subscribed!</div>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+      <div style="font-size:0.75rem;font-weight:600;margin-bottom:4px;">🔔 Push Alerts</div>
+      <div style="font-size:0.7rem;color:var(--muted);">You'll get instant pop-up alerts for new discussions when the hub is open.</div>
+    </div>
+  </div>
+</div>
 <div class="sidebar-footer">
 
 <div class="user-card">
@@ -3787,6 +3807,12 @@ function showHub(user) {
   var initials = name.split(" ").filter(Boolean).map(function(n){ return n[0]; }).join("").toUpperCase().slice(0,2) || "HM";
   document.querySelector(".user-name").textContent = name;
   document.querySelector(".user-avatar").textContent = initials;
+  initMemberNotifications(user);
+  // Show admin-only controls
+  if (user.email === 'ombonya@gmail.com') {
+    var digestBtn = document.getElementById('digest-send-btn');
+    if (digestBtn) digestBtn.style.display = 'inline-flex';
+  }
   var footer = document.querySelector(".sidebar-footer");
   if (!document.getElementById("logout-btn")) {
     var btn = document.createElement("button");
@@ -4139,6 +4165,181 @@ async function submitNewThread() {
     document.getElementById('thread-media-preview').style.display = 'none';
     setTimeout(function() { closeNewThread(); loadDiscussions(); }, 800);
   }
+}
+
+
+// ============================================================
+// MEMBER NOTIFICATIONS - Push + Weekly Digest
+// ============================================================
+
+var _pushEnabled = false;
+var _lastDiscussionCheck = localStorage.getItem('lastDiscCheck') || new Date().toISOString();
+
+// Ask for push permission after login
+async function initMemberNotifications(user) {
+  if (!('Notification' in window)) return;
+
+  // Show notification bell in sidebar
+  var bellContainer = document.getElementById('notif-bell-container');
+  if (bellContainer) bellContainer.style.display = 'flex';
+
+  // Check if already granted
+  if (Notification.permission === 'granted') {
+    _pushEnabled = true;
+    updateBellState(true);
+  }
+}
+
+function updateBellState(enabled) {
+  var bell = document.getElementById('notif-bell');
+  if (bell) {
+    bell.style.color = enabled ? 'var(--gold)' : 'var(--muted)';
+    bell.title = enabled ? 'Push notifications ON — click to manage' : 'Click to enable notifications';
+  }
+}
+
+async function toggleNotifications() {
+  if (!('Notification' in window)) {
+    alert('Your browser does not support notifications.');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    // Show manage panel
+    document.getElementById('notif-panel').classList.toggle('hidden');
+    return;
+  }
+  var perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    _pushEnabled = true;
+    updateBellState(true);
+    // Show success
+    new Notification('ImaarishaSRHR Hub', {
+      body: 'You will now receive notifications for new discussions and resources!',
+      icon: 'https://imaarishasrhr.org/favicon.ico'
+    });
+    document.getElementById('notif-panel').classList.remove('hidden');
+  }
+}
+
+// Check for new discussions and push notify
+async function checkNewDiscussions() {
+  if (!_pushEnabled || Notification.permission !== 'granted') return;
+  if (!currentUser) return;
+
+  var since = _lastDiscussionCheck;
+  var { data } = await _supabase.from('discussions')
+    .select('id, subject, profiles(full_name)')
+    .gt('created_at', since)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (!data || data.length === 0) return;
+
+  // Update last check time
+  _lastDiscussionCheck = new Date().toISOString();
+  localStorage.setItem('lastDiscCheck', _lastDiscussionCheck);
+
+  // Send push for each new discussion (max 3)
+  data.slice(0, 3).forEach(function(disc) {
+    var author = disc.profiles ? disc.profiles.full_name || 'A member' : 'A member';
+    new Notification('New Discussion on Hub', {
+      body: disc.subject + ' — by ' + author,
+      icon: 'https://imaarishasrhr.org/favicon.ico',
+      tag: 'disc-' + disc.id
+    });
+  });
+}
+
+// Check every 5 minutes when hub is open
+setInterval(function() {
+  if (currentUser) checkNewDiscussions();
+}, 5 * 60 * 1000);
+
+// Subscribe to weekly digest
+async function subscribeDigest() {
+  if (!currentUser) return;
+  var emailInput = document.getElementById('digest-email');
+  var email = emailInput ? emailInput.value.trim() : currentUser.email;
+  if (!email) return;
+
+  // Save digest preference to profiles table
+  await _supabase.from('profiles').update({
+    digest_subscribed: true,
+    digest_email: email
+  }).eq('id', currentUser.id);
+
+  // Notify admin
+  notifyAdmin('📧 Digest Subscription', (currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : currentUser.email) + ' subscribed to the weekly digest.');
+
+  var successEl = document.getElementById('digest-success');
+  if (successEl) { successEl.style.display = 'block'; }
+  setTimeout(function() {
+    document.getElementById('notif-panel').classList.add('hidden');
+  }, 2000);
+}
+
+// Send weekly digest (admin triggers this manually or via cron)
+// For now, admin can trigger it from the hub
+async function sendWeeklyDigest() {
+  if (!currentUser || currentUser.email !== 'ombonya@gmail.com') return;
+
+  // Get this week's activity
+  var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+  var [discsRes, resourcesRes, eventsRes] = await Promise.all([
+    _supabase.from('discussions').select('subject, profiles(full_name)').gt('created_at', weekAgo).order('created_at', { ascending: false }).limit(5),
+    _supabase.from('resources').select('title, type').gt('created_at', weekAgo).limit(5),
+    _supabase.from('events').select('title, event_date').gte('event_date', new Date().toISOString().split('T')[0]).limit(3)
+  ]);
+
+  var discs = discsRes.data || [];
+  var resources = resourcesRes.data || [];
+  var events = eventsRes.data || [];
+
+  // Build digest message
+  var digestMsg = 'WEEKLY HUB DIGEST\n\n';
+  if (discs.length) {
+    digestMsg += '💬 NEW DISCUSSIONS (' + discs.length + ')\n';
+    discs.forEach(function(d) { digestMsg += '• ' + d.subject + '\n'; });
+    digestMsg += '\n';
+  }
+  if (resources.length) {
+    digestMsg += '📁 NEW RESOURCES (' + resources.length + ')\n';
+    resources.forEach(function(r) { digestMsg += '• ' + r.title + '\n'; });
+    digestMsg += '\n';
+  }
+  if (events.length) {
+    digestMsg += '📅 UPCOMING EVENTS\n';
+    events.forEach(function(e) { digestMsg += '• ' + e.title + ' — ' + e.event_date + '\n'; });
+    digestMsg += '\n';
+  }
+  digestMsg += 'Visit the hub: https://imaarishasrhr.org';
+
+  // Get digest subscribers
+  var { data: subscribers } = await _supabase.from('profiles')
+    .select('digest_email, full_name')
+    .eq('digest_subscribed', true);
+
+  if (!subscribers || subscribers.length === 0) {
+    alert('No digest subscribers yet.');
+    return;
+  }
+
+  // Send to each subscriber via EmailJS
+  var sent = 0;
+  for (var i = 0; i < subscribers.length; i++) {
+    var sub = subscribers[i];
+    if (!sub.digest_email) continue;
+    try {
+      await emailjs.send('service_339nv6j', 'template_xyh9v5d', {
+        to_email: sub.digest_email,
+        subject: '[ImaarishaSRHR Hub] Weekly Digest — ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }),
+        message: digestMsg,
+        hub_url: 'https://imaarishasrhr.org'
+      });
+      sent++;
+    } catch(e) { console.warn('Failed to send to', sub.digest_email); }
+  }
+  alert('✓ Weekly digest sent to ' + sent + ' subscriber(s)!');
 }
 
 // Wire modal interactions after DOM is ready
@@ -7623,12 +7824,21 @@ var _emailjsTemplateId = 'template_xyh9v5d';   // from EmailJS dashboard
 var _emailjsPublicKey = 'zSZHMXchuaD9qEDvU';      // from EmailJS dashboard
 var _emailjsReady = false;
 
-window.addEventListener('DOMContentLoaded', function() {
-  if (typeof emailjs !== 'undefined' && _emailjsPublicKey !== 'YOUR_PUBLIC_KEY') {
+// Init EmailJS immediately when script loads
+(function initEmailJS() {
+  if (typeof emailjs !== 'undefined') {
     emailjs.init({ publicKey: _emailjsPublicKey });
     _emailjsReady = true;
+  } else {
+    // Retry after DOM loads
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof emailjs !== 'undefined') {
+        emailjs.init({ publicKey: _emailjsPublicKey });
+        _emailjsReady = true;
+      }
+    });
   }
-});
+})();
 
 async function notifyAdmin(subject, body) {
   // Always log to activity feed
@@ -7642,7 +7852,7 @@ async function notifyAdmin(subject, body) {
   } catch(e) {}
 
   // Send email via EmailJS if configured
-  if (_emailjsReady && _emailjsServiceId !== 'YOUR_SERVICE_ID') {
+  if (typeof emailjs !== 'undefined' && _emailjsServiceId !== 'YOUR_SERVICE_ID') {
     try {
       await emailjs.send(_emailjsServiceId, _emailjsTemplateId, {
         to_email: 'ombonya@gmail.com',
@@ -7662,17 +7872,18 @@ async function requestResourceAccess(resourceId, resourceTitle) {
   var userName = (currentUser.user_metadata && currentUser.user_metadata.full_name) || currentUser.email;
   var msg = userName + ' requested access to: ' + resourceTitle;
 
-  // Save request to DB
-  await _supabase.from('activity_log').insert({
-    activity_type: 'resource_upload',
-    description: '🔐 Access request: ' + msg,
-    entity_title: resourceTitle,
-    dot_color: 'red',
-    user_id: currentUser.id
-  });
+  // Save request to DB (catch errors so notifyAdmin still fires)
+  try {
+    await _supabase.from('activity_log').insert({
+      activity_type: 'resource_upload',
+      description: '🔐 Access request: ' + msg,
+      entity_title: resourceTitle,
+      dot_color: 'red'
+    });
+  } catch(e) {}
 
-  // Notify admin
-  await notifyAdmin('Resource Access Request', msg);
+  // Notify admin - always fires regardless of DB result
+  await notifyAdmin('🔐 Resource Access Request', userName + ' requested access to the resource: "' + resourceTitle + '"');
 
   // Show confirmation
   var toast = document.createElement('div');
