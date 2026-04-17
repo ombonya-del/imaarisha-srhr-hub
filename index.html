@@ -3777,10 +3777,11 @@ function showHub(user) {
   // Track session start time for time-on-hub
   window._sessionStart = Date.now();
 
-  // Show name prompt if no name set
+  // Notify admin of new member (first login only - no login_count yet)
   if (!name) {
     setTimeout(function() { showNamePrompt(user); }, 800);
     name = user.email.split("@")[0];
+    notifyAdmin('👤 New Member Joined', 'A new member just signed in for the first time: ' + user.email);
   }
 
   var initials = name.split(" ").filter(Boolean).map(function(n){ return n[0]; }).join("").toUpperCase().slice(0,2) || "HM";
@@ -3871,7 +3872,7 @@ async function handleSignup() {
   var result = await _supabase.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
   btn.disabled = false; btn.textContent = 'Request Access';
   if (result.error) showError(result.error.message);
-  else showSuccess('Account created! Check your email to confirm, then sign in.');
+  else { showSuccess('Account created! Check your email to confirm, then sign in.'); notifyAdmin('New Member Signup', name + ' (' + email + ') just created a hub account.'); }
 }
 
 
@@ -4068,6 +4069,7 @@ async function submitReply() {
     document.getElementById('reply-media-preview').style.display = 'none';
     loadReplies(currentDiscussionId);
     _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' replied to a discussion', dot_color: 'green' });
+    notifyAdmin('New Discussion Reply', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' posted a reply in a hub discussion.');
   }
 }
 
@@ -4283,8 +4285,8 @@ async function uploadFile() {
     document.getElementById('file-selected').style.display = 'none';
     setTimeout(function() { progress.style.display = 'none'; fill.style.width = '0%'; }, 500);
     loadResources();
-    // Log activity
     _supabase.from('activity_log').insert({ activity_type: 'resource_upload', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' uploaded ' + title, entity_title: title, dot_color: 'gold' });
+    notifyAdmin('Resource Uploaded', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' uploaded a new resource: ' + title);
   }
 }
 
@@ -4471,7 +4473,7 @@ function closeReportModal() {
   document.getElementById('report-modal').classList.add('hidden');
 }
 
-async function submitReport() {
+async function submitReport() { /* notify on success below */
   const claim = document.getElementById('report-claim').value.trim();
   const platforms = document.getElementById('report-platforms').value.trim();
   const spread = document.getElementById('report-spread').value;
@@ -4509,6 +4511,7 @@ async function submitReport() {
     document.getElementById('report-context').value = '';
     setTimeout(function() { closeReportModal(); loadDisinfo(); }, 2000);
     _supabase.from('activity_log').insert({ activity_type: 'discussion_start', description: 'New disinformation claim reported for network review', dot_color: 'red' });
+    notifyAdmin('🚨 Disinformation Claim Reported', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' reported a new SRHR disinformation claim for network review.');
   }
 }
 
@@ -5829,6 +5832,7 @@ async function submitListing() {
     document.getElementById('offer-tags').value = '';
     setTimeout(function() { closeListOfferModal(); loadMarketplace(); }, 2000);
     _supabase.from('activity_log').insert({ activity_type: 'campaign_launch', description: (currentUser && currentUser.user_metadata ? currentUser.user_metadata.full_name : 'A member') + ' listed a new marketplace offering: ' + title, dot_color: 'gold' });
+    notifyAdmin('🏪 New Marketplace Listing', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' added a new marketplace listing: ' + title + ' (' + category + ')');
   }
 }
 
@@ -6413,6 +6417,7 @@ async function handleRsvp(eventId, status, btn) {
 
   await _supabase.from('event_rsvps').upsert({ event_id: eventId, user_id: currentUser.id, status: status }, { onConflict: 'event_id,user_id' });
   await _supabase.from('activity_log').insert({ activity_type: 'event_rsvp', description: (currentUser.user_metadata&&currentUser.user_metadata.full_name?currentUser.user_metadata.full_name:'A member') + ' RSVPd ' + status + ' to an event', dot_color: 'green' });
+  if (status === 'going') notifyAdmin('📅 Event RSVP', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' RSVPd Going to an event.');
 }
 
 // ============================================================
@@ -6705,6 +6710,7 @@ async function submitCreateEvent() {
       description: (currentUser&&currentUser.user_metadata&&currentUser.user_metadata.full_name?currentUser.user_metadata.full_name:'Hub Admin') + ' created a new event: ' + title,
       dot_color: 'gold'
     });
+    notifyAdmin('📅 New Event Created', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' created a new event: ' + title + ' on ' + date);
     setTimeout(function() { closeCreateEvent(); loadEvents(); }, 1500);
   }
 }
@@ -7321,6 +7327,7 @@ async function submitNewCampaign() {
       description: (currentUser&&currentUser.user_metadata&&currentUser.user_metadata.full_name?currentUser.user_metadata.full_name:'Hub Admin') + ' launched a new campaign: ' + title,
       dot_color: 'gold'
     });
+    notifyAdmin('📣 New Campaign Launched', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' launched a new campaign: ' + title + (hashtag ? ' (' + hashtag + ')' : ''));
     setTimeout(function() { closeNewCampaign(); loadCampaigns(); }, 1500);
   }
 }
