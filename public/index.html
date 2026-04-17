@@ -2019,20 +2019,7 @@ flex; justify-content: space-between; }
   style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--muted);padding:4px;margin-left:auto;flex-shrink:0;">🔔</button>
 </div>
 <!-- Inline notification panel -->
-<div id="notif-panel" class="hidden" style="margin:0 12px 8px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px;">
-  <div id="notif-member-view">
-    <div style="font-size:0.72rem;font-weight:600;color:var(--gold);margin-bottom:4px;">📧 Weekly Digest</div>
-    <div style="font-size:0.65rem;color:var(--muted);margin-bottom:6px;">Get a weekly hub summary by email</div>
-    <input type="email" id="digest-email" placeholder="Your email" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:0.7rem;color:var(--white);outline:none;margin-bottom:5px;box-sizing:border-box;" />
-    <button onclick="subscribeDigest(event)" style="width:100%;font-size:0.7rem;padding:5px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;">Subscribe</button>
-    <div id="digest-success" style="display:none;font-size:0.7rem;color:var(--accent2);margin-top:4px;text-align:center;">✓ Subscribed! Check your inbox each week.</div>
-  </div>
-  <div id="notif-admin-view" style="display:none;">
-    <div style="font-size:0.72rem;font-weight:600;color:var(--gold);margin-bottom:4px;">📧 Weekly Digest</div>
-    <div style="font-size:0.65rem;color:var(--muted);">Use the 📧 Send Digest button (bottom right) to send the digest to all subscribers.</div>
-  </div>
-  <div style="font-size:0.65rem;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">🔔 Push alerts for new discussions when hub is open</div>
-</div>
+
 
 </div>
 
@@ -3395,6 +3382,26 @@ new claim goes viral</div>
   <div class="members-grid" id="members-grid">
     <div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">Loading members...</div>
   </div>
+
+  <!-- WEEKLY DIGEST SUBSCRIBE - members only -->
+  <div id="digest-subscribe-card" class="card" style="margin-top:24px;padding:20px;display:none;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="font-size:1.4rem;">📧</div>
+      <div>
+        <div style="font-family:Cormorant Garamond,serif;font-size:1.1rem;font-weight:600;">Subscribe to the <span style="color:var(--gold);">Weekly Digest</span></div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">Get a weekly summary of new discussions, resources and upcoming events</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="email" id="digest-email" placeholder="Enter your email address"
+        style="flex:1;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--white);outline:none;" />
+      <button onclick="subscribeDigest(event)"
+        style="background:var(--gold);color:var(--dark);border:none;border-radius:8px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+        Subscribe
+      </button>
+    </div>
+    <div id="digest-success" style="display:none;font-size:0.78rem;color:var(--accent2);margin-top:10px;text-align:center;">✓ Subscribed! You'll receive your first digest next week.</div>
+  </div>
 </div>
 
 
@@ -3485,7 +3492,7 @@ async function loadDashboard() {
     _supabase.from('resources').select('*', { count: 'exact', head: true }),
     _supabase.from('discussions').select('*', { count: 'exact', head: true }),
     _supabase.from('events').select('id, event_date, end_date, title').gte('event_date', new Date().toISOString().split('T')[0]).order('event_date'),
-    _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(5),
+    _supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(20),
     _supabase.from('organizations').select('short_name').limit(9)
   ]);
   const nums = document.querySelectorAll('.stat-number');
@@ -3503,12 +3510,14 @@ async function loadDashboard() {
     const titleEl = feed.querySelector('.card-title');
     feed.innerHTML = '';
     feed.appendChild(titleEl);
-    var isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+    var _isAdmin = currentUser && currentUser.email === 'ombonya@gmail.com';
+    var _shown = 0;
     activity.forEach(function(a) {
-      // Hide admin-only alerts from member view
-      if (!isAdmin && a.description && (
+      if (_shown >= 5) return;
+      if (!_isAdmin && a.description && (
         a.description.includes('ADMIN ALERT') ||
         a.description.includes('Access request') ||
+        a.description.includes('🔐') ||
         a.description.includes('Digest Subscription') ||
         a.description.includes('subscribed to the weekly')
       )) return;
@@ -3517,6 +3526,7 @@ async function loadDashboard() {
       div.className = 'activity-item';
       div.innerHTML = '<div class="activity-dot ' + dotClass + '"></div><div><div class="activity-text">' + a.description + '</div><div class="activity-time">' + timeAgo(a.created_at) + '</div></div>';
       feed.appendChild(div);
+      _shown++;
     });
   }
   if (orgs && orgs.length) {
@@ -3809,14 +3819,16 @@ function showHub(user) {
   document.querySelector(".user-avatar").textContent = initials;
   initMemberNotifications(user);
   // Show admin-only controls
+  // Show member-only controls
+  var digestCard = document.getElementById('digest-subscribe-card');
+  if (digestCard && user.email !== 'ombonya@gmail.com') digestCard.style.display = 'block';
+  // Show admin-only controls, hide member-only controls
   if (user.email === 'ombonya@gmail.com') {
     var digestBtn = document.getElementById('digest-send-btn');
     if (digestBtn) digestBtn.style.display = 'inline-flex';
-    // Switch notif panel to admin view
-    var memberView = document.getElementById('notif-member-view');
-    var adminView = document.getElementById('notif-admin-view');
-    if (memberView) memberView.style.display = 'none';
-    if (adminView) adminView.style.display = 'block';
+    // Hide bell for admin
+    var bell = document.getElementById('notif-bell');
+    if (bell) bell.style.display = 'none';
   }
   var footer = document.querySelector(".sidebar-footer");
   if (!document.getElementById("logout-btn")) {
