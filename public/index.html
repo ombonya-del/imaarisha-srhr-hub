@@ -3539,15 +3539,15 @@ async function loadDashboard() {
       if (_shown >= 5) return;
       if (a.description && (a.description.includes('Test -') || a.description.includes('entity_title'))) return;
       if (a.description && (a.description.includes('Test -') || a.description.includes('entity_title'))) return;
-      if (!_isAdmin && a.description && (
-        a.description.includes('ADMIN ALERT') ||
+      // Always hide admin-only noise from shared feed
+      if (a.description.includes('ADMIN ALERT') ||
+          a.description.includes('Digest Subscription') ||
+          a.description.includes('subscribed to the weekly')) return;
+      // Hide access requests from member view
+      if (!_isAdmin && (
         a.description.includes('Access request') ||
         a.description.includes('requested access to') ||
-        a.description.includes('🔐') ||
-        a.description.includes('Digest Subscription') ||
-        a.description.includes('subscribed to the weekly') ||
-        a.description.includes('Test -') ||
-        a.description.includes('entity_title')
+        a.description.includes('🔐')
       )) return;
       const dotClass = a.dot_color === 'green' ? 'green' : a.dot_color === 'red' ? 'red' : '';
       const div = document.createElement('div');
@@ -4552,7 +4552,7 @@ async function uploadFile() {
     setTimeout(function() { progress.style.display = 'none'; fill.style.width = '0%'; }, 500);
     loadResources();
     try { _supabase.from('activity_log').insert({ activity_type: 'resource_upload', description: (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'A member') + ' uploaded ' + title, entity_title: title, dot_color: 'gold' }); } catch(e) {}
-    notifyAdmin('📁 Resource Uploaded', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' uploaded a new resource: ' + title);
+    try { notifyAdmin('📁 Resource Uploaded', (currentUser && currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser ? currentUser.email : 'A member')) + ' uploaded a new resource: ' + title);); } catch(e) { console.warn('notifyAdmin error:', e); }
   }
 }
 
@@ -7909,9 +7909,10 @@ var _emailjsReady = false;
 async function notifyAdmin(subject, body) {
   // Always log to activity feed
   try {
-    await _supabase.from('activity_log').insert({
+    // Admin alerts sent by email only — removed activity_log insert
+    if (false) { await _supabase.from('activity_log').insert({
       activity_type: 'resource_upload',
-      description: '🔔 ADMIN ALERT: ' + subject,
+      description: 'ADMIN ALERT: ' + subject,
       entity_title: body,
       dot_color: 'red'
     });
