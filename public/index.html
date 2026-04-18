@@ -3388,6 +3388,20 @@ new claim goes viral</div>
     <div style="font-size:0.78rem;color:var(--muted)">Registered hub members across the 12 member organizations</div>
     <input class="search-input" id="members-search" placeholder="🔍 Search members..." style="max-width:240px;" oninput="filterMembers(this.value)" />
   </div>
+  <div id="digest-subscribe-card" class="card" style="margin-bottom:24px;padding:20px;display:none;border-color:rgba(201,168,76,0.3);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="font-size:1.4rem;">📧</div>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;">Subscribe to the <span style="color:var(--gold);">Weekly Digest</span></div>
+        <div style="font-size:0.75rem;color:var(--muted);">Get a weekly summary of hub activity by email</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <input type="email" id="digest-email" placeholder="Your email address" style="flex:1;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:0.82rem;color:var(--white);outline:none;font-family:'DM Sans',sans-serif;" />
+      <button onclick="subscribeDigest(event)" style="background:var(--gold);color:var(--dark);border:none;border-radius:8px;padding:9px 20px;font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Subscribe</button>
+    </div>
+    <div id="digest-success" style="display:none;font-size:0.78rem;color:var(--accent2);margin-top:8px;">✓ Subscribed! Check your inbox each week.</div>
+  </div>
   <div class="members-grid" id="members-grid">
     <div style="color:var(--muted);font-size:0.82rem;padding:24px;grid-column:span 3;text-align:center;">Loading members...</div>
   </div>
@@ -3843,6 +3857,7 @@ function showHub(user) {
     var bell = document.getElementById('notif-bell');
     if (bell) bell.style.display = 'none';
     var np = document.getElementById('notif-panel'); if (np) np.style.display = 'none';
+    var tb = document.getElementById('topbar-bell'); if (tb) tb.style.display = 'none';
   } else {
     var dc2 = document.getElementById('digest-subscribe-card');
     if (dc2) dc2.style.display = 'block';
