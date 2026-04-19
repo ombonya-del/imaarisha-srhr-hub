@@ -3896,7 +3896,7 @@ async function handleMagicLink() {
   if (!email) return showError("Please enter your email address.");
   var btn = document.getElementById("magic-btn");
   btn.disabled = true; btn.textContent = "Sending...";
-  var result = await _supabase.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
+  var result = await _supabase.auth.signInWithOtp({ email: email, options: { shouldCreateUser: false } });
   btn.disabled = false; btn.textContent = "Send Me a Sign-In Link";
   if (result.error) {
     showError(result.error.message);
