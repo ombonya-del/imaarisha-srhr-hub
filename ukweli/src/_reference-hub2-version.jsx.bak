@@ -1,0 +1,150 @@
+import { useState, useEffect } from 'react'
+import { sb, C, timeAgo } from '../lib/supabase'
+import { useLang } from '../lib/i18n'
+
+export default function Ukweli() {
+  const { tr, lang } = useLang()
+  const [view, setView] = useState('ask')   // ask | myths | learn
+  return (
+    <div style={{ padding:'18px 16px 90px' }}>
+      <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.18em',
+        textTransform:'uppercase', color:C.gold, margin:0 }}>Ukweli · the truth, no shame</p>
+      <h1 style={{ fontFamily:C.serif, fontSize:30, fontWeight:700, color:C.txt, margin:'4px 0 14px' }}>
+        Straight answers, judgment-free
+      </h1>
+      <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+        {[['ask',tr('ask_anon')],['myths',tr('myths')],['learn',tr('learn')]].map(([k,l]) => (
+          <button key={k} onClick={()=>setView(k)}
+            style={{ flex:1, fontFamily:C.sans, fontSize:12, fontWeight:700, padding:'9px 0', borderRadius:8,
+              cursor:'pointer', border:'none', background: view===k?C.gold:C.card, color: view===k?'#1A1408':C.mut }}>{l}</button>
+        ))}
+      </div>
+      {view === 'ask'   && <Uliza tr={tr} lang={lang} />}
+      {view === 'myths' && <Myths tr={tr} lang={lang} />}
+      {view === 'learn' && <Learn />}
+    </div>
+  )
+}
+
+// ── Uliza: anonymous Q&A ─────────────────────────────────────────────────────
+function Uliza({ tr, lang }) {
+  const [answered, setAnswered] = useState([])
+  const [q, setQ] = useState('')
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  const load = () => sb.from('uliza_questions').select('*').eq('status','answered')
+    .order('answered_at',{ascending:false}).limit(40).then(({data}) => setAnswered(data || []))
+  useEffect(load, [])
+
+  const submit = async () => {
+    if (q.trim().length < 8) return
+    setBusy(true)
+    const { error } = await sb.from('uliza_questions').insert({ question: q.trim(), language: lang })
+    setBusy(false)
+    if (!error) { setSent(true); setQ('') }
+  }
+
+  return (
+    <div>
+      <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:16, marginBottom:18 }}>
+        {sent ? (
+          <p style={{ fontFamily:C.sans, fontSize:13, color:C.teal, margin:0, lineHeight:1.6 }}>
+            ✓ Sent anonymously. A verified health worker will answer — check back here. Your name was never required.
+            <button onClick={()=>setSent(false)} style={{ display:'block', marginTop:10, background:'none',
+              border:`1px solid ${C.line}`, color:C.mut, fontFamily:C.sans, fontSize:11, padding:'6px 12px',
+              borderRadius:6, cursor:'pointer' }}>Ask another</button>
+          </p>
+        ) : (
+          <>
+            <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 8px' }}>
+              No account, no name. Answered by verified healthcare professionals — Kenya’s most trusted SRHR voice.
+            </p>
+            <textarea value={q} onChange={e=>setQ(e.target.value)} placeholder="Ask anything about contraception, HIV, your body, your rights…"
+              style={{ width:'100%', boxSizing:'border-box', minHeight:84, resize:'vertical', background:C.card2,
+                border:`1px solid ${C.line}`, borderRadius:8, padding:'10px 12px', color:C.txt,
+                fontFamily:C.sans, fontSize:13, outline:'none' }}/>
+            <button onClick={submit} disabled={busy || q.trim().length < 8}
+              style={{ marginTop:10, fontFamily:C.sans, fontSize:12, fontWeight:800, padding:'10px 22px', borderRadius:8,
+                border:'none', cursor:'pointer', background:C.gold, color:'#1A1408', opacity: q.trim().length<8?0.5:1 }}>
+              {busy ? 'Sending…' : 'Ask anonymously'}
+            </button>
+          </>
+        )}
+      </div>
+
+      <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.14em', textTransform:'uppercase', color:C.mut, marginBottom:10 }}>Answered questions</p>
+      {answered.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No answered questions yet — be the first to ask.</p>}
+      {answered.map(a => (
+        <div key={a.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:14, marginBottom:8 }}>
+          <p style={{ fontFamily:C.serif, fontSize:16, fontWeight:700, color:C.txt, margin:'0 0 6px' }}>{a.question}</p>
+          <p style={{ fontFamily:C.sans, fontSize:13, color:C.txt, lineHeight:1.7, margin:'0 0 8px', opacity:.9 }}>{a.answer}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.teal, margin:0, fontWeight:700 }}>
+            ✓ {a.answered_by || 'Verified health professional'} · {timeAgo(a.answered_at)}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Myth-buster cards ────────────────────────────────────────────────────────
+function Myths({ tr, lang }) {
+  const [cards, setCards] = useState([])
+  const [open, setOpen] = useState(null)
+  useEffect(() => {
+    sb.from('ukweli_cards').select('*').eq('active', true).order('sort_order')
+      .then(({data}) => setCards(data || []))
+  }, [])
+  // Prefer current language, fall back to English
+  const byLang = cards.filter(c => c.language === lang)
+  const list = byLang.length ? byLang : cards.filter(c => c.language === 'en')
+
+  return (
+    <div>
+      {list.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Myth cards loading…</p>}
+      {list.map(c => (
+        <div key={c.id} onClick={()=>setOpen(open===c.id?null:c.id)}
+          style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.red}`,
+            borderRadius:10, padding:14, marginBottom:8, cursor:'pointer' }}>
+          <div style={{ display:'flex', gap:8 }}>
+            <span style={{ fontSize:18 }}>⚠️</span>
+            <p style={{ fontFamily:C.serif, fontSize:17, fontWeight:700, color:C.txt, margin:0, lineHeight:1.3 }}>"{c.claim}"</p>
+          </div>
+          {open === c.id && (
+            <div style={{ marginTop:12, paddingTop:12, borderTop:`1px solid ${C.line}` }}>
+              <Block label={tr('why_feels_true')} text={c.why_it_feels_true} color={C.gold}/>
+              <Block label={tr('the_truth')} text={c.truth} color={C.teal}/>
+              <Block label={tr('what_to_do')} text={c.what_to_do} color={C.txt}/>
+            </div>
+          )}
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.gold, margin:'8px 0 0', fontWeight:700 }}>
+            {open===c.id ? '▲ Close' : '▼ Bust this myth'}
+          </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function Block({ label, text, color }) {
+  if (!text) return null
+  return (
+    <div style={{ marginBottom:10 }}>
+      <p style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:800, letterSpacing:'.1em', textTransform:'uppercase', color, margin:'0 0 3px' }}>{label}</p>
+      <p style={{ fontFamily:C.sans, fontSize:13, color:C.txt, lineHeight:1.65, margin:0, opacity:.92 }}>{text}</p>
+    </div>
+  )
+}
+
+function Learn() {
+  return (
+    <div style={{ background:C.card, border:`1px dashed ${C.line}`, borderRadius:12, padding:24, textAlign:'center' }}>
+      <p style={{ fontFamily:C.serif, fontSize:18, fontWeight:700, color:C.txt, margin:'0 0 6px' }}>Videos & podcast — coming with Phase 2</p>
+      <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, lineHeight:1.6, margin:0 }}>
+        The five informational videos and the podcast will live here, each with its own discussion thread.
+        Built for TikTok, X and WhatsApp first.
+      </p>
+    </div>
+  )
+}
