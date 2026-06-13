@@ -1,4 +1,10 @@
 
+[functions.activity-notify]
+enabled = true
+verify_jwt = false
+import_map = "./functions/activity-notify/deno.json"
+entrypoint = "./functions/activity-notify/index.ts"
+
 [functions.extract-event]
 enabled = true
 verify_jwt = true

@@ -130,7 +130,8 @@ export default function App() {
                 style={{ background:'none', border:'none', cursor:'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   padding:'4px 6px', flex:1 }}>
-                <span style={{ fontSize:16, lineHeight:1, filter: on ? 'none' : 'grayscale(1) opacity(.6)' }}>{n.icon}</span>
+                <span style={{ fontSize:16, lineHeight:1, color: on?'#FFFFFF':'#FF9466',
+                  filter: on ? 'none' : 'grayscale(1) opacity(.85)' }}>{n.icon}</span>
                 <span style={{ fontFamily:C.sans, fontSize:9, fontWeight: on?800:700, color: on?'#FFFFFF':'#FF9466' }}>{n.label}</span>
               </button>
             )

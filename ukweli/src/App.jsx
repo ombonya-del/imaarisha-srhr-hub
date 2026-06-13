@@ -3,6 +3,7 @@ import { sb, timeAgo } from './lib/supabase'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
 import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES, ATTR_LABEL } from './lib/fika'
+import KenyaMap from './KenyaMap'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -365,6 +366,7 @@ function Fika({ tr, lang, isDesktop }) {
   const [usingFallback, setUsingFallback] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [suggestOpen, setSuggestOpen] = useState(false)
+  const [indicator, setIndicator] = useState(null)   // tracker: Youth Friendliness of SRHR Facilities
 
   const load = () => {
     sb.from('fika_facilities').select('*').then(({ data, error }) => {
@@ -375,6 +377,16 @@ function Fika({ tr, lang, isDesktop }) {
       .order('created_at',{ascending:false}).then(({ data }) => setReviews(data || []))
   }
   useEffect(load, [])
+
+  useEffect(() => {
+    sb.from('tracker_indicators').select('name,current_value,unit').then(({ data }) => {
+      const row = (data || []).find(r => /youth friendliness/i.test(r.name))
+      setIndicator(row ? { val: row.current_value, unit: row.unit || '%' } : { val: 38, unit: '%' })
+    }).catch(() => setIndicator({ val: 38, unit: '%' }))
+  }, [])
+
+  const allFacilities = facilities || []
+  const coveredCounties = new Set(allFacilities.map(f => f.county)).size
 
   const byFac = {}
   reviews.forEach(r => { (byFac[r.facility_id] = byFac[r.facility_id] || []).push(r) })
@@ -399,6 +411,22 @@ function Fika({ tr, lang, isDesktop }) {
       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 16px', lineHeight:1.6, fontWeight:500 }}>
         {tr('fika_intro')}
       </p>
+
+      {/* Map + tracker indicator */}
+      <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${Y.gold}`,
+        borderRadius:16, padding:16, marginBottom:18, boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:10, marginBottom:4 }}>
+          <SectionLabel color={Y.gold}>{tr('fika_map_title')}</SectionLabel>
+          <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{tr('fika_tap_county')}</span>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, margin:'4px 0 12px' }}>
+          <MiniStat v={indicator ? `${indicator.val}${indicator.unit==='%'?'%':''}` : '—'} l={tr('fika_indicator')} color={Y.green}/>
+          <MiniStat v={allFacilities.length} l={tr('fika_mapped')} color={Y.teal}/>
+          <MiniStat v={coveredCounties} l={tr('fika_counties_live')} color={Y.gold}/>
+        </div>
+        <KenyaMap facilities={allFacilities} selected={county} onSelect={setCounty}
+          accent={Y.gold} mut={Y.mut} txt={Y.txt}/>
+      </div>
 
       <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginBottom:18 }}>
         <label style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, letterSpacing:'.06em',
@@ -585,6 +613,15 @@ const fikaInput = {
   width:'100%', boxSizing:'border-box', fontFamily:'inherit', fontSize:13.5, color:'#F1F5EE',
   background:'#0A2620', border:'1px solid rgba(214,243,230,0.12)', borderRadius:12, padding:'11px 12px',
   outline:'none', marginBottom:10,
+}
+
+function MiniStat({ v, l, color }) {
+  return (
+    <div style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 11px' }}>
+      <div style={{ fontFamily:Y.disp, fontSize:21, fontWeight:600, color, lineHeight:1 }}>{v}</div>
+      <div style={{ fontFamily:Y.sans, fontSize:9.5, color:Y.mut, marginTop:3, lineHeight:1.3 }}>{l}</div>
+    </div>
+  )
 }
 
 function Stars({ value }) {

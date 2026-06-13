@@ -54,6 +54,11 @@ const STRINGS = {
     fika_suggest_note: 'What do they offer? Why add them? (optional)',
     fika_suggest_sent: '✓ Asante! We’ll review it and add it to the map.',
     fika_suggest_need: 'Add a name and pick a county.',
+    fika_map_title: 'Coverage across Kenya',
+    fika_tap_county: 'Tap a county to see its services',
+    fika_indicator: 'Youth-friendly facilities (national)',
+    fika_mapped: 'services mapped',
+    fika_counties_live: 'counties covered',
   },
   sw: {
     ask_anon: 'Uliza', myths: 'Imani Potovu', learn: 'Gundua',
@@ -101,6 +106,11 @@ const STRINGS = {
     fika_suggest_note: 'Wanatoa huduma gani? Kwa nini tuongeze? (hiari)',
     fika_suggest_sent: '✓ Asante! Tutapitia na kuiongeza kwenye ramani.',
     fika_suggest_need: 'Ongeza jina na uchague kaunti.',
+    fika_map_title: 'Wigo kote Kenya',
+    fika_tap_county: 'Gusa kaunti uone huduma zake',
+    fika_indicator: 'Vituo rafiki kwa vijana (kitaifa)',
+    fika_mapped: 'huduma kwenye ramani',
+    fika_counties_live: 'kaunti zimefikiwa',
   },
   sheng: {
     ask_anon: 'Uliza', myths: 'Ma-Fake', learn: 'Soma',
@@ -148,6 +158,11 @@ const STRINGS = {
     fika_suggest_note: 'Wanatoa services gani? Kwa nini tuongeze? (optional)',
     fika_suggest_sent: '✓ Asante! Tutareview na tuongeze kwa map.',
     fika_suggest_need: 'Ongeza jina na uchague county.',
+    fika_map_title: 'Coverage Kenya nzima',
+    fika_tap_county: 'Bonyeza county uone services zake',
+    fika_indicator: 'Vituo friendly za youth (national)',
+    fika_mapped: 'services kwa map',
+    fika_counties_live: 'counties covered',
   },
 }
 

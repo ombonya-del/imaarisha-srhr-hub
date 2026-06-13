@@ -59,18 +59,19 @@ export default function Pulse({ go, session }) {
           </div>
         </button>
 
-        {/* Ukweli card */}
-        <div style={{ background:`linear-gradient(135deg, ${C.card}, #E9F4EA)`,
+        {/* Ukweli card — live */}
+        <a href="https://ukweli.imaarishasrhr.org" target="_blank" rel="noopener noreferrer"
+          style={{ display:'block', textDecoration:'none', background:`linear-gradient(135deg, ${C.card}, #E9F4EA)`,
           border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`, borderRadius:14, padding:16 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
             <p style={{ fontFamily:C.sans, fontSize:12.5, fontWeight:800, color:C.txt, margin:0 }}>✦ UkweliSRHR — Fresh & Friendly</p>
             <span style={{ fontFamily:C.sans, fontSize:8.5, fontWeight:800, letterSpacing:'.1em',
-              background:C.mint, color:'#fff', borderRadius:10, padding:'2px 8px' }}>LAUNCHING SOON</span>
+              background:C.mint, color:'#fff', borderRadius:10, padding:'2px 8px' }}>● LIVE</span>
           </div>
           <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'4px 0 0', lineHeight:1.5 }}>
-            for young people: anonymous Q&A, myth-busters, real talk →
+            for young people: anonymous Q&A, myth-busters, services near you — open the app →
           </p>
-        </div>
+        </a>
       </div>
 
       {/* Weekly digest */}
