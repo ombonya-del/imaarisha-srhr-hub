@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { sb, timeAgo } from './lib/supabase'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
+import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK } from './lib/fika'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -22,9 +23,20 @@ const Y = {
   sans:  "'Plus Jakarta Sans', system-ui, sans-serif",
 }
 
-const TABS = [['ask','💬'],['myths','⚡'],['learn','📖']]
-const TAB_ACCENT = { ask: Y.green, myths: Y.coral, learn: Y.teal }
+// Lightning "asterisk" — the spark that differentiates Ukweli from the calm hub mark
+function Bolt({ size = 12, color = '#F2C75C' }) {
+  return (
+    <svg width={size} height={size * 1.5} viewBox="0 0 12 18" fill="none"
+      style={{ marginLeft:2, marginTop:-1 }} aria-hidden="true">
+      <path d="M7 0 L1 9.5 H5 L4 18 L11 7 H6.5 Z" fill={color}/>
+    </svg>
+  )
+}
+
+const TABS = [['ask','💬'],['myths','⚡'],['learn','📖'],['fika','📍']]
+const TAB_ACCENT = { ask: Y.green, myths: Y.coral, learn: Y.teal, fika: Y.gold }
 const MYTH_COLORS = [Y.coral, Y.green, Y.teal, Y.gold]
+const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fika_nav' : id)
 
 export default function App() {
   const { tr, lang, setLang } = useLang()
@@ -68,11 +80,17 @@ export default function App() {
         backdropFilter:'blur(14px)', borderBottom:`1px solid ${Y.line}` }}>
         <div style={{ maxWidth:maxW, margin:'0 auto', padding:'12px 16px',
           display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <img src="/icon-192.png" alt="" width={30} height={30}
-              style={{ borderRadius:9, boxShadow:'0 2px 10px rgba(47,208,196,0.35)' }}/>
-            <div style={{ fontFamily:Y.disp, fontSize:21, fontWeight:600, letterSpacing:'-.02em', lineHeight:1 }}>
-              Ukweli<span style={{ color:Y.green }}>SRHR</span>
+          <div style={{ display:'flex', alignItems:'center', gap:11 }}>
+            <img src="/logo-mark.png" alt="Imaarisha" height={36}
+              style={{ display:'block', filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
+            <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
+              <span style={{ fontFamily:Y.disp, fontSize:21, fontWeight:600, letterSpacing:'-.02em',
+                display:'inline-flex', alignItems:'flex-start' }}>
+                Ukweli<span style={{ color:Y.green }}>SRHR</span>
+                <Bolt size={11} color={Y.gold}/>
+              </span>
+              <span style={{ fontFamily:Y.sans, fontSize:9.5, fontWeight:700, letterSpacing:'.26em',
+                textTransform:'uppercase', color:Y.green, marginTop:5 }}>Fresh &amp; Friendly</span>
             </div>
           </div>
 
@@ -87,7 +105,7 @@ export default function App() {
                       border:'none', cursor:'pointer', letterSpacing:'.01em',
                       background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
                       boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
-                    <span style={{ marginRight:6, filter:on?'none':'grayscale(1) opacity(.7)' }}>{icon}</span>{tr(id==='ask'?'ask_anon':id)}
+                    <span style={{ marginRight:6, filter:on?'none':'grayscale(1) opacity(.7)' }}>{icon}</span>{navLabel(tr, id)}
                   </button>
                 )
               })}
@@ -119,6 +137,7 @@ export default function App() {
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} />}
+        {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} />}
       </main>
 
       {/* Mobile bottom nav — chunky, each tab lights up in its own colour */}
@@ -136,7 +155,7 @@ export default function App() {
                   background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
                   boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
                 <span style={{ fontSize:16, lineHeight:1, filter: on?'none':'grayscale(1) opacity(.6)' }}>{icon}</span>
-                <span style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600 }}>{tr(id==='ask'?'ask_anon':id)}</span>
+                <span style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600 }}>{navLabel(tr, id)}</span>
               </button>
             )
           })}
@@ -330,6 +349,205 @@ function Learn({ tr, lang, isDesktop }) {
       <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'18px 4px 0', textAlign:'center' }}>
         {tr('learn_footer')}
       </p>
+    </div>
+  )
+}
+
+// ── Hebu Fika: youth-rated access to SRHR services, by county ────────────────
+function Fika({ tr, lang, isDesktop }) {
+  const [county, setCounty] = useState('Nairobi')
+  const [facilities, setFacilities] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [usingFallback, setUsingFallback] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
+
+  const load = () => {
+    sb.from('fika_facilities').select('*').then(({ data, error }) => {
+      if (!error && data && data.length) { setFacilities(data); setUsingFallback(false) }
+      else { setFacilities(FACILITIES_FALLBACK); setUsingFallback(true) }
+    }).catch(() => { setFacilities(FACILITIES_FALLBACK); setUsingFallback(true) })
+    sb.from('fika_reviews').select('*').eq('status','published')
+      .order('created_at',{ascending:false}).then(({ data }) => setReviews(data || []))
+  }
+  useEffect(load, [])
+
+  const byFac = {}
+  reviews.forEach(r => { (byFac[r.facility_id] = byFac[r.facility_id] || []).push(r) })
+
+  const ranked = (facilities || [])
+    .filter(f => f.county === county)
+    .map(f => {
+      const rs = byFac[f.id] || []
+      const avg = rs.length ? rs.reduce((s,r)=>s+r.rating,0)/rs.length : null
+      return { ...f, avg, count: rs.length, recent: rs.slice(0,2) }
+    })
+    .sort((a,b) => (b.avg ?? -1) - (a.avg ?? -1) || (b.verified?1:0) - (a.verified?1:0))
+    .slice(0, 5)
+
+  const countyFacilities = (facilities || []).filter(f => f.county === county)
+
+  return (
+    <div>
+      <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 16px', lineHeight:1.6, fontWeight:500 }}>
+        {tr('fika_intro')}
+      </p>
+
+      <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginBottom:18 }}>
+        <label style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, letterSpacing:'.06em',
+          textTransform:'uppercase', color:Y.gold }}>{tr('fika_county')}</label>
+        <select value={county} onChange={e=>setCounty(e.target.value)}
+          style={{ flex:'1 1 180px', fontFamily:Y.sans, fontSize:14, fontWeight:600, color:Y.txt,
+            background:Y.card2, border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 12px', outline:'none' }}>
+          {KENYA_COUNTIES.map(c => <option key={c} value={c} style={{ background:Y.bg }}>{c}</option>)}
+        </select>
+        <button onClick={()=>setSubmitOpen(true)} className="uk-press"
+          style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'10px 16px', borderRadius:12, border:'none',
+            cursor:'pointer', color:'#06241C', background:Y.gold, boxShadow:'0 4px 12px rgba(242,199,92,0.3)' }}>
+          ＋ {tr('fika_share')}
+        </button>
+      </div>
+
+      <SectionLabel color={Y.gold}>{tr('fika_top')} {county}</SectionLabel>
+
+      {facilities === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
+      {facilities !== null && ranked.length === 0 && (
+        <div className="uk-card" style={{ background:Y.card, border:`1px dashed ${Y.line}`, borderRadius:16, padding:20, textAlign:'center' }}>
+          <p style={{ fontSize:26, margin:'0 0 6px' }}>📍</p>
+          <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:600, color:Y.txt, margin:'0 0 5px' }}>{tr('fika_empty_title')}</p>
+          <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.mut, lineHeight:1.6, margin:0 }}>{tr('fika_empty_body')}</p>
+        </div>
+      )}
+
+      <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
+        {ranked.map((f, i) => {
+          const ft = FACILITY_TYPES[f.kind] || FACILITY_TYPES.public
+          return (
+            <div key={f.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
+              borderLeft:`4px solid ${ft.color}`, borderRadius:16, padding:16, alignSelf:'start',
+              boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10 }}>
+                <div>
+                  <p style={{ fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.25 }}>
+                    <span style={{ color:ft.color, marginRight:5 }}>{i+1}.</span>{f.name}
+                  </p>
+                  <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'3px 0 0' }}>📍 {f.area} · {f.county}</p>
+                </div>
+                {f.verified && <span style={{ fontFamily:Y.sans, fontSize:9.5, fontWeight:800, color:Y.green,
+                  border:`1px solid ${Y.green}`, borderRadius:8, padding:'2px 7px', whiteSpace:'nowrap' }}>✓ Known</span>}
+              </div>
+
+              <div style={{ display:'flex', alignItems:'center', gap:8, margin:'10px 0' }}>
+                <Stars value={f.avg}/>
+                <span style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut }}>
+                  {f.avg ? `${f.avg.toFixed(1)} · ${f.count} ${f.count===1?tr('fika_review'):tr('fika_reviews')}` : tr('fika_no_ratings')}
+                </span>
+              </div>
+
+              <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, color:ft.color,
+                  background:ft.color+'22', border:`1px solid ${ft.color}55`, borderRadius:10, padding:'2px 9px' }}>{ft.label}</span>
+                {(f.services||[]).map((s,j) => (
+                  <span key={j} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:600, color:Y.txt, opacity:.8,
+                    background:'rgba(255,255,255,0.06)', border:`1px solid ${Y.line}`, borderRadius:10, padding:'2px 9px' }}>{s}</span>
+                ))}
+              </div>
+
+              {f.recent.length > 0 && (
+                <div style={{ marginTop:12, paddingTop:11, borderTop:`1px solid ${Y.line}` }}>
+                  {f.recent.map(r => (
+                    <div key={r.id} style={{ marginBottom:8 }}>
+                      <span style={{ fontFamily:Y.sans, fontSize:11, color:Y.gold, fontWeight:700 }}>{'★'.repeat(r.rating)}</span>
+                      <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.82, lineHeight:1.55, margin:'2px 0 0' }}>“{r.comment}”</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'18px 4px 0', textAlign:'center' }}>
+        {tr('fika_footer')}
+      </p>
+
+      {submitOpen && (
+        <FikaSubmit tr={tr} lang={lang} county={county} facilities={countyFacilities}
+          canWrite={!usingFallback} onClose={()=>setSubmitOpen(false)} onDone={load}/>
+      )}
+    </div>
+  )
+}
+
+function Stars({ value }) {
+  const v = value || 0
+  return (
+    <span style={{ fontSize:14, letterSpacing:'1px', lineHeight:1 }} aria-label={`${v.toFixed(1)} of 5`}>
+      {[1,2,3,4,5].map(n => (
+        <span key={n} style={{ color: n <= Math.round(v) ? Y.gold : 'rgba(255,255,255,0.18)' }}>★</span>
+      ))}
+    </span>
+  )
+}
+
+function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone }) {
+  const [facilityId, setFacilityId] = useState(facilities[0]?.id || '')
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const submit = async () => {
+    if (!facilityId || !rating) { setMsg(tr('fika_need')); return }
+    if (!canWrite) { setMsg(tr('fika_soon')); return }
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('fika_reviews').insert({
+      facility_id: facilityId, rating, comment: comment.trim() || null, language: lang, status: 'pending',
+    })
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    onDone?.(); onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(4,18,14,0.7)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:Y.card, border:`1px solid ${Y.line}`,
+        borderRadius:18, padding:22, width:'100%', maxWidth:420, boxShadow:'0 20px 50px rgba(0,0,0,0.5)' }}>
+        <p style={{ fontFamily:Y.disp, fontSize:19, fontWeight:600, color:Y.txt, margin:'0 0 2px' }}>{tr('fika_share')}</p>
+        <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'0 0 14px' }}>{county} · {tr('ask_privacy')}</p>
+
+        <select value={facilityId} onChange={e=>setFacilityId(e.target.value)}
+          style={{ width:'100%', fontFamily:Y.sans, fontSize:13.5, color:Y.txt, background:Y.card2,
+            border:`1px solid ${Y.line}`, borderRadius:12, padding:'11px 12px', outline:'none', marginBottom:12 }}>
+          {facilities.length === 0 && <option value="">{tr('fika_no_facilities')}</option>}
+          {facilities.map(f => <option key={f.id} value={f.id} style={{ background:Y.bg }}>{f.name}</option>)}
+        </select>
+
+        <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+          {[1,2,3,4,5].map(n => (
+            <button key={n} onClick={()=>setRating(n)} className="uk-press"
+              style={{ fontSize:26, lineHeight:1, background:'none', border:'none', cursor:'pointer',
+                color: n <= rating ? Y.gold : 'rgba(255,255,255,0.2)' }}>★</button>
+          ))}
+        </div>
+
+        <textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder={tr('fika_comment_ph')}
+          style={{ width:'100%', minHeight:80, resize:'vertical', background:Y.bg, border:`1px solid ${Y.line}`,
+            borderRadius:12, padding:'12px', color:Y.txt, fontFamily:Y.sans, fontSize:13.5, outline:'none', lineHeight:1.5 }}/>
+        {msg && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'10px 0 0', lineHeight:1.5 }}>{msg}</p>}
+        <div style={{ display:'flex', gap:8, marginTop:14 }}>
+          <button onClick={onClose} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+            padding:'12px 0', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>
+            {tr('close_card')}
+          </button>
+          <button onClick={submit} disabled={busy} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+            padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+            background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})` }}>
+            {busy ? tr('ask_sending') : tr('fika_share')}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
