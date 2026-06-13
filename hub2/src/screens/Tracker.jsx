@@ -198,7 +198,7 @@ export default function Tracker({ session }) {
           const meta = META[ind.name] || {}
           const pct = pctOf(ind)
           const isOpen = open === ind.id
-          const higherIsBetter = ind.higherIsBetter !== false
+          const higherIsBetter = (ind.higher_is_better ?? ind.higherIsBetter) !== false
           return (
             <div key={ind.id} onClick={()=>setOpen(isOpen ? null : ind.id)}
               style={{ background:C.card, border:`1px solid ${isOpen ? C.mint : C.line}`,
