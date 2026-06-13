@@ -5,22 +5,44 @@ import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/compone
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session }) {
   const [view, setView] = useState('activity')
+  const [counts, setCounts] = useState({ uliza: 0, fika: 0 })
+
+  const loadCounts = async () => {
+    const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
+    const [u, r, g] = await Promise.all([
+      head('uliza_questions', 'pending'),
+      head('fika_reviews', 'pending'),
+      head('fika_suggestions', 'pending'),
+    ])
+    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0) })
+  }
+  useEffect(() => { loadCounts() }, [view])
+
   return (
     <div>
       <ScreenTitle accent={C.lilac} kicker="👑 Admin · members never see this" title="The control room"
-        sub="Activity, usage metrics, members & digest, and the Uliza answer desk."/>
+        sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
-        {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],['uliza','💬 Uliza desk'],['fika','📍 Hebu Fika']].map(([k,l]) => (
-          <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>{l}</Chip>
+        {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
+          ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika]].map(([k,l,n]) => (
+          <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
+            {l}{n > 0 && <Badge n={n}/>}
+          </Chip>
         ))}
       </div>
       {view === 'activity' && <Activity/>}
       {view === 'metrics'  && <Metrics/>}
       {view === 'members'  && <Members/>}
-      {view === 'uliza'    && <UlizaDesk session={session}/>}
-      {view === 'fika'     && <FikaDesk/>}
+      {view === 'uliza'    && <UlizaDesk session={session} onChange={loadCounts}/>}
+      {view === 'fika'     && <FikaDesk onChange={loadCounts}/>}
     </div>
   )
+}
+
+// Small pending-count badge for the desk chips
+function Badge({ n }) {
+  return <span style={{ marginLeft:6, fontFamily:C.sans, fontSize:9.5, fontWeight:800, color:'#fff',
+    background:C.coral, borderRadius:9, padding:'1px 6px', lineHeight:1.5 }}>{n}</span>
 }
 
 // ── Full activity log with filters — who posted/uploaded/did what ────────────
@@ -141,12 +163,12 @@ function Members() {
 }
 
 // ── Uliza desk — answer the youth PWA's anonymous questions ──────────────────
-function UlizaDesk({ session }) {
+function UlizaDesk({ session, onChange }) {
   const [pending, setPending] = useState([])
   const [answers, setAnswers] = useState({})
   const [busy, setBusy] = useState(null)
   const load = () => sb.from('uliza_questions').select('*').eq('status','pending')
-    .order('created_at',{ascending:true}).limit(50).then(({data}) => setPending(data || []))
+    .order('created_at',{ascending:true}).limit(50).then(({data}) => { setPending(data || []); onChange?.() })
   useEffect(() => { load() }, [])
 
   const publish = async (q) => {
@@ -200,7 +222,7 @@ const FIKA_ATTR = {
 }
 const slugify = (s) => 'f-sug-' + (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) + '-' + Math.random().toString(36).slice(2,6)
 
-function FikaDesk() {
+function FikaDesk({ onChange }) {
   const [facMap, setFacMap] = useState({})
   const [reviews, setReviews] = useState([])
   const [suggs, setSuggs] = useState([])
@@ -214,6 +236,7 @@ function FikaDesk() {
     ])
     const m = {}; (f.data||[]).forEach(x => { m[x.id] = x.name }); setFacMap(m)
     setReviews(r.data || []); setSuggs(s.data || [])
+    onChange?.()
   }
   useEffect(() => { load() }, [])
 

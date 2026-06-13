@@ -28,10 +28,27 @@ Deno.serve(async (req) => {
   let body: Record<string, unknown> = {}
   try { body = await req.json() } catch { /* ignore */ }
   const rec: Record<string, unknown> = (body.record || body.new || body) as Record<string, unknown>
+  const table = String(body.table || '')
 
-  const desc  = String(rec.description || 'New activity on the Imaarisha Collective Hub')
-  const kind  = String(rec.activity_type || 'activity')
-  const title = rec.entity_title ? ` — ${rec.entity_title}` : ''
+  // Build a human message per source table (one function, many webhooks).
+  let desc: string, kind: string, title = ''
+  if (table === 'fika_reviews') {
+    kind = 'Hebu Fika review'
+    const stars = '★'.repeat(Number(rec.rating) || 0)
+    desc = `New ${stars || rec.rating + '-star'} review awaiting moderation for ${rec.facility_id}`
+      + (rec.comment ? ` — “${String(rec.comment).slice(0, 140)}”` : '')
+  } else if (table === 'fika_suggestions') {
+    kind = 'suggested service'
+    desc = `New suggested service: ${rec.name} (${rec.county})`
+      + (rec.note ? ` — ${String(rec.note).slice(0, 140)}` : '')
+  } else if (table === 'uliza_questions') {
+    kind = 'Ukweli question'
+    desc = `New anonymous question: ${String(rec.question || '').slice(0, 160)}`
+  } else {
+    kind  = String(rec.activity_type || 'activity')
+    desc  = String(rec.description || 'New activity on the Imaarisha Collective Hub')
+    title = rec.entity_title ? ` — ${rec.entity_title}` : ''
+  }
   const when  = String(rec.created_at || new Date().toISOString())
 
   if (!RESEND_KEY) {
