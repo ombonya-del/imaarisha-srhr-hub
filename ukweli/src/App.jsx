@@ -364,6 +364,7 @@ function Fika({ tr, lang, isDesktop }) {
   const [reviews, setReviews] = useState([])
   const [usingFallback, setUsingFallback] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(false)
 
   const load = () => {
     sb.from('fika_facilities').select('*').then(({ data, error }) => {
@@ -489,7 +490,15 @@ function Fika({ tr, lang, isDesktop }) {
         })}
       </div>
 
-      <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'18px 4px 0', textAlign:'center' }}>
+      <div style={{ textAlign:'center', marginTop:18 }}>
+        <button onClick={()=>setSuggestOpen(true)} className="uk-press"
+          style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'10px 18px', borderRadius:12, cursor:'pointer',
+            border:`1px solid ${Y.gold}`, background:'transparent', color:Y.gold }}>
+          ＋ {tr('fika_suggest')}
+        </button>
+      </div>
+
+      <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'16px 4px 0', textAlign:'center' }}>
         {tr('fika_footer')}
       </p>
 
@@ -497,8 +506,85 @@ function Fika({ tr, lang, isDesktop }) {
         <FikaSubmit tr={tr} lang={lang} county={county} facilities={countyFacilities}
           canWrite={!usingFallback} onClose={()=>setSubmitOpen(false)} onDone={load}/>
       )}
+      {suggestOpen && (
+        <FikaSuggest tr={tr} lang={lang} county={county} canWrite={!usingFallback}
+          onClose={()=>setSuggestOpen(false)}/>
+      )}
     </div>
   )
+}
+
+// ── Suggest a missing service — anonymous, admin-reviewed ────────────────────
+function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
+  const [name, setName] = useState('')
+  const [cnty, setCnty] = useState(county)
+  const [area, setArea] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const submit = async () => {
+    if (!name.trim() || !cnty) { setMsg(tr('fika_suggest_need')); return }
+    if (!canWrite) { setMsg(tr('fika_soon')); return }
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('fika_suggestions').insert({
+      name: name.trim(), county: cnty, area: area.trim() || null, note: note.trim() || null,
+      language: lang, status: 'pending',
+    })
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    setSent(true)
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(4,18,14,0.7)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:Y.card, border:`1px solid ${Y.line}`,
+        borderRadius:18, padding:22, width:'100%', maxWidth:420, boxShadow:'0 20px 50px rgba(0,0,0,0.5)' }}>
+        <p style={{ fontFamily:Y.disp, fontSize:19, fontWeight:600, color:Y.txt, margin:'0 0 2px' }}>{tr('fika_suggest_title')}</p>
+        <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'0 0 14px' }}>{tr('ask_privacy')}</p>
+
+        {sent ? (
+          <>
+            <p style={{ fontFamily:Y.sans, fontSize:14, color:Y.txt, lineHeight:1.6, fontWeight:500, margin:'0 0 14px' }}>{tr('fika_suggest_sent')}</p>
+            <button onClick={onClose} className="uk-press" style={{ width:'100%', fontFamily:Y.disp, fontSize:14, fontWeight:600,
+              padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+              background:`linear-gradient(135deg, ${Y.green}, ${Y.teal})` }}>{tr('close_card')}</button>
+          </>
+        ) : (
+          <>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder={tr('fika_suggest_name')}
+              style={fikaInput}/>
+            <select value={cnty} onChange={e=>setCnty(e.target.value)} style={{ ...fikaInput, appearance:'auto' }}>
+              {KENYA_COUNTIES.map(c => <option key={c} value={c} style={{ background:Y.bg }}>{c}</option>)}
+            </select>
+            <input value={area} onChange={e=>setArea(e.target.value)} placeholder={tr('fika_suggest_area')} style={fikaInput}/>
+            <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder={tr('fika_suggest_note')}
+              style={{ ...fikaInput, minHeight:74, resize:'vertical' }}/>
+            {msg && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'2px 0 0', lineHeight:1.5 }}>{msg}</p>}
+            <div style={{ display:'flex', gap:8, marginTop:14 }}>
+              <button onClick={onClose} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+                padding:'12px 0', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>
+                {tr('close_card')}
+              </button>
+              <button onClick={submit} disabled={busy} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+                padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+                background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})` }}>
+                {busy ? tr('ask_sending') : tr('fika_suggest_title')}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const fikaInput = {
+  width:'100%', boxSizing:'border-box', fontFamily:'inherit', fontSize:13.5, color:'#F1F5EE',
+  background:'#0A2620', border:'1px solid rgba(214,243,230,0.12)', borderRadius:12, padding:'11px 12px',
+  outline:'none', marginBottom:10,
 }
 
 function Stars({ value }) {
