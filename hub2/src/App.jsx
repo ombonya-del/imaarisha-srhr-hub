@@ -5,6 +5,7 @@ import Pulse from './screens/Pulse'
 import Radar from './screens/Radar'
 import Watch from './screens/Watch'
 import Forum from './screens/Forum'
+import Tracker from './screens/Tracker'
 import Exchange from './screens/Exchange'
 import Events from './screens/Events'
 import Admin from './screens/Admin'
@@ -14,6 +15,7 @@ const NAV = [
   { id:'radar',    icon:'⦿',  label:'Radar',    screen: Radar },
   { id:'watch',    icon:'🚩', label:'Disinfo Watch', screen: Watch },
   { id:'forum',    icon:'💬', label:'Forum',    screen: Forum },
+  { id:'tracker',  icon:'📊', label:'Tracker',  screen: Tracker },
   { id:'exchange', icon:'⇄',  label:'Exchange', screen: Exchange },
   { id:'events',   icon:'📅', label:'Events',   screen: Events },
   { id:'admin',    icon:'👑', label:'Admin',    screen: Admin, adminOnly: true },
