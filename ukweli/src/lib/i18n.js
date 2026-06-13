@@ -31,7 +31,7 @@ const STRINGS = {
     learn_footer: 'Info reviewed against Kenya MoH adolescent SRHR guidance & WHO. In an emergency, call the helplines under “Your rights” and “GBV”.',
     verified_pro: 'Verified health professional',
     // hebu fika
-    fika: 'Hebu Fika', fika_nav: 'Fika',
+    fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Where do young people actually get treated well? Find youth-friendly SRHR services near you, rated by people like you — and share your own experience.',
     fika_county: 'County',
     fika_share: 'Share experience',
@@ -45,9 +45,11 @@ const STRINGS = {
     fika_need: 'Pick a facility and a star rating.',
     fika_soon: 'Sharing opens once the live services list is connected.',
     fika_no_facilities: 'No facilities yet in this county',
+    fika_praise: 'Praised for',
+    fika_whatgood: 'What was good? (optional)',
   },
   sw: {
-    ask_anon: 'Uliza', myths: 'Imani Potovu', learn: 'Jifunze',
+    ask_anon: 'Uliza', myths: 'Imani Potovu', learn: 'Gundua',
     exit: 'TOKA',
     tagline: 'Majibu ya moja kwa moja kuhusu mwili, afya na chaguo zako. Bila kujulikana. Bila hukumu. Yanajibiwa na wataalamu halisi wa afya.',
     ask_placeholder: 'Uliza chochote — uzazi wa mpango, VVU, mwili wako, haki zako. Hakuna atakayejua ni wewe.',
@@ -69,7 +71,7 @@ const STRINGS = {
     learn_footer: 'Taarifa zimepitiwa kulingana na mwongozo wa SRHR wa vijana wa Wizara ya Afya Kenya na WHO. Wakati wa dharura, piga simu zilizo katika “Haki zako” na “Ukatili”.',
     verified_pro: 'Mtaalamu wa afya aliyethibitishwa',
     // hebu fika
-    fika: 'Hebu Fika', fika_nav: 'Fika',
+    fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Ni wapi vijana wanahudumiwa vizuri kweli? Pata huduma za SRHR rafiki kwa vijana karibu nawe, zilizotathminiwa na watu kama wewe — na ushiriki uzoefu wako.',
     fika_county: 'Kaunti',
     fika_share: 'Shiriki uzoefu',
@@ -83,6 +85,8 @@ const STRINGS = {
     fika_need: 'Chagua kituo na nyota za ukadiriaji.',
     fika_soon: 'Kushiriki kutafunguliwa orodha ya huduma itakapounganishwa.',
     fika_no_facilities: 'Bado hakuna vituo katika kaunti hii',
+    fika_praise: 'Inasifiwa kwa',
+    fika_whatgood: 'Kilichokuwa kizuri? (hiari)',
   },
   sheng: {
     ask_anon: 'Uliza', myths: 'Ma-Fake', learn: 'Soma',
@@ -107,7 +111,7 @@ const STRINGS = {
     learn_footer: 'Info imecheckiwa na mwongozo wa SRHR wa vijana wa MoH Kenya na WHO. Ukiwa kwa dharura, piga lines ziko kwa “Haki zako” na “Ukatili”.',
     verified_pro: 'Pro wa afya aliyeverify-iwa',
     // hebu fika
-    fika: 'Hebu Fika', fika_nav: 'Fika',
+    fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Ni wapi vijana wanatreatiwa poa kweli? Pata SRHR services za youth karibu, zikiratiwa na watu kama wewe — na ushare experience yako.',
     fika_county: 'Kaunti',
     fika_share: 'Share experience',
@@ -121,6 +125,8 @@ const STRINGS = {
     fika_need: 'Chagua facility na star rating.',
     fika_soon: 'Ku-share kutaopen list ya services ikiconnect.',
     fika_no_facilities: 'Bado hakuna facilities kwa hii county',
+    fika_praise: 'Inasifiwa kwa',
+    fika_whatgood: 'Ni nini ilikuwa poa? (optional)',
   },
 }
 

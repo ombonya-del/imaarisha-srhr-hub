@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { sb, timeAgo } from './lib/supabase'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
-import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK } from './lib/fika'
+import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES, ATTR_LABEL } from './lib/fika'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -78,18 +78,19 @@ export default function App() {
       {/* Top bar */}
       <header style={{ position:'sticky', top:3, zIndex:10, background:'rgba(10,38,32,0.82)',
         backdropFilter:'blur(14px)', borderBottom:`1px solid ${Y.line}` }}>
-        <div style={{ maxWidth:maxW, margin:'0 auto', padding:'12px 16px',
-          display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:11 }}>
-            <img src="/logo-mark.png" alt="Imaarisha" height={36}
-              style={{ display:'block', filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
-            <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
-              <span style={{ fontFamily:Y.disp, fontSize:21, fontWeight:600, letterSpacing:'-.02em',
-                display:'inline-flex', alignItems:'flex-start' }}>
+        <div style={{ maxWidth:maxW, margin:'0 auto', padding: isDesktop?'12px 16px':'10px 12px',
+          display:'flex', alignItems:'center', justifyContent:'space-between', gap: isDesktop?12:8 }}>
+          <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink:1 }}>
+            <img src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:30}
+              style={{ display:'block', flexShrink:0, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
+            <div style={{ display:'flex', flexDirection:'column', lineHeight:1, minWidth:0 }}>
+              <span style={{ fontFamily:Y.disp, fontSize: isDesktop?21:18, fontWeight:600, letterSpacing:'-.02em',
+                display:'inline-flex', alignItems:'flex-start', whiteSpace:'nowrap' }}>
                 Ukweli<span style={{ color:Y.green }}>SRHR</span>
-                <Bolt size={11} color={Y.gold}/>
+                <Bolt size={isDesktop?11:9} color={Y.gold}/>
               </span>
-              <span style={{ fontFamily:Y.sans, fontSize:9.5, fontWeight:700, letterSpacing:'.26em',
+              <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:8, fontWeight:700,
+                letterSpacing: isDesktop?'.26em':'.18em', whiteSpace:'nowrap',
                 textTransform:'uppercase', color:Y.green, marginTop:5 }}>Fresh &amp; Friendly</span>
             </div>
           </div>
@@ -112,16 +113,19 @@ export default function App() {
             </nav>
           )}
 
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <div style={{ display:'flex', gap:2, background:'rgba(255,255,255,0.06)', borderRadius:20, padding:3, border:`1px solid ${Y.line}` }}>
+          <div style={{ display:'flex', alignItems:'center', gap: isDesktop?8:6, flexShrink:0 }}>
+            <div style={{ display:'flex', gap:2, background:'rgba(255,255,255,0.06)', borderRadius:20,
+              padding: isDesktop?3:2, border:`1px solid ${Y.line}` }}>
               {LANGS.map(([code,label]) => (
                 <button key={code} onClick={()=>setLang(code)}
-                  style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:700, padding:'4px 10px', borderRadius:16, border:'none',
+                  style={{ fontFamily:Y.sans, fontSize: isDesktop?10.5:9.5, fontWeight:700,
+                    padding: isDesktop?'4px 10px':'3px 7px', borderRadius:16, border:'none',
                     cursor:'pointer', background: lang===code?Y.txt:'transparent', color: lang===code?Y.bg:Y.mut }}>{label}</button>
               ))}
             </div>
             <button onClick={quickExit} title="Leave this site instantly" className="uk-press"
-              style={{ fontFamily:Y.disp, fontSize:11, fontWeight:600, padding:'6px 12px', borderRadius:16,
+              style={{ fontFamily:Y.disp, fontSize: isDesktop?11:10, fontWeight:600,
+                padding: isDesktop?'6px 12px':'5px 9px', borderRadius:16, flexShrink:0,
                 border:`1px solid ${Y.coral}`, background:'rgba(255,111,97,0.12)', color:Y.coral, cursor:'pointer', whiteSpace:'nowrap' }}>
               ✕ {tr('exit')}
             </button>
@@ -144,18 +148,18 @@ export default function App() {
       {!isDesktop && (
         <nav style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:480,
           background:'rgba(10,38,32,0.95)', backdropFilter:'blur(14px)', borderTop:`1px solid ${Y.line}`,
-          display:'flex', justifyContent:'space-around', gap:8,
-          padding:'10px 14px calc(10px + env(safe-area-inset-bottom))', zIndex:20 }}>
+          display:'flex', justifyContent:'space-around', gap:5,
+          padding:'8px 8px calc(8px + env(safe-area-inset-bottom))', zIndex:20 }}>
           {TABS.map(([id,icon]) => {
             const on = tab === id, acc = TAB_ACCENT[id]
             return (
               <button key={id} onClick={()=>setTab(id)} className="uk-press"
-                style={{ flex:1, cursor:'pointer', border:'none', borderRadius:14,
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:7, padding:'11px 0',
+                style={{ flex:1, minWidth:0, cursor:'pointer', border:'none', borderRadius:14,
+                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, padding:'8px 2px',
                   background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
                   boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
-                <span style={{ fontSize:16, lineHeight:1, filter: on?'none':'grayscale(1) opacity(.6)' }}>{icon}</span>
-                <span style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600 }}>{navLabel(tr, id)}</span>
+                <span style={{ fontSize:17, lineHeight:1, filter: on?'none':'grayscale(1) opacity(.6)' }}>{icon}</span>
+                <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:600, whiteSpace:'nowrap', letterSpacing:'-.01em' }}>{navLabel(tr, id)}</span>
               </button>
             )
           })}
@@ -379,7 +383,10 @@ function Fika({ tr, lang, isDesktop }) {
     .map(f => {
       const rs = byFac[f.id] || []
       const avg = rs.length ? rs.reduce((s,r)=>s+r.rating,0)/rs.length : null
-      return { ...f, avg, count: rs.length, recent: rs.slice(0,2) }
+      const tally = {}
+      rs.forEach(r => (r.attributes||[]).forEach(a => { tally[a] = (tally[a]||0)+1 }))
+      const praised = Object.entries(tally).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>k)
+      return { ...f, avg, count: rs.length, recent: rs.slice(0,2), praised }
     })
     .sort((a,b) => (b.avg ?? -1) - (a.avg ?? -1) || (b.verified?1:0) - (a.verified?1:0))
     .slice(0, 5)
@@ -452,6 +459,21 @@ function Fika({ tr, lang, isDesktop }) {
                 ))}
               </div>
 
+              {f.praised.length > 0 && (
+                <div style={{ marginTop:10 }}>
+                  <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.04em',
+                    textTransform:'uppercase', color:Y.mut }}>{tr('fika_praise')}: </span>
+                  <span style={{ display:'inline-flex', flexWrap:'wrap', gap:5, marginTop:5 }}>
+                    {f.praised.map(a => (
+                      <span key={a} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:700, color:Y.green,
+                        background:'rgba(63,224,160,0.12)', border:`1px solid ${Y.green}44`, borderRadius:10, padding:'2px 9px' }}>
+                        {ATTR_LABEL[a] || a}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
+
               {f.recent.length > 0 && (
                 <div style={{ marginTop:12, paddingTop:11, borderTop:`1px solid ${Y.line}` }}>
                   {f.recent.map(r => (
@@ -493,16 +515,19 @@ function Stars({ value }) {
 function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone }) {
   const [facilityId, setFacilityId] = useState(facilities[0]?.id || '')
   const [rating, setRating] = useState(0)
+  const [attrs, setAttrs] = useState([])
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+
+  const toggleAttr = (k) => setAttrs(a => a.includes(k) ? a.filter(x=>x!==k) : [...a, k])
 
   const submit = async () => {
     if (!facilityId || !rating) { setMsg(tr('fika_need')); return }
     if (!canWrite) { setMsg(tr('fika_soon')); return }
     setBusy(true); setMsg('')
     const { error } = await sb.from('fika_reviews').insert({
-      facility_id: facilityId, rating, comment: comment.trim() || null, language: lang, status: 'pending',
+      facility_id: facilityId, rating, attributes: attrs, comment: comment.trim() || null, language: lang, status: 'pending',
     })
     setBusy(false)
     if (error) { setMsg(error.message); return }
@@ -524,12 +549,26 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
           {facilities.map(f => <option key={f.id} value={f.id} style={{ background:Y.bg }}>{f.name}</option>)}
         </select>
 
-        <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+        <div style={{ display:'flex', gap:6, marginBottom:14 }}>
           {[1,2,3,4,5].map(n => (
             <button key={n} onClick={()=>setRating(n)} className="uk-press"
               style={{ fontSize:26, lineHeight:1, background:'none', border:'none', cursor:'pointer',
                 color: n <= rating ? Y.gold : 'rgba(255,255,255,0.2)' }}>★</button>
           ))}
+        </div>
+
+        <p style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, letterSpacing:'.04em', textTransform:'uppercase',
+          color:Y.mut, margin:'0 0 8px' }}>{tr('fika_whatgood')}</p>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:7, marginBottom:14 }}>
+          {ATTRIBUTES.map(([k,label]) => {
+            const on = attrs.includes(k)
+            return (
+              <button key={k} onClick={()=>toggleAttr(k)} className="uk-press"
+                style={{ fontFamily:Y.sans, fontSize:11.5, fontWeight:700, padding:'6px 11px', borderRadius:20, cursor:'pointer',
+                  border:`1px solid ${on?Y.green:Y.line}`, background: on?'rgba(63,224,160,0.16)':'transparent',
+                  color: on?Y.green:Y.mut }}>{label}</button>
+            )
+          })}
         </div>
 
         <textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder={tr('fika_comment_ph')}
