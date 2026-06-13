@@ -10,7 +10,7 @@ export default function Admin({ session }) {
       <ScreenTitle accent={C.lilac} kicker="👑 Admin · members never see this" title="The control room"
         sub="Activity, usage metrics, members & digest, and the Uliza answer desk."/>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
-        {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],['uliza','💬 Uliza desk']].map(([k,l]) => (
+        {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],['uliza','💬 Uliza desk'],['fika','📍 Hebu Fika']].map(([k,l]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>{l}</Chip>
         ))}
       </div>
@@ -18,6 +18,7 @@ export default function Admin({ session }) {
       {view === 'metrics'  && <Metrics/>}
       {view === 'members'  && <Members/>}
       {view === 'uliza'    && <UlizaDesk session={session}/>}
+      {view === 'fika'     && <FikaDesk/>}
     </div>
   )
 }
@@ -186,6 +187,107 @@ function UlizaDesk({ session }) {
             </Btn>
             <Btn small ghost onClick={()=>hide(q)}>Hide</Btn>
           </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Hebu Fika desk — moderate youth facility reviews & suggestions ───────────
+const FIKA_ATTR = {
+  private:'🔒 Private', friendly:'😊 Friendly', affordable:'💰 Affordable',
+  fast:'⏱️ Short wait', nonjudgmental:'🤝 Non-judgmental', stocked:'📦 Well stocked',
+}
+const slugify = (s) => 'f-sug-' + (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) + '-' + Math.random().toString(36).slice(2,6)
+
+function FikaDesk() {
+  const [facMap, setFacMap] = useState({})
+  const [reviews, setReviews] = useState([])
+  const [suggs, setSuggs] = useState([])
+  const [busy, setBusy] = useState(null)
+
+  const load = async () => {
+    const [f, r, s] = await Promise.all([
+      sb.from('fika_facilities').select('id,name,county'),
+      sb.from('fika_reviews').select('*').eq('status','pending').order('created_at',{ascending:true}).limit(80),
+      sb.from('fika_suggestions').select('*').eq('status','pending').order('created_at',{ascending:true}).limit(80),
+    ])
+    const m = {}; (f.data||[]).forEach(x => { m[x.id] = x.name }); setFacMap(m)
+    setReviews(r.data || []); setSuggs(s.data || [])
+  }
+  useEffect(() => { load() }, [])
+
+  const setReview = async (id, status) => {
+    setBusy(id)
+    const { error } = await sb.from('fika_reviews').update({ status }).eq('id', id)
+    if (error) toast(error.message,'red'); else { toast(status==='published'?'✓ Published to Ukweli':'Hidden', status==='published'?'green':'gold'); load() }
+    setBusy(null)
+  }
+  const addSuggestion = async (s) => {
+    setBusy(s.id)
+    const { error: e1 } = await sb.from('fika_facilities').insert({
+      id: slugify(s.name), name: s.name, county: s.county, area: s.area || null,
+      kind: 'ngo', services: [], verified: false, active: true,
+    })
+    if (e1) { toast(e1.message,'red'); setBusy(null); return }
+    await sb.from('fika_suggestions').update({ status:'added' }).eq('id', s.id)
+    toast('✓ Added to Hebu Fika','green'); load(); setBusy(null)
+  }
+  const rejectSuggestion = async (s) => {
+    await sb.from('fika_suggestions').update({ status:'rejected' }).eq('id', s.id)
+    toast('Rejected','gold'); load()
+  }
+
+  return (
+    <div>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+        Anonymous facility reviews and suggested places from the Ukweli youth PWA. Published reviews
+        appear in Hebu Fika instantly and feed each facility’s rating; added suggestions become new listings.
+      </p>
+
+      <SectionLabel color={C.mint}>⭐ Pending reviews ({reviews.length})</SectionLabel>
+      {reviews.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic', marginBottom:18 }}>No reviews waiting.</p>}
+      {reviews.map(r => (
+        <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`,
+          borderRadius:12, padding:14, marginBottom:9 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, margin:'0 0 3px' }}>
+            {facMap[r.facility_id] || r.facility_id}
+          </p>
+          <p style={{ fontFamily:C.sans, fontSize:12, color:C.gold, margin:'0 0 6px' }}>{'★'.repeat(r.rating)}{'☆'.repeat(5-r.rating)}</p>
+          {(r.attributes||[]).length > 0 && (
+            <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 6px' }}>
+              {r.attributes.map(a => FIKA_ATTR[a] || a).join(' · ')}
+            </p>
+          )}
+          {r.comment && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.6, margin:'0 0 8px' }}>“{r.comment}”</p>}
+          <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'0 0 10px' }}>{timeAgo(r.created_at)} · {r.language || 'en'}</p>
+          <div style={{ display:'flex', gap:8 }}>
+            <Btn small onClick={()=>setReview(r.id,'published')} disabled={busy===r.id} color={C.mint}>
+              {busy===r.id ? 'Working…' : '✓ Publish'}
+            </Btn>
+            <Btn small ghost onClick={()=>setReview(r.id,'hidden')}>Hide</Btn>
+          </div>
+        </div>
+      ))}
+
+      <SectionLabel color={C.gold}>📍 Suggested places ({suggs.length})</SectionLabel>
+      {suggs.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No suggestions waiting.</p>}
+      {suggs.map(s => (
+        <div key={s.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.gold}`,
+          borderRadius:12, padding:14, marginBottom:9 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{s.name}</p>
+          <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 6px' }}>📍 {s.area ? s.area + ' · ' : ''}{s.county}</p>
+          {s.note && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.6, margin:'0 0 8px' }}>{s.note}</p>}
+          <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'0 0 10px' }}>{timeAgo(s.created_at)} · {s.language || 'en'}</p>
+          <div style={{ display:'flex', gap:8 }}>
+            <Btn small onClick={()=>addSuggestion(s)} disabled={busy===s.id} color={C.mint}>
+              {busy===s.id ? 'Adding…' : '＋ Add to map'}
+            </Btn>
+            <Btn small ghost onClick={()=>rejectSuggestion(s)}>Reject</Btn>
+          </div>
+          <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'8px 0 0', fontStyle:'italic' }}>
+            Added as an unverified NGO listing — edit services/type in Supabase if needed.
+          </p>
         </div>
       ))}
     </div>
