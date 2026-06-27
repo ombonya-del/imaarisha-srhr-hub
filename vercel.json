@@ -3,8 +3,5 @@
   "buildCommand": "echo 'Static site - no build needed'",
   "outputDirectory": "public",
   "framework": null,
-  "installCommand": "echo 'skip'",
-  "redirects": [
-    { "source": "/:path*", "destination": "https://hub.imaarishasrhr.org/:path*", "permanent": false }
-  ]
+  "installCommand": "echo 'skip'"
 }
