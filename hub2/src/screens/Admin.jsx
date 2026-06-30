@@ -141,52 +141,118 @@ function Metrics() {
 // ── Members & digest list ────────────────────────────────────────────────────
 function Members() {
   const [profiles, setProfiles] = useState([])
-  const [pendingOrgs, setPendingOrgs] = useState([])
-  const loadOrgs = () => sb.from('organizations').select('*').eq('approved', false)
-    .order('created_at',{ascending:true}).then(({data}) => setPendingOrgs(data || []))
-  useEffect(() => {
-    sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200)
-      .then(({data}) => setProfiles(data || []))
-    loadOrgs()
-  }, [])
+  const [orgs, setOrgs] = useState([])
+  const [editOrg, setEditOrg] = useState(null)       // { id, name, short_name, focus_area }
+  const [editMember, setEditMember] = useState(null) // { id, full_name }
+
+  const loadProfiles = () => sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(300).then(({data}) => setProfiles(data || []))
+  const loadOrgs = () => sb.from('organizations').select('*').order('short_name').then(({data}) => setOrgs(data || []))
+  useEffect(() => { loadProfiles(); loadOrgs() }, [])
+
+  const eIn = { fontFamily:C.sans, fontSize:12, padding:'5px 8px', borderRadius:7, border:`1px solid ${C.line}`, background:'#fff', color:C.txt, minWidth:0 }
+
+  // ── Organization actions ──
   const approveOrg = async (o) => {
     const { error } = await sb.from('organizations').update({ approved: true }).eq('id', o.id)
     if (error) toast(error.message,'red'); else { toast('✓ Approved — now in the Directory','green'); loadOrgs() }
   }
-  const rejectOrg = async (o) => {
-    if (!confirm(`Remove the organization request "${o.name}"?`)) return
+  const deleteOrg = async (o) => {
+    if (!confirm(`Delete the organization "${o.name}" from the Directory?`)) return
     const { error } = await sb.from('organizations').delete().eq('id', o.id)
-    if (error) toast(error.message,'red'); else { toast('Removed','gold'); loadOrgs() }
+    if (error) toast(error.message,'red'); else { toast('Organization deleted','gold'); loadOrgs() }
   }
+  const saveOrg = async () => {
+    const { id, name, short_name, focus_area } = editOrg
+    if (!name.trim()) { toast('Name cannot be empty','red'); return }
+    const { error } = await sb.from('organizations').update({ name:name.trim(), short_name:(short_name||'').trim()||name.trim(), focus_area:(focus_area||'').trim()||null }).eq('id', id)
+    if (error) toast(error.message,'red'); else { toast('✓ Saved','green'); setEditOrg(null); loadOrgs() }
+  }
+
+  // ── Member actions ──
+  const toggleAdmin = async (p) => {
+    const { error } = await sb.from('profiles').update({ is_admin: !p.is_admin }).eq('id', p.id)
+    if (error) toast(error.message,'red'); else { toast(p.is_admin ? 'Admin removed' : '👑 Made admin','gold'); loadProfiles() }
+  }
+  const saveMember = async () => {
+    const { id, full_name } = editMember
+    const { error } = await sb.from('profiles').update({ full_name: full_name.trim() || null }).eq('id', id)
+    if (error) toast(error.message,'red'); else { toast('✓ Saved','green'); setEditMember(null); loadProfiles() }
+  }
+  const deleteMember = async (p) => {
+    if (!confirm(`Remove "${p.full_name || 'this member'}" from the members list?\n\n(This deletes their profile. Their login still exists — fully remove it from Supabase → Authentication if needed.)`)) return
+    const { error } = await sb.from('profiles').delete().eq('id', p.id)
+    if (error) toast(error.message,'red'); else { toast('Member removed','gold'); loadProfiles() }
+  }
+
+  const pending = orgs.filter(o => !o.approved)
+  const approved = orgs.filter(o => o.approved)
   const subs = profiles.filter(p => p.digest_subscribed)
+
   return (
     <div>
-      <SectionLabel color={C.coral}>🏛 Organizations awaiting approval ({pendingOrgs.length})</SectionLabel>
-      {pendingOrgs.length === 0 ? (
+      {/* Pending approvals */}
+      <SectionLabel color={C.coral}>🏛 Organizations awaiting approval ({pending.length})</SectionLabel>
+      {pending.length === 0 ? (
         <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
-          None pending. When a new member signs up, their organization lands here for approval before it joins the public Directory.
+          None pending. New sign-ups land here for approval before joining the public Directory.
         </p>
-      ) : pendingOrgs.map(o => (
+      ) : pending.map(o => (
         <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
           <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt }}>{o.name}{o.focus_area ? ` · ${o.focus_area}` : ''}</span>
           <span style={{ display:'flex', gap:6 }}>
             <Btn small color={C.mint} onClick={()=>approveOrg(o)}>✓ Approve</Btn>
-            <Btn small ghost color={C.coral} onClick={()=>rejectOrg(o)}>✕</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>deleteOrg(o)}>✕</Btn>
           </span>
         </div>
       ))}
-      <div style={{ height:16 }}/>
+
+      {/* Approved orgs — edit / delete */}
+      <div style={{ height:14 }}/>
+      <SectionLabel color={C.mint}>🏛 Member organizations ({approved.length})</SectionLabel>
+      {approved.map(o => editOrg?.id === o.id ? (
+        <div key={o.id} style={{ display:'flex', flexWrap:'wrap', gap:6, alignItems:'center', padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
+          <input style={{ ...eIn, flex:'2 1 120px' }} value={editOrg.name} onChange={e=>setEditOrg({ ...editOrg, name:e.target.value })} placeholder="Name"/>
+          <input style={{ ...eIn, flex:'1 1 80px' }} value={editOrg.short_name} onChange={e=>setEditOrg({ ...editOrg, short_name:e.target.value })} placeholder="Short"/>
+          <input style={{ ...eIn, flex:'2 1 120px' }} value={editOrg.focus_area} onChange={e=>setEditOrg({ ...editOrg, focus_area:e.target.value })} placeholder="Focus area"/>
+          <Btn small color={C.mint} onClick={saveOrg}>Save</Btn>
+          <Btn small ghost onClick={()=>setEditOrg(null)}>Cancel</Btn>
+        </div>
+      ) : (
+        <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
+          <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, minWidth:0 }}>{o.short_name || o.name}{o.focus_area ? <span style={{ color:C.mut }}> · {o.focus_area}</span> : null}</span>
+          <span style={{ display:'flex', gap:6, flexShrink:0 }}>
+            <Btn small ghost onClick={()=>setEditOrg({ id:o.id, name:o.name||'', short_name:o.short_name||'', focus_area:o.focus_area||'' })}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>deleteOrg(o)}>🗑</Btn>
+          </span>
+        </div>
+      ))}
+
+      {/* Digest subscribers */}
+      <div style={{ height:14 }}/>
       <SectionLabel color={C.lilac}>📧 Digest subscribers ({subs.length})</SectionLabel>
       <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 8px', lineHeight:1.6 }}>
         {subs.map(p => p.digest_email || p.full_name).filter(Boolean).join(' · ') || 'None yet — nudge the network from the Forum.'}
       </p>
+
+      {/* All members — edit / delete / admin toggle */}
       <SectionLabel color={C.gold}>👥 All members ({profiles.length})</SectionLabel>
-      {profiles.map(p => (
-        <div key={p.id} style={{ display:'flex', justifyContent:'space-between', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
-          <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt }}>
+      {profiles.map(p => editMember?.id === p.id ? (
+        <div key={p.id} style={{ display:'flex', flexWrap:'wrap', gap:6, alignItems:'center', padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
+          <input style={{ ...eIn, flex:'2 1 140px' }} value={editMember.full_name} onChange={e=>setEditMember({ ...editMember, full_name:e.target.value })} placeholder="Full name"/>
+          <Btn small color={C.mint} onClick={saveMember}>Save</Btn>
+          <Btn small ghost onClick={()=>setEditMember(null)}>Cancel</Btn>
+        </div>
+      ) : (
+        <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
+          <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, minWidth:0 }}>
             {p.is_admin ? '👑 ' : ''}{p.full_name || '(no name)'} {p.digest_subscribed ? '📧' : ''}
+            <span style={{ color:C.mut, fontSize:10.5 }}> · {timeAgo(p.created_at)}</span>
           </span>
-          <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>{timeAgo(p.created_at)}</span>
+          <span style={{ display:'flex', gap:6, flexShrink:0 }}>
+            <Btn small ghost color={p.is_admin ? C.coral : C.lilac} onClick={()=>toggleAdmin(p)}>{p.is_admin ? '↓ Unadmin' : '👑 Admin'}</Btn>
+            <Btn small ghost onClick={()=>setEditMember({ id:p.id, full_name:p.full_name || '' })}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>deleteMember(p)}>🗑</Btn>
+          </span>
         </div>
       ))}
     </div>
