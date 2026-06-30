@@ -49,9 +49,9 @@ export default function App() {
             radial-gradient(800px 520px at 50% 110%, rgba(139,92,246,0.08), transparent 60%);
           background-attachment: fixed; }
         ::-webkit-scrollbar { width:8px } ::-webkit-scrollbar-thumb { background:#CFCBE0; border-radius:4px }
-        .navlink { color:#EAE7F0; transition: color .15s ease, text-shadow .15s ease; }
+        .navlink { color:#FF9466; transition: color .15s ease, text-shadow .15s ease; }
         .navlink:hover { color:#FFFFFF; text-shadow: 0 0 14px rgba(255,255,255,0.35); }
-        .navlink.on { color:#FFFFFF; box-shadow: inset 0 -3px 0 #E8B14B; }`}</style>
+        .navlink.on { color:#FFFFFF; box-shadow: inset 0 -3px 0 #E2552F; }`}</style>
       {/* identity stripe — the logo, as a line */}
       <div style={{ position:'fixed', top:0, left:0, right:0, height:4, zIndex:30,
         background:'linear-gradient(90deg, #E8B14B 0%, #D99A26 25%, #3E9B4F 55%, #E2552F 100%)' }}/>
