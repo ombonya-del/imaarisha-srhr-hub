@@ -70,6 +70,18 @@ export function useSession() {
   useEffect(() => {
     if (!user) { setProfile(null); return }
     sb.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => setProfile(data || null))
+    // Auto-add the member's organization to the Directory as a PENDING entry
+    // (an admin approves it before it shows publicly). Idempotent — only inserts
+    // if no org with that name exists yet.
+    const orgName = (user.user_metadata?.org_name || '').trim()
+    if (orgName) {
+      const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('org-' + user.id.slice(0, 8))
+      sb.from('organizations').select('id').ilike('name', orgName).limit(1).then(({ data }) => {
+        if (!data || data.length === 0) {
+          sb.from('organizations').insert({ name: orgName, short_name: orgName, slug, submitted_by: user.id, approved: false }).then(() => {})
+        }
+      })
+    }
   }, [user])
   const name = profile?.full_name || user?.user_metadata?.full_name || user?.email || ''
   return { user, profile, name, isAdmin: !!profile?.is_admin }

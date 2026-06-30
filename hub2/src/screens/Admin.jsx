@@ -5,16 +5,17 @@ import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/compone
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session }) {
   const [view, setView] = useState('activity')
-  const [counts, setCounts] = useState({ uliza: 0, fika: 0 })
+  const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0 })
 
   const loadCounts = async () => {
     const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
-    const [u, r, g] = await Promise.all([
+    const [u, r, g, n] = await Promise.all([
       head('uliza_questions', 'pending'),
       head('fika_reviews', 'pending'),
       head('fika_suggestions', 'pending'),
+      head('unado_posts', 'pending'),
     ])
-    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0) })
+    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0 })
   }
   useEffect(() => { loadCounts() }, [view])
 
@@ -24,7 +25,8 @@ export default function Admin({ session }) {
         sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
-          ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika]].map(([k,l,n]) => (
+          ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
+          ['unado','📸 UnaDO?',counts.unado]].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
             {l}{n > 0 && <Badge n={n}/>}
           </Chip>
@@ -35,6 +37,7 @@ export default function Admin({ session }) {
       {view === 'members'  && <Members/>}
       {view === 'uliza'    && <UlizaDesk session={session} onChange={loadCounts}/>}
       {view === 'fika'     && <FikaDesk onChange={loadCounts}/>}
+      {view === 'unado'    && <UnadoDesk session={session} onChange={loadCounts}/>}
     </div>
   )
 }
@@ -138,13 +141,41 @@ function Metrics() {
 // ── Members & digest list ────────────────────────────────────────────────────
 function Members() {
   const [profiles, setProfiles] = useState([])
+  const [pendingOrgs, setPendingOrgs] = useState([])
+  const loadOrgs = () => sb.from('organizations').select('*').eq('approved', false)
+    .order('created_at',{ascending:true}).then(({data}) => setPendingOrgs(data || []))
   useEffect(() => {
     sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(200)
       .then(({data}) => setProfiles(data || []))
+    loadOrgs()
   }, [])
+  const approveOrg = async (o) => {
+    const { error } = await sb.from('organizations').update({ approved: true }).eq('id', o.id)
+    if (error) toast(error.message,'red'); else { toast('✓ Approved — now in the Directory','green'); loadOrgs() }
+  }
+  const rejectOrg = async (o) => {
+    if (!confirm(`Remove the organization request "${o.name}"?`)) return
+    const { error } = await sb.from('organizations').delete().eq('id', o.id)
+    if (error) toast(error.message,'red'); else { toast('Removed','gold'); loadOrgs() }
+  }
   const subs = profiles.filter(p => p.digest_subscribed)
   return (
     <div>
+      <SectionLabel color={C.coral}>🏛 Organizations awaiting approval ({pendingOrgs.length})</SectionLabel>
+      {pendingOrgs.length === 0 ? (
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+          None pending. When a new member signs up, their organization lands here for approval before it joins the public Directory.
+        </p>
+      ) : pendingOrgs.map(o => (
+        <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
+          <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt }}>{o.name}{o.focus_area ? ` · ${o.focus_area}` : ''}</span>
+          <span style={{ display:'flex', gap:6 }}>
+            <Btn small color={C.mint} onClick={()=>approveOrg(o)}>✓ Approve</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>rejectOrg(o)}>✕</Btn>
+          </span>
+        </div>
+      ))}
+      <div style={{ height:16 }}/>
       <SectionLabel color={C.lilac}>📧 Digest subscribers ({subs.length})</SectionLabel>
       <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 8px', lineHeight:1.6 }}>
         {subs.map(p => p.digest_email || p.full_name).filter(Boolean).join(' · ') || 'None yet — nudge the network from the Forum.'}
@@ -311,6 +342,95 @@ function FikaDesk({ onChange }) {
           <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'8px 0 0', fontStyle:'italic' }}>
             Added as an unverified NGO listing — edit services/type in Supabase if needed.
           </p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── UnaDO? desk — approve members' field-activity photos & videos ────────────
+const ACT_LABEL = {
+  outreach:'📣 Outreach', training:'🎓 Training', advocacy:'✊ Advocacy', service:'🏥 Service delivery',
+  dialogue:'🗣 Community dialogue', campaign:'📢 Campaign', other:'✨ Other',
+}
+
+function UnadoDesk({ session, onChange }) {
+  const [posts, setPosts] = useState([])
+  const [signed, setSigned] = useState({})
+  const [busy, setBusy] = useState(null)
+
+  const load = async () => {
+    const { data } = await sb.from('unado_posts').select('*').eq('status','pending')
+      .order('created_at',{ascending:true}).limit(80)
+    const list = data || []
+    const paths = list.flatMap(p => (p.media||[]).map(m=>m.path)).filter(Boolean)
+    const map = {}
+    if (paths.length) {
+      const { data: urls } = await sb.storage.from('unado').createSignedUrls(paths, 3600)
+      ;(urls||[]).forEach(u => { if (u.path && u.signedUrl) map[u.path] = u.signedUrl })
+    }
+    setSigned(map); setPosts(list); onChange?.()
+  }
+  useEffect(() => { load() }, [])
+
+  const approve = async (p) => {
+    setBusy(p.id)
+    const { error } = await sb.from('unado_posts').update({
+      status:'approved', approved_at:new Date().toISOString(), approved_by: session?.user?.id || null,
+    }).eq('id', p.id)
+    if (error) toast(error.message,'red')
+    else { toast('✓ Approved — now visible to members','green'); load() }
+    setBusy(null)
+  }
+  const hide = async (p) => {
+    setBusy(p.id)
+    await sb.from('unado_posts').update({ status:'hidden' }).eq('id', p.id)
+    toast('Hidden','gold'); load(); setBusy(null)
+  }
+  const del = async (p) => {
+    if (!confirm('Delete this post permanently?')) return
+    setBusy(p.id)
+    const paths = (p.media||[]).map(m=>m.path).filter(Boolean)
+    if (paths.length) { try { await sb.storage.from('unado').remove(paths) } catch {} }
+    const { error } = await sb.from('unado_posts').delete().eq('id', p.id)
+    if (error) toast(error.message,'red'); else { toast('Deleted','gold'); load() }
+    setBusy(null)
+  }
+
+  return (
+    <div>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+        Photos and videos members submitted from the field. Approved posts become visible to all
+        signed-in members in the UnaDO? tab; nothing appears until you approve it.
+      </p>
+      <SectionLabel color={C.lilac}>📸 Pending posts ({posts.length})</SectionLabel>
+      {posts.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — nothing waiting for review. 🎉</p>}
+      {posts.map(p => (
+        <div key={p.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`,
+          borderRadius:12, padding:14, marginBottom:10 }}>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+            {(p.media||[]).map((m,i) => {
+              const url = signed[m.path]
+              if (!url) return null
+              return m.kind === 'video'
+                ? <video key={i} src={url} controls style={{ width:160, height:160, objectFit:'cover', borderRadius:8, background:'#000' }}/>
+                : <img key={i} src={url} alt="" loading="lazy" style={{ width:160, height:160, objectFit:'cover', borderRadius:8 }}/>
+            })}
+          </div>
+          {p.activity_type && (
+            <span style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:800, color:C.lilac,
+              border:`1px solid ${C.lilac}`, borderRadius:5, padding:'1px 7px' }}>{ACT_LABEL[p.activity_type] || p.activity_type}</span>
+          )}
+          <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'8px 0 4px', lineHeight:1.4 }}>{p.caption}</p>
+          {p.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, margin:'0 0 6px', lineHeight:1.6 }}>{p.description}</p>}
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 10px' }}>
+            {p.author_name || 'A member'}{p.org_name ? ` · ${p.org_name}` : ''}{p.location ? ` · ${p.location}` : ''} · {timeAgo(p.created_at)}
+          </p>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <Btn small onClick={()=>approve(p)} disabled={busy===p.id} color={C.mint}>{busy===p.id ? 'Working…' : '✓ Approve'}</Btn>
+            <Btn small ghost onClick={()=>hide(p)}>🚫 Hide</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>del(p)}>🗑 Delete</Btn>
+          </div>
         </div>
       ))}
     </div>

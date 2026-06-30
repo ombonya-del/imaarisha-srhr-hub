@@ -14,7 +14,7 @@ export default function Exchange({ session }) {
   useEffect(() => {
     sb.from('resources').select('*').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
-    sb.from('organizations').select('*').order('short_name').limit(60).then(({data})=>setOrgs(data||[]))
+    sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
   }, [])
 
   // Every open + share is logged to activity_log → quantifiable from the admin portal

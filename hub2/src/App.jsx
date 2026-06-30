@@ -8,6 +8,7 @@ import Forum from './screens/Forum'
 import Tracker from './screens/Tracker'
 import Exchange from './screens/Exchange'
 import Events from './screens/Events'
+import Unado from './screens/Unado'
 import Admin from './screens/Admin'
 
 const NAV = [
@@ -15,6 +16,7 @@ const NAV = [
   { id:'radar',    icon:'⦿',  label:'Radar',    screen: Radar },
   { id:'watch',    icon:'🚩', label:'Disinfo Watch', screen: Watch },
   { id:'forum',    icon:'💬', label:'Forum',    screen: Forum },
+  { id:'unado',    icon:'📸', label:'UnaDO?',   screen: Unado },
   { id:'tracker',  icon:'📊', label:'Tracker',  screen: Tracker },
   { id:'exchange', icon:'⇄',  label:'Exchange', screen: Exchange },
   { id:'events',   icon:'📅', label:'Events',   screen: Events },
@@ -47,9 +49,9 @@ export default function App() {
             radial-gradient(800px 520px at 50% 110%, rgba(139,92,246,0.08), transparent 60%);
           background-attachment: fixed; }
         ::-webkit-scrollbar { width:8px } ::-webkit-scrollbar-thumb { background:#CFCBE0; border-radius:4px }
-        .navlink { color:#FF9466; transition: color .15s ease, text-shadow .15s ease; }
+        .navlink { color:#EAE7F0; transition: color .15s ease, text-shadow .15s ease; }
         .navlink:hover { color:#FFFFFF; text-shadow: 0 0 14px rgba(255,255,255,0.35); }
-        .navlink.on { color:#FFFFFF; box-shadow: inset 0 -3px 0 #E2552F; }`}</style>
+        .navlink.on { color:#FFFFFF; box-shadow: inset 0 -3px 0 #E8B14B; }`}</style>
       {/* identity stripe — the logo, as a line */}
       <div style={{ position:'fixed', top:0, left:0, right:0, height:4, zIndex:30,
         background:'linear-gradient(90deg, #E8B14B 0%, #D99A26 25%, #3E9B4F 55%, #E2552F 100%)' }}/>
@@ -130,9 +132,9 @@ export default function App() {
                 style={{ background:'none', border:'none', cursor:'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   padding:'4px 6px', flex:1 }}>
-                <span style={{ fontSize:16, lineHeight:1, color: on?'#FFFFFF':'#FF9466',
-                  filter: on ? 'none' : 'grayscale(1) opacity(.85)' }}>{n.icon}</span>
-                <span style={{ fontFamily:C.sans, fontSize:9, fontWeight: on?800:700, color: on?'#FFFFFF':'#FF9466' }}>{n.label}</span>
+                <span style={{ fontSize:16, lineHeight:1, color: on?'#FFFFFF':'#C4C8D4',
+                  filter: on ? 'none' : 'grayscale(1) opacity(.95)' }}>{n.icon}</span>
+                <span style={{ fontFamily:C.sans, fontSize:9, fontWeight: on?800:700, color: on?'#FFFFFF':'#C4C8D4' }}>{n.label}</span>
               </button>
             )
           })}
@@ -148,6 +150,7 @@ function AuthModal({ onClose }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [org, setOrg] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -161,7 +164,7 @@ function AuthModal({ onClose }) {
         const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
         if (error) setMsg(error.message); else onClose()
       } else {
-        const { error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { full_name: fullName.trim() } } })
+        const { error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { full_name: fullName.trim(), org_name: org.trim() } } })
         setMsg(error ? error.message : '✓ Account created — check your email to confirm.')
       }
     } catch (e) { setMsg(String(e.message || e)) }
@@ -183,6 +186,8 @@ function AuthModal({ onClose }) {
           ))}
         </div>
         {mode === 'signup' && <input style={inputStyle} placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)}/>}
+        {mode === 'signup' && <input style={inputStyle} placeholder="Organization (e.g. NAYA Kenya)" value={org} onChange={e=>setOrg(e.target.value)}/>}
+        {mode === 'signup' && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'-4px 0 10px', lineHeight:1.45 }}>Your organization joins the member Directory once an admin approves it.</p>}
         <input style={inputStyle} type="email" placeholder="you@organisation.org" value={email} onChange={e=>setEmail(e.target.value)}/>
         {mode !== 'magic' && <input style={inputStyle} type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/>}
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color: msg.startsWith('✓') ? C.mint : C.coral, margin:'0 0 10px', lineHeight:1.5 }}>{msg}</p>}
