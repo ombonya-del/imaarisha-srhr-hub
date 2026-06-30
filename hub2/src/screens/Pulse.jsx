@@ -7,12 +7,14 @@ export default function Pulse({ go, session }) {
   const { user, name, profile } = session
   const [idx, setIdx] = useState(null)
   const [activity, setActivity] = useState([])
+  const [orgs, setOrgs] = useState([])
   const [digestEmail, setDigestEmail] = useState('')
   const [digestDone, setDigestDone] = useState(false)
 
   useEffect(() => {
     sb.from('radar_index').select('*').order('date',{ascending:false}).limit(1).then(({data})=>setIdx(data?.[0]||null))
     sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(16).then(({data})=>setActivity(data||[]))
+    sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(80).then(({data})=>setOrgs(data||[]))
   }, [])
   useEffect(() => { if (profile?.digest_subscribed) setDigestDone(true) }, [profile])
 
@@ -72,6 +74,28 @@ export default function Pulse({ go, session }) {
           </p>
         </div>
       </div>
+
+      {/* Member organizations — the network, up front */}
+      {orgs.length > 0 && (
+        <div style={{ marginBottom:18 }}>
+          <SectionLabel color={C.lilac}>🏛 Member organizations ({orgs.length})</SectionLabel>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {orgs.map(o => (
+              <span key={o.id} title={o.focus_area || ''} style={{ background:C.card, border:`1px solid ${C.line}`,
+                borderRadius:20, padding:'7px 13px', fontFamily:C.sans, fontSize:12, fontWeight:800, color:C.txt,
+                display:'inline-flex', alignItems:'center', gap:6, maxWidth:'100%' }}>
+                {o.emoji ? <span>{o.emoji}</span> : null}
+                <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.short_name || o.name}</span>
+                {o.focus_area ? <span style={{ fontWeight:600, fontSize:10, color:C.mut }}>· {o.focus_area}</span> : null}
+              </span>
+            ))}
+          </div>
+          <button onClick={()=>go('exchange')} style={{ marginTop:9, background:'none', border:'none', cursor:'pointer',
+            fontFamily:C.sans, fontSize:11, fontWeight:700, color:C.lilac, padding:0 }}>
+            Browse the full Directory →
+          </button>
+        </div>
+      )}
 
       {/* Weekly digest */}
       {!digestDone ? (

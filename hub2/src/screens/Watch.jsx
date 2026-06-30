@@ -91,10 +91,12 @@ export default function Watch({ session }) {
                 {(d.platforms || []).length ? ' · ' + d.platforms.join(', ') : ''}
               </span>
             </div>
-            <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:'0 0 6px', lineHeight:1.45 }}>
+            <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:'0 0 6px', lineHeight:1.45,
+              overflowWrap:'anywhere', wordBreak:'break-word' }}>
               "{d.claim}"
             </p>
-            <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mint, margin:0, lineHeight:1.6 }}>{d.correction}</p>
+            <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mint, margin:0, lineHeight:1.6,
+              overflowWrap:'anywhere', wordBreak:'break-word' }}>{d.correction}</p>
 
             {isOpen && (
               <div style={{ marginTop:12, paddingTop:12, borderTop:`1px solid ${C.line}` }} onClick={e=>e.stopPropagation()}>
