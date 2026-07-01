@@ -143,6 +143,10 @@ export default function App() {
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} />}
+        <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
+            style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, textDecoration:'none' }}>Privacy Policy</a>
+        </div>
       </main>
 
       {/* Mobile bottom nav — chunky, each tab lights up in its own colour */}

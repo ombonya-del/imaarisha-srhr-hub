@@ -117,6 +117,10 @@ export default function App() {
       <main style={{ maxWidth: isDesktop ? 1100 : 480, margin:'0 auto',
         padding: isDesktop ? '24px 16px 60px' : '18px 16px 96px' }}>
         <Active go={setTab} session={session}/>
+        <div style={{ textAlign:'center', marginTop:28, paddingTop:14, borderTop:`1px solid ${C.line}` }}>
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
+            style={{ fontFamily:C.sans, fontSize:11, color:C.mut, textDecoration:'none' }}>Privacy Policy</a>
+        </div>
       </main>
 
       {/* ── Mobile bottom nav ── */}
