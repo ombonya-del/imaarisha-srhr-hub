@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { sb, timeAgo } from './lib/supabase'
+import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
 import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES, ATTR_LABEL } from './lib/fika'
@@ -180,6 +181,7 @@ function Uliza({ tr, lang, isDesktop }) {
   const [q, setQ] = useState('')
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [tsToken, setTsToken] = useState('')
 
   useEffect(() => {
     sb.from('uliza_questions').select('*').eq('status','answered')
@@ -188,10 +190,12 @@ function Uliza({ tr, lang, isDesktop }) {
 
   const submit = async () => {
     if (q.trim().length < 8) return
+    if (!tsToken) return
     setBusy(true)
-    const { error } = await sb.from('uliza_questions').insert({ question: q.trim(), language: lang })
+    const { error } = await tsInsert(sb, 'uliza_questions', { question: q.trim(), language: lang }, tsToken)
     setBusy(false)
     if (!error) { setSent(true); setQ('') }
+    else { resetTurnstile(); setTsToken('') }
   }
 
   return (
@@ -214,12 +218,13 @@ function Uliza({ tr, lang, isDesktop }) {
               style={{ width:'100%', minHeight:100, resize:'vertical', background:Y.bg,
                 border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
                 fontFamily:Y.sans, fontSize:14.5, outline:'none', lineHeight:1.5 }}/>
-            <button onClick={submit} disabled={busy || q.trim().length < 8} className="uk-press"
+            <TurnstileWidget onVerify={setTsToken} />
+            <button onClick={submit} disabled={busy || q.trim().length < 8 || !tsToken} className="uk-press"
               style={{ marginTop:12, width:'100%', fontFamily:Y.disp, fontSize:15, fontWeight:600, padding:'14px 0',
                 borderRadius:14, border:'none', cursor:'pointer', color:'#06241C',
                 background:`linear-gradient(135deg, ${Y.green}, ${Y.teal})`,
                 boxShadow:'0 8px 20px rgba(63,224,160,0.28)',
-                opacity: q.trim().length<8?0.45:1 }}>
+                opacity: (q.trim().length<8||!tsToken)?0.45:1 }}>
               {busy ? tr('ask_sending') : `💬 ${tr('ask_cta')}`}
             </button>
             <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'10px 0 0', textAlign:'center', fontWeight:600 }}>
@@ -555,17 +560,19 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [sent, setSent] = useState(false)
+  const [tsToken, setTsToken] = useState('')
 
   const submit = async () => {
     if (!name.trim() || !cnty) { setMsg(tr('fika_suggest_need')); return }
     if (!canWrite) { setMsg(tr('fika_soon')); return }
+    if (!tsToken) { setMsg(tr('fika_verify') || 'Please complete the verification.'); return }
     setBusy(true); setMsg('')
-    const { error } = await sb.from('fika_suggestions').insert({
+    const { error } = await tsInsert(sb, 'fika_suggestions', {
       name: name.trim(), county: cnty, area: area.trim() || null, note: note.trim() || null,
-      language: lang, status: 'pending',
-    })
+      language: lang,
+    }, tsToken)
     setBusy(false)
-    if (error) { setMsg(error.message); return }
+    if (error) { setMsg(error.message); resetTurnstile(); setTsToken(''); return }
     setSent(true)
   }
 
@@ -595,14 +602,15 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
             <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder={tr('fika_suggest_note')}
               style={{ ...fikaInput, minHeight:74, resize:'vertical' }}/>
             {msg && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'2px 0 0', lineHeight:1.5 }}>{msg}</p>}
+            {canWrite && <TurnstileWidget onVerify={setTsToken} />}
             <div style={{ display:'flex', gap:8, marginTop:14 }}>
               <button onClick={onClose} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
                 padding:'12px 0', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>
                 {tr('close_card')}
               </button>
-              <button onClick={submit} disabled={busy} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+              <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
                 padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-                background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})` }}>
+                background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})`, opacity:(canWrite && !tsToken)?0.5:1 }}>
                 {busy ? tr('ask_sending') : tr('fika_suggest_title')}
               </button>
             </div>
@@ -646,18 +654,20 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [tsToken, setTsToken] = useState('')
 
   const toggleAttr = (k) => setAttrs(a => a.includes(k) ? a.filter(x=>x!==k) : [...a, k])
 
   const submit = async () => {
     if (!facilityId || !rating) { setMsg(tr('fika_need')); return }
     if (!canWrite) { setMsg(tr('fika_soon')); return }
+    if (!tsToken) { setMsg(tr('fika_verify') || 'Please complete the verification.'); return }
     setBusy(true); setMsg('')
-    const { error } = await sb.from('fika_reviews').insert({
-      facility_id: facilityId, rating, attributes: attrs, comment: comment.trim() || null, language: lang, status: 'pending',
-    })
+    const { error } = await tsInsert(sb, 'fika_reviews', {
+      facility_id: facilityId, rating, attributes: attrs, comment: comment.trim() || null, language: lang,
+    }, tsToken)
     setBusy(false)
-    if (error) { setMsg(error.message); return }
+    if (error) { setMsg(error.message); resetTurnstile(); setTsToken(''); return }
     onDone?.(); onClose()
   }
 
@@ -702,14 +712,15 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
           style={{ width:'100%', minHeight:80, resize:'vertical', background:Y.bg, border:`1px solid ${Y.line}`,
             borderRadius:12, padding:'12px', color:Y.txt, fontFamily:Y.sans, fontSize:13.5, outline:'none', lineHeight:1.5 }}/>
         {msg && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'10px 0 0', lineHeight:1.5 }}>{msg}</p>}
+        {canWrite && <TurnstileWidget onVerify={setTsToken} />}
         <div style={{ display:'flex', gap:8, marginTop:14 }}>
           <button onClick={onClose} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
             padding:'12px 0', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>
             {tr('close_card')}
           </button>
-          <button onClick={submit} disabled={busy} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
+          <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
             padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-            background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})` }}>
+            background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})`, opacity:(canWrite && !tsToken)?0.5:1 }}>
             {busy ? tr('ask_sending') : tr('fika_share')}
           </button>
         </div>
