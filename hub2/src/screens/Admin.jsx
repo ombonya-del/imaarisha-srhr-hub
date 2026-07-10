@@ -184,12 +184,46 @@ function Members() {
     if (error) toast(error.message,'red'); else { toast('Member removed','gold'); loadProfiles() }
   }
 
+  // ── Membership vetting ──
+  const approveMember = async (p) => {
+    const { error } = await sb.from('profiles').update({ approved: true }).eq('id', p.id)
+    if (error) toast(error.message,'red'); else { toast('✓ Member approved — they can enter the hub','green'); loadProfiles() }
+  }
+  const rejectMember = async (p) => {
+    if (!confirm(`Reject the request from "${p.full_name || 'this person'}"? This deletes their profile.`)) return
+    const { error } = await sb.from('profiles').delete().eq('id', p.id)
+    if (error) toast(error.message,'red'); else { toast('Request rejected','gold'); loadProfiles() }
+  }
+
   const pending = orgs.filter(o => !o.approved)
   const approved = orgs.filter(o => o.approved)
   const subs = profiles.filter(p => p.digest_subscribed)
+  const pendingMembers = profiles.filter(p => !p.approved && !p.is_admin)
 
   return (
     <div>
+      {/* Members awaiting approval — the vetting gate */}
+      <SectionLabel color={C.coral}>👥 Members awaiting approval ({pendingMembers.length})</SectionLabel>
+      {pendingMembers.length === 0 ? (
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+          None waiting. New sign-ups appear here to vet before they can enter the hub.
+        </p>
+      ) : pendingMembers.map(p => (
+        <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, padding:'10px 0', borderBottom:`1px solid ${C.line}` }}>
+          <div style={{ minWidth:0 }}>
+            <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, margin:0 }}>
+              {p.full_name || '(no name)'} <span style={{ color:C.mut, fontWeight:400, fontSize:10.5 }}>· {timeAgo(p.created_at)}</span>
+            </p>
+            {p.reason && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'2px 0 0', lineHeight:1.5 }}>“{p.reason}”</p>}
+          </div>
+          <span style={{ display:'flex', gap:6, flexShrink:0 }}>
+            <Btn small color={C.mint} onClick={()=>approveMember(p)}>✓ Approve</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>rejectMember(p)}>✕ Reject</Btn>
+          </span>
+        </div>
+      ))}
+      <div style={{ height:16 }}/>
+
       {/* Pending approvals */}
       <SectionLabel color={C.coral}>🏛 Organizations awaiting approval ({pending.length})</SectionLabel>
       {pending.length === 0 ? (
