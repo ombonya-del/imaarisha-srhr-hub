@@ -125,24 +125,42 @@ export default function Exchange({ session }) {
 }
 const Empty = () => <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing here yet.</p>
 
-// ── Add resource: any member submits; it stays pending until an admin approves ─
+// ── Add resource: file upload OR link; stays pending until an admin approves ──
 function AddResourceModal({ session, onClose }) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('report')
   const [desc, setDesc] = useState('')
   const [org, setOrg] = useState('')
+  const [mode, setMode] = useState('file')   // 'file' | 'link'
   const [url, setUrl] = useState('')
+  const [file, setFile] = useState(null)
   const [restricted, setRestricted] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
+  const humanSize = (b) => b < 1048576 ? Math.max(1, Math.round(b/1024)) + ' KB' : (b/1048576).toFixed(1) + ' MB'
+
   const submit = async () => {
-    if (!title.trim() || !url.trim()) { setMsg('Title and a link are required.'); return }
+    if (!title.trim()) { setMsg('Title is required.'); return }
     setBusy(true); setMsg('')
+    let file_url = url.trim(), file_type = null, file_size = null
+    if (mode === 'file') {
+      if (!file) { setMsg('Choose a file to upload.'); setBusy(false); return }
+      if (file.size > 50 * 1048576) { setMsg('File is over 50 MB — please share a link instead.'); setBusy(false); return }
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const path = `${session.user?.id || 'anon'}/${Date.now()}-${safe}`
+      const { error: upErr } = await sb.storage.from('resources').upload(path, file, { upsert: false })
+      if (upErr) { setMsg('Upload failed: ' + upErr.message); setBusy(false); return }
+      file_url  = sb.storage.from('resources').getPublicUrl(path).data.publicUrl
+      file_type = (file.name.split('.').pop() || '').toUpperCase()
+      file_size = humanSize(file.size)
+    } else if (!file_url) {
+      setMsg('Add a link, or switch to Upload file.'); setBusy(false); return
+    }
     const { error } = await sb.from('resources').insert({
       title: title.trim(), type, description: desc.trim() || null,
-      source_org: org.trim() || null, file_url: url.trim(), is_restricted: restricted,
-      status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
+      source_org: org.trim() || null, file_url, file_type, file_size,
+      is_restricted: restricted, status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
     })
     setBusy(false)
     if (error) { setMsg(error.message); return }
@@ -151,6 +169,12 @@ function AddResourceModal({ session, onClose }) {
     onClose()
   }
 
+  const tabBtn = (k, l) => (
+    <button onClick={()=>{ setMode(k); setMsg('') }}
+      style={{ flex:1, fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'8px 0', borderRadius:8,
+        border:'none', cursor:'pointer', background: mode===k?C.gold:C.card, color: mode===k?'#171204':C.mut }}>{l}</button>
+  )
+
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
@@ -158,13 +182,30 @@ function AddResourceModal({ session, onClose }) {
         borderRadius:16, padding:22, width:'100%', maxWidth:420, maxHeight:'90vh', overflowY:'auto' }}>
         <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Add a resource</p>
         <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
-          Share a report, toolkit, dataset or link with the collective. An admin reviews it before it appears publicly.
+          Upload a file or share a link. An admin reviews it before it appears publicly.
         </p>
         <input style={inputStyle} placeholder="Title *" value={title} onChange={e=>setTitle(e.target.value)}/>
         <select style={inputStyle} value={type} onChange={e=>setType(e.target.value)}>
           {RES_TYPES.map(t => <option key={t} value={t}>{(TYPE_ICONS[t]||'📄')} {t}</option>)}
         </select>
-        <input style={inputStyle} placeholder="Link (https://…) *" value={url} onChange={e=>setUrl(e.target.value)}/>
+
+        <div style={{ display:'flex', gap:6, margin:'2px 0 10px' }}>
+          {tabBtn('file','⬆ Upload file')}
+          {tabBtn('link','🔗 Paste link')}
+        </div>
+        {mode === 'file' ? (
+          <div style={{ marginBottom:10 }}>
+            <input type="file"
+              accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt"
+              onChange={e=>setFile(e.target.files?.[0] || null)}
+              style={{ fontFamily:C.sans, fontSize:12, color:C.txt, width:'100%' }}/>
+            {file && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'6px 0 0' }}>{file.name} · {humanSize(file.size)}</p>}
+            <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'6px 0 0', lineHeight:1.4 }}>Images, video, PDF, Word, PowerPoint, Excel, CSV · up to 50 MB.</p>
+          </div>
+        ) : (
+          <input style={inputStyle} placeholder="Link (https://…)" value={url} onChange={e=>setUrl(e.target.value)}/>
+        )}
+
         <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Short description" value={desc} onChange={e=>setDesc(e.target.value)}/>
         <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:12, color:C.txt, margin:'2px 0 12px', cursor:'pointer' }}>
@@ -172,7 +213,9 @@ function AddResourceModal({ session, onClose }) {
           🔐 Restricted — members must request access before downloading
         </label>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
-        <Btn full onClick={submit} disabled={busy || !title.trim() || !url.trim()}>{busy ? 'Submitting…' : 'Submit for review'}</Btn>
+        <Btn full onClick={submit} disabled={busy || !title.trim() || (mode==='file' ? !file : !url.trim())}>
+          {busy ? (mode==='file' ? 'Uploading…' : 'Submitting…') : 'Submit for review'}
+        </Btn>
       </div>
     </div>
   )
