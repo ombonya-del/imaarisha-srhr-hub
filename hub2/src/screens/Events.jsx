@@ -28,6 +28,11 @@ export default function Events({ session }) {
   }
   useEffect(() => { load() }, [user])
 
+  // keep the open event fresh if the list reloads
+  useEffect(() => {
+    if (open) { const fresh = events.find(x => x.id === open.id); if (fresh) setOpen(fresh) }
+  }, [events]) // eslint-disable-line
+
   const today = new Date().toISOString().split('T')[0]
   const upcoming = events.filter(e => (e.end_date || e.event_date) >= today)
   const past = events.filter(e => (e.end_date || e.event_date) < today).reverse()
@@ -89,6 +94,8 @@ export default function Events({ session }) {
     </div>
   )
 
+  if (open) return <EventPage e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onBack={() => setOpen(null)}/>
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
@@ -115,53 +122,66 @@ export default function Events({ session }) {
         </>
       )}
 
-      {open && <EventDetail e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onClose={() => setOpen(null)}/>}
       {posting && <PostEventModal session={session} onClose={() => setPosting(false)}/>}
     </div>
   )
 }
 
-// ── Full event detail (clicking a card opens this) ───────────────────────────
-function EventDetail({ e, myStatus, onRsvp, onClose }) {
+// ── Full event PAGE — clicking a card navigates here (replaces the list) ──────
+function EventPage({ e, myStatus, onRsvp, onBack }) {
   const dates = e.end_date && e.end_date !== e.event_date
     ? `${fmtFull(e.event_date)} – ${fmtFull(e.end_date)}`
     : fmtFull(e.event_date)
+  const isPast = (e.end_date || e.event_date) < new Date().toISOString().split('T')[0]
   return (
-    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
-      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
-      <div onClick={ev => ev.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
-        borderRadius:16, padding:22, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
-          <span style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.14em', textTransform:'uppercase',
-            color:C.mint }}>{e.event_type || 'Event'}{e.is_virtual ? ' · 🌐 Online' : ''}</span>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:C.mut, fontSize:22, cursor:'pointer', lineHeight:1, padding:0 }}>×</button>
-        </div>
-        <h2 style={{ fontFamily:C.serif, fontSize:24, fontWeight:700, color:C.txt, margin:'6px 0 10px', lineHeight:1.15 }}>{e.title}</h2>
+    <div>
+      <button onClick={onBack} style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:C.sans,
+        fontSize:12, fontWeight:800, color:C.mut, background:'none', border:'none', cursor:'pointer',
+        padding:0, marginBottom:16 }}>← All events</button>
 
-        <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:14 }}>
-          <Row icon="📅" text={dates + (e.start_time ? ` · ${e.start_time.slice(0,5)}` : '')}/>
+      <span style={{ display:'inline-block', fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.14em',
+        textTransform:'uppercase', color:isPast ? C.mut : C.mint }}>
+        {e.event_type || 'Event'}{e.is_virtual ? ' · 🌐 Online' : ''}{isPast ? ' · past' : ''}
+      </span>
+      <h1 style={{ fontFamily:C.serif, fontSize:'clamp(28px, 4.5vw, 38px)', fontWeight:700, color:C.txt,
+        margin:'6px 0 4px', lineHeight:1.12, letterSpacing:'-0.01em', overflowWrap:'anywhere' }}>{e.title}</h1>
+      <div style={{ width:64, height:5, borderRadius:3, margin:'0 0 18px',
+        background:`linear-gradient(90deg, ${C.mint}, ${C.mint}22)` }}/>
+
+      <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:14, padding:18, marginBottom:16 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          <Row icon="📅" text={dates + (e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : '')}/>
           {!e.is_virtual && e.location && (
             <Row icon="📍" text={<a href={mapsUrl(e.location)} target="_blank" rel="noopener noreferrer"
-              style={{ color:C.sky, fontWeight:700, textDecoration:'none' }}>{e.location} ↗</a>}/>
+              style={{ color:C.sky, fontWeight:700, textDecoration:'none' }}>{e.location} — open in Maps ↗</a>}/>
           )}
           {e.is_virtual && <Row icon="🌐" text="Online event"/>}
           {e.capacity ? <Row icon="👥" text={`${e.rsvp_count || 0} attending · capacity ${e.capacity}`}/>
                       : <Row icon="👥" text={`${e.rsvp_count || 0} attending`}/>}
           {e.submitter_name && <Row icon="✍️" text={`Posted by ${e.submitter_name}`}/>}
         </div>
+      </div>
 
-        {e.description && <p style={{ fontFamily:C.sans, fontSize:13.5, color:C.txt, lineHeight:1.7, margin:'0 0 14px', whiteSpace:'pre-wrap' }}>{e.description}</p>}
+      {e.description && <p style={{ fontFamily:C.sans, fontSize:14.5, color:C.txt, lineHeight:1.75,
+        margin:'0 0 18px', whiteSpace:'pre-wrap', overflowWrap:'anywhere' }}>{e.description}</p>}
 
-        {e.link && <a href={e.link} target="_blank" rel="noopener noreferrer"
-          style={{ display:'inline-block', fontFamily:C.sans, fontSize:12, fontWeight:800, color:C.mint,
-            textDecoration:'none', marginBottom:14 }}>🔗 Registration / more info ↗</a>}
+      {e.link && <p style={{ margin:'0 0 18px' }}><a href={e.link} target="_blank" rel="noopener noreferrer"
+        style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.mint, textDecoration:'none',
+          overflowWrap:'anywhere' }}>🔗 Registration / more info ↗</a></p>}
 
-        <div style={{ borderTop:`1px solid ${C.line}`, paddingTop:14, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
-          <Btn small color={myStatus === 'going' ? C.mint : C.gold} onClick={() => onRsvp(e, 'going')}>
-            {myStatus === 'going' ? '✓ Going' : '✋ I will attend'}
-          </Btn>
-          <Btn small ghost onClick={() => onRsvp(e, 'maybe')}>{myStatus === 'maybe' ? '✓ Maybe' : 'Maybe'}</Btn>
-        </div>
+      <div style={{ position:'sticky', bottom:0, background:C.bg || C.surf, borderTop:`1px solid ${C.line}`,
+        paddingTop:14, paddingBottom:'max(14px, env(safe-area-inset-bottom))',
+        display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+        {isPast ? (
+          <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>This event has passed.</span>
+        ) : (
+          <>
+            <Btn color={myStatus === 'going' ? C.mint : C.gold} onClick={() => onRsvp(e, 'going')}>
+              {myStatus === 'going' ? '✓ You’re going' : '✋ I will attend'}
+            </Btn>
+            <Btn ghost onClick={() => onRsvp(e, 'maybe')}>{myStatus === 'maybe' ? '✓ Maybe' : 'Maybe'}</Btn>
+          </>
+        )}
       </div>
     </div>
   )

@@ -578,6 +578,7 @@ function ResourceDesk({ onChange }) {
   const [opps, setOpps] = useState([])
   const [evs, setEvs] = useState([])
   const [busy, setBusy] = useState(null)
+  const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
@@ -632,81 +633,111 @@ function ResourceDesk({ onChange }) {
     if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
     setBusy(null)
   }
+  const total = pending.length + reqs.length + opps.length + evs.length
+  const secProps = { openSec, setOpenSec }
+
   return (
     <div>
       <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
         Everything members submit — resources, opportunities and events — lands here first. Nothing goes live until you approve it.
+        {total === 0 ? ' Every queue is clear right now. 🎉' : ` ${total} item${total===1?'':'s'} waiting — tap a section to review.`}
       </p>
-      {pending.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — nothing waiting. 🎉</p>}
-      {pending.map(r => (
-        <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.sky}`, borderRadius:12, padding:14, marginBottom:10 }}>
-          <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 3px' }}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
-          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
-            {r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}
-          </p>
-          {r.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{r.description}</p>}
-          {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.sky, textDecoration:'none' }}>Preview link ↗</a>}
-          <div style={{ display:'flex', gap:8, marginTop:10 }}>
-            <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
-            <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
-          </div>
-        </div>
-      ))}
 
-      <div style={{ height:18 }}/>
-      <SectionLabel color={C.coral}>🔐 Download access requests ({reqs.length})</SectionLabel>
-      {reqs.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No access requests waiting.</p>}
-      {reqs.map(rq => (
-        <div key={rq.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.coral}`, borderRadius:12, padding:14, marginBottom:10 }}>
-          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{rq.resource_title || 'Resource'}</p>
-          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
-            {rq.requester_name || 'A member'}{rq.org ? ` · ${rq.org}` : ''} · {timeAgo(rq.created_at)}
-          </p>
-          {rq.reason && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>“{rq.reason}”</p>}
-          <div style={{ display:'flex', gap:8 }}>
-            <Btn small color={C.mint} onClick={()=>decideReq(rq,'approved')} disabled={busy===rq.id}>{busy===rq.id ? '…' : '✓ Grant access'}</Btn>
-            <Btn small ghost color={C.coral} onClick={()=>decideReq(rq,'denied')} disabled={busy===rq.id}>✕ Deny</Btn>
+      <Section id="resources" color={C.sky} icon="📚" label="Resource submissions" count={pending.length} {...secProps}>
+        {pending.map(r => (
+          <div key={r.id} style={cardS(C.sky)}>
+            <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
+            <p style={metaS}>{r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
+            {r.description && <p style={descS}>{r.description}</p>}
+            {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.sky)}>Preview link ↗</a>}
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
+              <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </Section>
 
-      <div style={{ height:18 }}/>
-      <SectionLabel color={C.lilac}>🎯 Opportunity submissions ({opps.length})</SectionLabel>
-      {opps.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No opportunities waiting.</p>}
-      {opps.map(o => (
-        <div key={o.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:14, marginBottom:10 }}>
-          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{o.title}</p>
-          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
-            {o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}
-          </p>
-          {o.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{o.description}</p>}
-          {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.lilac, textDecoration:'none' }}>Preview link ↗</a>}
-          <div style={{ display:'flex', gap:8, marginTop:10 }}>
-            <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
-            <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
+      <Section id="reqs" color={C.coral} icon="🔐" label="Download access requests" count={reqs.length} {...secProps}>
+        {reqs.map(rq => (
+          <div key={rq.id} style={cardS(C.coral)}>
+            <p style={ttlS}>{rq.resource_title || 'Resource'}</p>
+            <p style={metaS}>{rq.requester_name || 'A member'}{rq.org ? ` · ${rq.org}` : ''} · {timeAgo(rq.created_at)}</p>
+            {rq.reason && <p style={descS}>“{rq.reason}”</p>}
+            <div style={{ display:'flex', gap:8 }}>
+              <Btn small color={C.mint} onClick={()=>decideReq(rq,'approved')} disabled={busy===rq.id}>{busy===rq.id ? '…' : '✓ Grant access'}</Btn>
+              <Btn small ghost color={C.coral} onClick={()=>decideReq(rq,'denied')} disabled={busy===rq.id}>✕ Deny</Btn>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </Section>
 
-      <div style={{ height:18 }}/>
-      <SectionLabel color={C.mint}>📅 Event submissions ({evs.length})</SectionLabel>
-      {evs.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No events waiting.</p>}
-      {evs.map(e => (
-        <div key={e.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`, borderRadius:12, padding:14, marginBottom:10 }}>
-          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{e.title}</p>
-          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
-            {e.event_type || 'Event'} · {e.event_date}{e.end_date && e.end_date !== e.event_date ? `–${e.end_date}` : ''}
-            {e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : ''}
-            {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''} · by {e.submitter_name || 'a member'}
-          </p>
-          {e.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{e.description}</p>}
-          {e.link && <a href={e.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.mint, textDecoration:'none' }}>Registration link ↗</a>}
-          <div style={{ display:'flex', gap:8, marginTop:10 }}>
-            <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
-            <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
+      <Section id="opps" color={C.lilac} icon="🎯" label="Opportunity submissions" count={opps.length} {...secProps}>
+        {opps.map(o => (
+          <div key={o.id} style={cardS(C.lilac)}>
+            <p style={ttlS}>{o.title}</p>
+            <p style={metaS}>{o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}</p>
+            {o.description && <p style={descS}>{o.description}</p>}
+            {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={linkS(C.lilac)}>Preview link ↗</a>}
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
+              <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </Section>
+
+      <Section id="evs" color={C.mint} icon="📅" label="Event submissions" count={evs.length} {...secProps}>
+        {evs.map(e => (
+          <div key={e.id} style={cardS(C.mint)}>
+            <p style={ttlS}>{e.title}</p>
+            <p style={metaS}>
+              {e.event_type || 'Event'} · {e.event_date}{e.end_date && e.end_date !== e.event_date ? `–${e.end_date}` : ''}
+              {e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : ''}
+              {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''} · by {e.submitter_name || 'a member'}
+            </p>
+            {e.description && <p style={descS}>{e.description}</p>}
+            {e.link && <a href={e.link} target="_blank" rel="noopener noreferrer" style={linkS(C.mint)}>Registration link ↗</a>}
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
+              <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
+            </div>
+          </div>
+        ))}
+      </Section>
     </div>
   )
 }
+
+// Collapsible queue section for the submissions desk (one open at a time)
+function Section({ id, color, icon, label, count, children, openSec, setOpenSec }) {
+  const open = openSec === id
+  return (
+    <div style={{ border:`1px solid ${C.line}`, borderRadius:12, marginBottom:10, overflow:'hidden' }}>
+      <button onClick={() => setOpenSec(open ? null : id)}
+        aria-expanded={open}
+        style={{ width:'100%', display:'flex', alignItems:'center', gap:10, textAlign:'left', cursor:'pointer',
+          background: open ? C.card2 : C.card, border:'none', borderLeft:`3px solid ${color}`, padding:'13px 14px' }}>
+        <span style={{ fontSize:15, flexShrink:0 }}>{icon}</span>
+        <span style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, flex:1 }}>{label}</span>
+        <span style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:'#fff', borderRadius:20,
+          padding:'1px 9px', background: count > 0 ? color : C.line, minWidth:18, textAlign:'center' }}>{count}</span>
+        <span style={{ color:C.mut, fontSize:11, transform: open ? 'rotate(180deg)' : 'none', transition:'transform .15s' }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ padding:'12px 14px 4px' }}>
+          {count === 0
+            ? <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic', margin:'0 0 10px' }}>Nothing waiting here.</p>
+            : children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// shared card styles for the desk
+const cardS = (c) => ({ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${c}`, borderRadius:12, padding:14, marginBottom:10 })
+const ttlS  = { fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }
+const metaS = { fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }
+const descS = { fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }
+const linkS = (c) => ({ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:c, textDecoration:'none' })
