@@ -9,14 +9,17 @@ export default function Admin({ session }) {
 
   const loadCounts = async () => {
     const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
-    const [u, r, g, n, res] = await Promise.all([
+    const [u, r, g, n, res, opp, ev] = await Promise.all([
       head('uliza_questions', 'pending'),
       head('fika_reviews', 'pending'),
       head('fika_suggestions', 'pending'),
       head('unado_posts', 'pending'),
       head('resources', 'pending'),
+      head('opportunities', 'pending'),
+      head('events', 'pending'),
     ])
-    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0, resources: res.count || 0 })
+    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0,
+      resources: (res.count || 0) + (opp.count || 0) + (ev.count || 0) })
   }
   useEffect(() => { loadCounts() }, [view])
 
@@ -573,6 +576,7 @@ function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
   const [reqs, setReqs] = useState([])
   const [opps, setOpps] = useState([])
+  const [evs, setEvs] = useState([])
   const [busy, setBusy] = useState(null)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
@@ -581,8 +585,22 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setReqs(data || []))
     sb.from('opportunities').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => setOpps(data || []))
+    sb.from('events').select('*').eq('status','pending').order('event_date',{ascending:true})
+      .then(({data}) => setEvs(data || []))
   }
   useEffect(() => { load() }, [])
+  const decideEvent = async (e, approve) => {
+    setBusy(e.id)
+    if (approve) {
+      const { error } = await sb.from('events').update({ status:'approved' }).eq('id', e.id)
+      if (error) toast(error.message,'red'); else { toast('✓ Published to the Events calendar','green'); load(); onChange?.() }
+    } else {
+      if (!confirm(`Reject "${e.title}"?`)) { setBusy(null); return }
+      const { error } = await sb.from('events').delete().eq('id', e.id)
+      if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load(); onChange?.() }
+    }
+    setBusy(null)
+  }
   const decideOpp = async (o, approve) => {
     setBusy(o.id)
     if (approve) {
@@ -617,7 +635,7 @@ function ResourceDesk({ onChange }) {
   return (
     <div>
       <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
-        Resources members submitted with the ＋ Add resource button. Nothing appears in the Exchange until you approve it.
+        Everything members submit — resources, opportunities and events — lands here first. Nothing goes live until you approve it.
       </p>
       {pending.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — nothing waiting. 🎉</p>}
       {pending.map(r => (
@@ -666,6 +684,26 @@ function ResourceDesk({ onChange }) {
           <div style={{ display:'flex', gap:8, marginTop:10 }}>
             <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
             <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ height:18 }}/>
+      <SectionLabel color={C.mint}>📅 Event submissions ({evs.length})</SectionLabel>
+      {evs.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No events waiting.</p>}
+      {evs.map(e => (
+        <div key={e.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`, borderRadius:12, padding:14, marginBottom:10 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{e.title}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
+            {e.event_type || 'Event'} · {e.event_date}{e.end_date && e.end_date !== e.event_date ? `–${e.end_date}` : ''}
+            {e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : ''}
+            {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''} · by {e.submitter_name || 'a member'}
+          </p>
+          {e.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{e.description}</p>}
+          {e.link && <a href={e.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.mint, textDecoration:'none' }}>Registration link ↗</a>}
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
           </div>
         </div>
       ))}
