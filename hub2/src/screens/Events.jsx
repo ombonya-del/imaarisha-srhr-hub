@@ -8,6 +8,8 @@ const fmtFull  = (d) => new Date(d + 'T00:00:00').toLocaleDateString(['en-KE','e
 
 const EVENT_TYPES = ['Convening','Training','Webinar','Workshop','Conference','March / action','Launch','Community dialogue','Other']
 const mapsUrl = (loc) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`
+// user-entered links may lack a scheme ("example.com") — make them real URLs
+const withHttp = (u) => !u ? '' : (/^https?:\/\//i.test(u) ? u : 'https://' + String(u).replace(/^\/+/, ''))
 
 export default function Events({ session, go, eventId }) {
   const { user, name } = session
@@ -74,9 +76,12 @@ export default function Events({ session, go, eventId }) {
     </div>
   )
 
+  // Clicking an event goes to its real website when it has one; otherwise it
+  // opens the in-hub detail page.
   const Card = ({ e }) => (
-    <div onClick={() => openEvent(e)} role="button" tabIndex={0}
-      onKeyDown={ev => { if (ev.key === 'Enter') openEvent(e) }}
+    <div onClick={() => e.link ? window.open(withHttp(e.link), '_blank', 'noopener,noreferrer') : openEvent(e)}
+      role="button" tabIndex={0}
+      onKeyDown={ev => { if (ev.key === 'Enter') (e.link ? window.open(withHttp(e.link), '_blank', 'noopener,noreferrer') : openEvent(e)) }}
       style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:16,
         marginBottom:9, display:'flex', gap:14, cursor:'pointer', transition:'border-color .15s' }}
       onMouseEnter={ev => ev.currentTarget.style.borderColor = C.mint}
@@ -97,13 +102,21 @@ export default function Events({ session, go, eventId }) {
         {e.description && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'0 0 8px', lineHeight:1.55 }}>{e.description.slice(0,150)}{e.description?.length > 150 ? '…' : ''}</p>}
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', justifyContent:'space-between' }}>
           <div onClick={ev => ev.stopPropagation()}><RsvpRow e={e}/></div>
-          <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.mint, whiteSpace:'nowrap' }}>Open event →</span>
+          <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+            {e.link && <button onClick={ev => { ev.stopPropagation(); openEvent(e) }}
+              style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, background:'none',
+                border:'none', cursor:'pointer', padding:0 }}>Details</button>}
+            <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.mint, whiteSpace:'nowrap' }}>
+              {e.link ? 'Visit event page ↗' : 'Open event →'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
   )
 
-  if (open) return <EventPage e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onBack={backToList}/>
+  if (open) return <EventPage e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onBack={backToList}
+    isAdmin={session.isAdmin} onLinkSaved={(url) => { setOpen(o => ({ ...o, link: url })); load() }}/>
 
   return (
     <div>
@@ -137,11 +150,23 @@ export default function Events({ session, go, eventId }) {
 }
 
 // ── Full event PAGE — clicking a card navigates here (replaces the list) ──────
-function EventPage({ e, myStatus, onRsvp, onBack }) {
+function EventPage({ e, myStatus, onRsvp, onBack, isAdmin, onLinkSaved }) {
+  const [editing, setEditing] = useState(false)
+  const [linkVal, setLinkVal] = useState(e.link || '')
+  const [savingLink, setSavingLink] = useState(false)
   const dates = e.end_date && e.end_date !== e.event_date
     ? `${fmtFull(e.event_date)} – ${fmtFull(e.end_date)}`
     : fmtFull(e.event_date)
   const isPast = (e.end_date || e.event_date) < new Date().toISOString().split('T')[0]
+  const saveLink = async () => {
+    const url = linkVal.trim() ? withHttp(linkVal.trim()) : null
+    setSavingLink(true)
+    const { error } = await sb.from('events').update({ link: url }).eq('id', e.id)
+    setSavingLink(false)
+    if (error) { toast(error.message, 'red'); return }
+    toast(url ? '✓ Event website saved' : 'Website link removed', 'green')
+    setEditing(false); onLinkSaved && onLinkSaved(url)
+  }
   const share = async () => {
     const url = `${window.location.origin}/#event/${e.id}`
     try {
@@ -185,9 +210,34 @@ function EventPage({ e, myStatus, onRsvp, onBack }) {
       {e.description && <p style={{ fontFamily:C.sans, fontSize:14.5, color:C.txt, lineHeight:1.75,
         margin:'0 0 18px', whiteSpace:'pre-wrap', overflowWrap:'anywhere' }}>{e.description}</p>}
 
-      {e.link && <p style={{ margin:'0 0 18px' }}><a href={e.link} target="_blank" rel="noopener noreferrer"
-        style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.mint, textDecoration:'none',
-          overflowWrap:'anywhere' }}>🔗 Registration / more info ↗</a></p>}
+      {e.link && (
+        <a href={withHttp(e.link)} target="_blank" rel="noopener noreferrer"
+          style={{ display:'block', textAlign:'center', fontFamily:C.sans, fontSize:14, fontWeight:800,
+            color:'#fff', textDecoration:'none', background:'linear-gradient(135deg, #3E9B4F, #2E7D3E)',
+            borderRadius:10, padding:'13px 20px', marginBottom:14, boxShadow:'0 3px 10px rgba(62,155,79,0.28)' }}>
+          🔗 Visit the event website ↗
+        </a>
+      )}
+
+      {isAdmin && (
+        <div style={{ marginBottom:18 }}>
+          {!editing ? (
+            <button onClick={() => { setLinkVal(e.link || ''); setEditing(true) }}
+              style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.lilac, background:'none',
+                border:`1px dashed ${C.line}`, borderRadius:8, cursor:'pointer', padding:'7px 12px' }}>
+              👑 {e.link ? 'Edit event website link' : '＋ Add the event website link'}
+            </button>
+          ) : (
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+              <input value={linkVal} onChange={ev => setLinkVal(ev.target.value)} autoFocus
+                placeholder="https://the-event-website.org"
+                style={{ ...inputStyle, marginBottom:0, flex:1, minWidth:200 }}/>
+              <Btn small color={C.mint} onClick={saveLink} disabled={savingLink}>{savingLink ? 'Saving…' : 'Save'}</Btn>
+              <Btn small ghost onClick={() => setEditing(false)}>Cancel</Btn>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ position:'sticky', bottom:0, background:C.bg || C.surf, borderTop:`1px solid ${C.line}`,
         paddingTop:14, paddingBottom:'max(14px, env(safe-area-inset-bottom))',
@@ -285,7 +335,7 @@ function PostEventModal({ session, onClose }) {
           🌐 This is an online event
         </label>
         {!virtual && <input style={inputStyle} placeholder="📍 Location (venue, city)" value={location} onChange={e=>setLocation(e.target.value)}/>}
-        <input style={inputStyle} placeholder={virtual ? 'Join / registration link (https://…)' : 'Registration / more-info link (optional)'} value={link} onChange={e=>setLink(e.target.value)}/>
+        <input style={inputStyle} placeholder={virtual ? 'Event website / join link (https://…)' : 'Event website link (where people register) — recommended'} value={link} onChange={e=>setLink(e.target.value)}/>
         <input style={inputStyle} type="number" min="0" placeholder="Capacity (optional)" value={capacity} onChange={e=>setCapacity(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="What's it about? Who should come?" value={desc} onChange={e=>setDesc(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
