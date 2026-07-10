@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, logActivity, toast } from '../lib/supabase'
-import { ScreenTitle, Chip, Btn } from '../lib/components'
+import { ScreenTitle, Chip, Btn, inputStyle } from '../lib/components'
 
 const TYPE_ICONS = { report:'📊', toolkit:'🧰', research:'🔬', policy:'📜', guide:'📘', data:'📈', video:'🎬', link:'🔗' }
+const RES_TYPES = ['report','toolkit','research','policy','guide','data','video','link']
 
 export default function Exchange({ session }) {
   const { user, name, isAdmin } = session
@@ -10,9 +11,10 @@ export default function Exchange({ session }) {
   const [resources, setResources] = useState([])
   const [listings, setListings] = useState([])
   const [orgs, setOrgs] = useState([])
+  const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
-    sb.from('resources').select('*').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
+    sb.from('resources').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
     sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
   }, [])
@@ -36,10 +38,19 @@ export default function Exchange({ session }) {
       <ScreenTitle kicker="Exchange" title="Resources, offers & the network"
         sub="Open it, share it, build with it. Every open and share is counted — evidence of a living commons."/>
 
-      <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+      {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
+
+      <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
         {[['resources','📚 Resources'],['market','⇄ Marketplace'],['directory','🏛 Directory']].map(([k,l]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>{l}</Chip>
         ))}
+        {view === 'resources' && user && (
+          <button onClick={()=>setAddOpen(true)}
+            style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:11.5, fontWeight:800, padding:'7px 14px',
+              borderRadius:16, border:'none', background:C.mint, color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
+            ＋ Add resource
+          </button>
+        )}
       </div>
 
       {view === 'resources' && (
@@ -101,3 +112,56 @@ export default function Exchange({ session }) {
   )
 }
 const Empty = () => <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing here yet.</p>
+
+// ── Add resource: any member submits; it stays pending until an admin approves ─
+function AddResourceModal({ session, onClose }) {
+  const [title, setTitle] = useState('')
+  const [type, setType] = useState('report')
+  const [desc, setDesc] = useState('')
+  const [org, setOrg] = useState('')
+  const [url, setUrl] = useState('')
+  const [restricted, setRestricted] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const submit = async () => {
+    if (!title.trim() || !url.trim()) { setMsg('Title and a link are required.'); return }
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('resources').insert({
+      title: title.trim(), type, description: desc.trim() || null,
+      source_org: org.trim() || null, file_url: url.trim(), is_restricted: restricted,
+      status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
+    })
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    logActivity('resource_upload', `📤 ${session.name || 'A member'} submitted a resource for review: ${title.trim()}`, title.trim(), 'gold')
+    toast('✓ Submitted — an admin reviews it before it goes live', 'green')
+    onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
+        borderRadius:16, padding:22, width:'100%', maxWidth:420, maxHeight:'90vh', overflowY:'auto' }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Add a resource</p>
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
+          Share a report, toolkit, dataset or link with the collective. An admin reviews it before it appears publicly.
+        </p>
+        <input style={inputStyle} placeholder="Title *" value={title} onChange={e=>setTitle(e.target.value)}/>
+        <select style={inputStyle} value={type} onChange={e=>setType(e.target.value)}>
+          {RES_TYPES.map(t => <option key={t} value={t}>{(TYPE_ICONS[t]||'📄')} {t}</option>)}
+        </select>
+        <input style={inputStyle} placeholder="Link (https://…) *" value={url} onChange={e=>setUrl(e.target.value)}/>
+        <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Short description" value={desc} onChange={e=>setDesc(e.target.value)}/>
+        <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:12, color:C.txt, margin:'2px 0 12px', cursor:'pointer' }}>
+          <input type="checkbox" checked={restricted} onChange={e=>setRestricted(e.target.checked)}/>
+          🔐 Restricted — members must request access before downloading
+        </label>
+        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
+        <Btn full onClick={submit} disabled={busy || !title.trim() || !url.trim()}>{busy ? 'Submitting…' : 'Submit for review'}</Btn>
+      </div>
+    </div>
+  )
+}

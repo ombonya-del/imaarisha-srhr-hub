@@ -5,17 +5,18 @@ import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/compone
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session }) {
   const [view, setView] = useState('activity')
-  const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0 })
+  const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0, resources: 0 })
 
   const loadCounts = async () => {
     const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
-    const [u, r, g, n] = await Promise.all([
+    const [u, r, g, n, res] = await Promise.all([
       head('uliza_questions', 'pending'),
       head('fika_reviews', 'pending'),
       head('fika_suggestions', 'pending'),
       head('unado_posts', 'pending'),
+      head('resources', 'pending'),
     ])
-    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0 })
+    setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0, resources: res.count || 0 })
   }
   useEffect(() => { loadCounts() }, [view])
 
@@ -25,6 +26,7 @@ export default function Admin({ session }) {
         sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
+          ['resources','📚 Submissions',counts.resources],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
           ['unado','📸 UnaDO?',counts.unado]].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
@@ -32,12 +34,13 @@ export default function Admin({ session }) {
           </Chip>
         ))}
       </div>
-      {view === 'activity' && <Activity/>}
-      {view === 'metrics'  && <Metrics/>}
-      {view === 'members'  && <Members/>}
-      {view === 'uliza'    && <UlizaDesk session={session} onChange={loadCounts}/>}
-      {view === 'fika'     && <FikaDesk onChange={loadCounts}/>}
-      {view === 'unado'    && <UnadoDesk session={session} onChange={loadCounts}/>}
+      {view === 'activity'  && <Activity/>}
+      {view === 'metrics'   && <Metrics/>}
+      {view === 'members'   && <Members/>}
+      {view === 'resources' && <ResourceDesk onChange={loadCounts}/>}
+      {view === 'uliza'     && <UlizaDesk session={session} onChange={loadCounts}/>}
+      {view === 'fika'      && <FikaDesk onChange={loadCounts}/>}
+      {view === 'unado'     && <UnadoDesk session={session} onChange={loadCounts}/>}
     </div>
   )
 }
@@ -558,6 +561,50 @@ function UnadoDesk({ session, onChange }) {
             <Btn small onClick={()=>approve(p)} disabled={busy===p.id} color={C.mint}>{busy===p.id ? 'Working…' : '✓ Approve'}</Btn>
             <Btn small ghost onClick={()=>hide(p)}>🚫 Hide</Btn>
             <Btn small ghost color={C.coral} onClick={()=>del(p)}>🗑 Delete</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Resource submissions desk — approve members' resource uploads ────────────
+function ResourceDesk({ onChange }) {
+  const [pending, setPending] = useState([])
+  const [busy, setBusy] = useState(null)
+  const load = () => sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
+    .then(({data}) => { setPending(data || []); onChange?.() })
+  useEffect(() => { load() }, [])
+  const approve = async (r) => {
+    setBusy(r.id)
+    const { error } = await sb.from('resources').update({ status:'approved' }).eq('id', r.id)
+    if (error) toast(error.message,'red'); else { toast('✓ Published to the Exchange','green'); load() }
+    setBusy(null)
+  }
+  const reject = async (r) => {
+    if (!confirm(`Reject "${r.title}"? This deletes the submission.`)) return
+    setBusy(r.id)
+    const { error } = await sb.from('resources').delete().eq('id', r.id)
+    if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
+    setBusy(null)
+  }
+  return (
+    <div>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+        Resources members submitted with the ＋ Add resource button. Nothing appears in the Exchange until you approve it.
+      </p>
+      {pending.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — nothing waiting. 🎉</p>}
+      {pending.map(r => (
+        <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.sky}`, borderRadius:12, padding:14, marginBottom:10 }}>
+          <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 3px' }}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
+            {r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}
+          </p>
+          {r.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{r.description}</p>}
+          {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.sky, textDecoration:'none' }}>Preview link ↗</a>}
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
           </div>
         </div>
       ))}
