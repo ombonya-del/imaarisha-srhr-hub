@@ -145,9 +145,11 @@ function Members() {
   const [editOrg, setEditOrg] = useState(null)       // { id, name, short_name, focus_area }
   const [editMember, setEditMember] = useState(null) // { id, full_name }
 
+  const [invites, setInvites] = useState([])
   const loadProfiles = () => sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(300).then(({data}) => setProfiles(data || []))
   const loadOrgs = () => sb.from('organizations').select('*').order('short_name').then(({data}) => setOrgs(data || []))
-  useEffect(() => { loadProfiles(); loadOrgs() }, [])
+  const loadInvites = () => sb.from('member_invites').select('*').eq('status','pending').order('created_at',{ascending:false}).then(({data}) => setInvites(data || []))
+  useEffect(() => { loadProfiles(); loadOrgs(); loadInvites() }, [])
 
   const eIn = { fontFamily:C.sans, fontSize:12, padding:'5px 8px', borderRadius:7, border:`1px solid ${C.line}`, background:'#fff', color:C.txt, minWidth:0 }
 
@@ -194,6 +196,10 @@ function Members() {
     const { error } = await sb.from('profiles').delete().eq('id', p.id)
     if (error) toast(error.message,'red'); else { toast('Request rejected','gold'); loadProfiles() }
   }
+  const dismissInvite = async (iv) => {
+    const { error } = await sb.from('member_invites').update({ status: 'declined' }).eq('id', iv.id)
+    if (error) toast(error.message,'red'); else { toast('Recommendation dismissed','gold'); loadInvites() }
+  }
 
   const pending = orgs.filter(o => !o.approved)
   const approved = orgs.filter(o => o.approved)
@@ -220,6 +226,28 @@ function Members() {
             <Btn small color={C.mint} onClick={()=>approveMember(p)}>✓ Approve</Btn>
             <Btn small ghost color={C.coral} onClick={()=>rejectMember(p)}>✕ Reject</Btn>
           </span>
+        </div>
+      ))}
+      <div style={{ height:16 }}/>
+
+      {/* Member recommendations put forward by existing members */}
+      <SectionLabel color={C.lilac}>🤝 Member recommendations ({invites.length})</SectionLabel>
+      {invites.length === 0 ? (
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+          None yet. Members put people forward with the ＋ Invite button; they appear here for context when you review the request.
+        </p>
+      ) : invites.map(iv => (
+        <div key={iv.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, padding:'10px 0', borderBottom:`1px solid ${C.line}` }}>
+          <div style={{ minWidth:0 }}>
+            <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, margin:0 }}>
+              {iv.invitee_name || iv.email}{iv.org ? <span style={{ color:C.mut, fontWeight:400 }}> · {iv.org}</span> : null}
+            </p>
+            <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'1px 0 0' }}>
+              {iv.email} · by {iv.recommender_name || 'a member'} · {timeAgo(iv.created_at)}
+            </p>
+            {iv.note && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'3px 0 0', lineHeight:1.5, fontStyle:'italic' }}>“{iv.note}”</p>}
+          </div>
+          <Btn small ghost color={C.coral} onClick={()=>dismissInvite(iv)}>✕</Btn>
         </div>
       ))}
       <div style={{ height:16 }}/>

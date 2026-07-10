@@ -27,6 +27,7 @@ export default function App() {
   const session = useSession()
   const [tab, setTab] = useState('pulse')
   const [authOpen, setAuthOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900)
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function App() {
         background:'linear-gradient(90deg, #E8B14B 0%, #D99A26 25%, #3E9B4F 55%, #E2552F 100%)' }}/>
       <Toasts/>
       {authOpen && <AuthModal onClose={()=>setAuthOpen(false)}/>}
+      {inviteOpen && <InviteModal session={session} onClose={()=>setInviteOpen(false)}/>}
 
       {/* ── Top bar ── */}
       <header style={{ position:'sticky', top:4, zIndex:10, background:'rgba(34,39,54,0.96)',
@@ -116,6 +118,12 @@ export default function App() {
           )}
 
           <div style={{ marginLeft: isDesktop ? 0 : 'auto', display:'flex', alignItems:'center', gap:8 }}>
+            <button onClick={()=>setInviteOpen(true)} title="Recommend a member to join"
+              style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'6px 12px', borderRadius:16,
+                border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8',
+                cursor:'pointer', whiteSpace:'nowrap' }}>
+              ＋ Invite
+            </button>
             {session.user ? (
               <button onClick={async()=>{ await sb.auth.signOut(); toast('Signed out', 'gold') }}
                 title={session.name}
@@ -232,6 +240,47 @@ function AuthModal({ onClose }) {
       <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
         borderRadius:16, padding:22, width:'100%', maxWidth:380 }}>
         <AuthForm onSignedIn={onClose}/>
+      </div>
+    </div>
+  )
+}
+
+// ── Recommend a member: any approved member can put someone forward ──────────
+function InviteModal({ session, onClose }) {
+  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
+  const [org, setOrg] = useState('')
+  const [note, setNote] = useState('')
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const submit = async () => {
+    if (!email.trim()) return
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('member_invites').insert({
+      email: email.trim(), invitee_name: name.trim() || null, org: org.trim() || null,
+      note: note.trim() || null, recommended_by: session.user?.id, recommender_name: session.name || null,
+    })
+    setBusy(false)
+    if (error) setMsg(error.message)
+    else { toast('✓ Recommendation submitted — an admin will review', 'green'); onClose() }
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
+        borderRadius:16, padding:22, width:'100%', maxWidth:400 }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Recommend a member</p>
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
+          Put someone you trust forward to join. An admin reviews every recommendation before access is granted.
+        </p>
+        <input style={inputStyle} type="email" placeholder="Their email *" value={email} onChange={e=>setEmail(e.target.value)}/>
+        <input style={inputStyle} placeholder="Their name" value={name} onChange={e=>setName(e.target.value)}/>
+        <input style={inputStyle} placeholder="Their organization" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Why they'd be a trusted member" value={note} onChange={e=>setNote(e.target.value)}/>
+        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
+        <Btn full onClick={submit} disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Submit recommendation'}</Btn>
       </div>
     </div>
   )
