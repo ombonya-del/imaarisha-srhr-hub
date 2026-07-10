@@ -12,12 +12,21 @@ export default function Exchange({ session }) {
   const [listings, setListings] = useState([])
   const [orgs, setOrgs] = useState([])
   const [addOpen, setAddOpen] = useState(false)
+  const [myReq, setMyReq] = useState({})      // resource_id -> status (pending|approved|denied)
+  const [reqFor, setReqFor] = useState(null)  // the resource being requested
 
+  const loadMyReq = () => {
+    if (!user) return
+    sb.from('resource_requests').select('resource_id,status').eq('requester_id', user.id).then(({data}) => {
+      const m = {}; (data||[]).forEach(x => { if (m[x.resource_id] !== 'approved') m[x.resource_id] = x.status }); setMyReq(m)
+    })
+  }
   useEffect(() => {
     sb.from('resources').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
     sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
   }, [])
+  useEffect(() => { loadMyReq() }, [user])
 
   // Every open + share is logged to activity_log → quantifiable from the admin portal
   const trackOpen = (r) => logActivity('resource_upload', `📂 ${name || 'A visitor'} opened resource: ${r.title}`, r.title, 'gold')
@@ -27,11 +36,14 @@ export default function Exchange({ session }) {
     if (navigator.share) { try { await navigator.share({ title: r.title, url }) } catch {} }
     else { try { await navigator.clipboard.writeText(url); toast('✓ Link copied — paste anywhere', 'green') } catch {} }
   }
-  const requestAccess = async (r) => {
-    if (!user) { toast('Sign in to request access', 'red'); return }
-    await logActivity('resource_upload', `🔐 Access request: ${name} requested access to "${r.title}"`, r.title, 'red')
-    toast('✓ Request sent — the admin will be in touch', 'green')
-  }
+  const openRequest = (r) => { if (!user) { toast('Sign in to request access', 'red'); return } setReqFor(r) }
+  const DL = (r) => (
+    <a href={r.file_url} target="_blank" rel="noopener noreferrer" onClick={()=>trackOpen(r)}
+      style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'7px 14px', borderRadius:10,
+        background:C.gold, color:'#171204', textDecoration:'none' }}>
+      {r.file_url && r.file_url.startsWith('http') && !r.file_url.includes('supabase') ? '🔗 Open' : '⬇ Download'}
+    </a>
+  )
 
   return (
     <div>
@@ -39,6 +51,7 @@ export default function Exchange({ session }) {
         sub="Open it, share it, build with it. Every open and share is counted — evidence of a living commons."/>
 
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
+      {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}/>}
 
       <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
         {[['resources','📚 Resources'],['market','⇄ Marketplace'],['directory','🏛 Directory']].map(([k,l]) => (
@@ -68,13 +81,12 @@ export default function Exchange({ session }) {
                 {r.source_org || ''}{r.file_type ? ` · ${r.file_type}` : ''}{r.file_size ? ` · ${r.file_size}` : ''} · {timeAgo(r.created_at)}
               </p>
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {r.is_restricted
-                  ? <Btn small color={C.coral} onClick={()=>requestAccess(r)}>🔐 Request access</Btn>
-                  : r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" onClick={()=>trackOpen(r)}
-                      style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'7px 14px', borderRadius:10,
-                        background:C.gold, color:'#171204', textDecoration:'none' }}>
-                      {r.file_url.startsWith('http') && !r.file_url.includes('supabase') ? '🔗 Open' : '⬇ Download'}
-                    </a>}
+                {r.is_restricted && !isAdmin ? (
+                  myReq[r.id] === 'approved' ? (r.file_url && DL(r))
+                  : myReq[r.id] === 'pending' ? <Btn small ghost disabled>⏳ Request pending</Btn>
+                  : myReq[r.id] === 'denied'  ? <Btn small ghost color={C.coral} onClick={()=>openRequest(r)}>Denied · ask again</Btn>
+                  : <Btn small color={C.coral} onClick={()=>openRequest(r)}>🔐 Request access</Btn>
+                ) : (r.file_url && DL(r))}
                 <Btn small ghost onClick={()=>share(r)}>↗ Share</Btn>
                 {isAdmin && <Btn small ghost color={C.coral} onClick={async()=>{
                   if (!confirm('Delete resource?')) return
@@ -161,6 +173,48 @@ function AddResourceModal({ session, onClose }) {
         </label>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
         <Btn full onClick={submit} disabled={busy || !title.trim() || !url.trim()}>{busy ? 'Submitting…' : 'Submit for review'}</Btn>
+      </div>
+    </div>
+  )
+}
+
+// ── Request access to a restricted resource (name / org / reason → admin) ─────
+function RequestAccessModal({ session, resource, onClose, onDone }) {
+  const [reqName, setReqName] = useState(session.name || '')
+  const [org, setOrg] = useState('')
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const submit = async () => {
+    if (!reqName.trim() || !reason.trim()) { setMsg('Your name and a reason are required.'); return }
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('resource_requests').insert({
+      resource_id: String(resource.id), resource_title: resource.title,
+      requester_id: session.user?.id, requester_name: reqName.trim(),
+      org: org.trim() || null, reason: reason.trim(), status: 'pending',
+    })
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    logActivity('resource_upload', `\u{1F510} ${reqName.trim()} requested access to "${resource.title}"`, resource.title, 'red')
+    toast('✓ Request sent — an admin will review it', 'green')
+    onDone && onDone(); onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
+        borderRadius:16, padding:22, width:'100%', maxWidth:400 }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Request access</p>
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
+          "{resource.title}" is restricted. Tell us who you are and how you'll use it — an admin approves before you can download.
+        </p>
+        <input style={inputStyle} placeholder="Your name *" value={reqName} onChange={e=>setReqName(e.target.value)}/>
+        <input style={inputStyle} placeholder="Your organization" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="Why you want it / how you'll use it *" value={reason} onChange={e=>setReason(e.target.value)}/>
+        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
+        <Btn full onClick={submit} disabled={busy || !reqName.trim() || !reason.trim()}>{busy ? 'Sending…' : 'Send request'}</Btn>
       </div>
     </div>
   )

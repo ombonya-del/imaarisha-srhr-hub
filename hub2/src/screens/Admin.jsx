@@ -571,10 +571,21 @@ function UnadoDesk({ session, onChange }) {
 // ── Resource submissions desk — approve members' resource uploads ────────────
 function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
+  const [reqs, setReqs] = useState([])
   const [busy, setBusy] = useState(null)
-  const load = () => sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
-    .then(({data}) => { setPending(data || []); onChange?.() })
+  const load = () => {
+    sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
+      .then(({data}) => { setPending(data || []); onChange?.() })
+    sb.from('resource_requests').select('*').eq('status','pending').order('created_at',{ascending:true})
+      .then(({data}) => setReqs(data || []))
+  }
   useEffect(() => { load() }, [])
+  const decideReq = async (rq, status) => {
+    setBusy(rq.id)
+    const { error } = await sb.from('resource_requests').update({ status, decided_at: new Date().toISOString() }).eq('id', rq.id)
+    if (error) toast(error.message,'red'); else { toast(status==='approved'?'✓ Access granted':'Denied', status==='approved'?'green':'gold'); load() }
+    setBusy(null)
+  }
   const approve = async (r) => {
     setBusy(r.id)
     const { error } = await sb.from('resources').update({ status:'approved' }).eq('id', r.id)
@@ -605,6 +616,23 @@ function ResourceDesk({ onChange }) {
           <div style={{ display:'flex', gap:8, marginTop:10 }}>
             <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
             <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ height:18 }}/>
+      <SectionLabel color={C.coral}>🔐 Download access requests ({reqs.length})</SectionLabel>
+      {reqs.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No access requests waiting.</p>}
+      {reqs.map(rq => (
+        <div key={rq.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.coral}`, borderRadius:12, padding:14, marginBottom:10 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{rq.resource_title || 'Resource'}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
+            {rq.requester_name || 'A member'}{rq.org ? ` · ${rq.org}` : ''} · {timeAgo(rq.created_at)}
+          </p>
+          {rq.reason && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>“{rq.reason}”</p>}
+          <div style={{ display:'flex', gap:8 }}>
+            <Btn small color={C.mint} onClick={()=>decideReq(rq,'approved')} disabled={busy===rq.id}>{busy===rq.id ? '…' : '✓ Grant access'}</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>decideReq(rq,'denied')} disabled={busy===rq.id}>✕ Deny</Btn>
           </div>
         </div>
       ))}
