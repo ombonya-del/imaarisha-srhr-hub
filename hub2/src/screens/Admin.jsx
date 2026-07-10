@@ -572,14 +572,29 @@ function UnadoDesk({ session, onChange }) {
 function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
   const [reqs, setReqs] = useState([])
+  const [opps, setOpps] = useState([])
   const [busy, setBusy] = useState(null)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
     sb.from('resource_requests').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => setReqs(data || []))
+    sb.from('opportunities').select('*').eq('status','pending').order('created_at',{ascending:true})
+      .then(({data}) => setOpps(data || []))
   }
   useEffect(() => { load() }, [])
+  const decideOpp = async (o, approve) => {
+    setBusy(o.id)
+    if (approve) {
+      const { error } = await sb.from('opportunities').update({ status:'approved' }).eq('id', o.id)
+      if (error) toast(error.message,'red'); else { toast('✓ Published to the Opportunity Desk','green'); load() }
+    } else {
+      if (!confirm(`Reject "${o.title}"?`)) { setBusy(null); return }
+      const { error } = await sb.from('opportunities').delete().eq('id', o.id)
+      if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
+    }
+    setBusy(null)
+  }
   const decideReq = async (rq, status) => {
     setBusy(rq.id)
     const { error } = await sb.from('resource_requests').update({ status, decided_at: new Date().toISOString() }).eq('id', rq.id)
@@ -633,6 +648,24 @@ function ResourceDesk({ onChange }) {
           <div style={{ display:'flex', gap:8 }}>
             <Btn small color={C.mint} onClick={()=>decideReq(rq,'approved')} disabled={busy===rq.id}>{busy===rq.id ? '…' : '✓ Grant access'}</Btn>
             <Btn small ghost color={C.coral} onClick={()=>decideReq(rq,'denied')} disabled={busy===rq.id}>✕ Deny</Btn>
+          </div>
+        </div>
+      ))}
+
+      <div style={{ height:18 }}/>
+      <SectionLabel color={C.lilac}>🎯 Opportunity submissions ({opps.length})</SectionLabel>
+      {opps.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No opportunities waiting.</p>}
+      {opps.map(o => (
+        <div key={o.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:14, marginBottom:10 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{o.title}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }}>
+            {o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}
+          </p>
+          {o.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }}>{o.description}</p>}
+          {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.lilac, textDecoration:'none' }}>Preview link ↗</a>}
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
           </div>
         </div>
       ))}

@@ -4,6 +4,7 @@ import { ScreenTitle, Chip, Btn, inputStyle } from '../lib/components'
 
 const TYPE_ICONS = { report:'📊', toolkit:'🧰', research:'🔬', policy:'📜', guide:'📘', data:'📈', video:'🎬', link:'🔗' }
 const RES_TYPES = ['report','toolkit','research','policy','guide','data','video','link']
+const OPP_KINDS = { funding:'💰 Funding', consultancy:'🧑‍💼 Consultancy', conference:'🎤 Conference', scholarship:'🎓 Scholarship', fellowship:'🏅 Fellowship', job:'💼 Job', other:'✨ Other' }
 
 export default function Exchange({ session }) {
   const { user, name, isAdmin } = session
@@ -14,6 +15,8 @@ export default function Exchange({ session }) {
   const [addOpen, setAddOpen] = useState(false)
   const [myReq, setMyReq] = useState({})      // resource_id -> status (pending|approved|denied)
   const [reqFor, setReqFor] = useState(null)  // the resource being requested
+  const [opps, setOpps] = useState([])
+  const [oppOpen, setOppOpen] = useState(false)
 
   const loadMyReq = () => {
     if (!user) return
@@ -25,6 +28,7 @@ export default function Exchange({ session }) {
     sb.from('resources').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
     sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
+    sb.from('opportunities').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setOpps(data||[]))
   }, [])
   useEffect(() => { loadMyReq() }, [user])
 
@@ -52,9 +56,10 @@ export default function Exchange({ session }) {
 
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
       {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}/>}
+      {oppOpen && <PostOpportunityModal session={session} onClose={()=>setOppOpen(false)}/>}
 
       <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
-        {[['resources','📚 Resources'],['market','⇄ Marketplace'],['directory','🏛 Directory']].map(([k,l]) => (
+        {[['resources','📚 Resources'],['opps','🎯 Opportunities'],['market','⇄ Marketplace'],['directory','🏛 Directory']].map(([k,l]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>{l}</Chip>
         ))}
         {view === 'resources' && user && (
@@ -62,6 +67,13 @@ export default function Exchange({ session }) {
             style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:11.5, fontWeight:800, padding:'7px 14px',
               borderRadius:16, border:'none', background:C.mint, color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
             ＋ Add resource
+          </button>
+        )}
+        {view === 'opps' && user && (
+          <button onClick={()=>setOppOpen(true)}
+            style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:11.5, fontWeight:800, padding:'7px 14px',
+              borderRadius:16, border:'none', background:C.lilac, color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
+            ＋ Post opportunity
           </button>
         )}
       </div>
@@ -99,6 +111,32 @@ export default function Exchange({ session }) {
           {resources.length === 0 && <Empty/>}
         </div>
       )}
+
+      {view === 'opps' && (opps.length ? (
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {opps.map(o => {
+            const days = o.deadline ? Math.ceil((new Date(o.deadline) - Date.now()) / 86400000) : null
+            const closed = days !== null && days < 0
+            return (
+              <div key={o.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:16 }}>
+                <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:C.lilac, margin:'0 0 5px' }}>
+                  {OPP_KINDS[o.kind] || '✨ Opportunity'}
+                </p>
+                <p style={{ fontFamily:C.sans, fontSize:15, fontWeight:800, color:C.txt, margin:'0 0 5px', lineHeight:1.35 }}>{o.title}</p>
+                {o.org && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 6px' }}>{o.org}</p>}
+                {o.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.6, margin:'0 0 8px' }}>{o.description}</p>}
+                <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                  {o.deadline && <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color: (closed || days<=7) ? C.coral : C.mint }}>
+                    {closed ? '⛔ Closed' : (days === 0 ? '⏳ Closes today' : `⏳ ${days} days left`)} · {new Date(o.deadline).toLocaleDateString()}
+                  </span>}
+                  {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'6px 13px', borderRadius:10, background:C.lilac, color:'#fff', textDecoration:'none' }}>Apply / details ↗</a>}
+                  {isAdmin && <Btn small ghost color={C.coral} onClick={async()=>{ if(!confirm('Delete opportunity?'))return; const {error}=await sb.from('opportunities').delete().eq('id',o.id); if(error)toast(error.message,'red'); else{toast('Deleted','gold'); setOpps(l=>l.filter(x=>x.id!==o.id))} }}>🗑</Btn>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : <Empty/>)}
 
       {view === 'market' && (listings.length ? listings.map(l => (
         <div key={l.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:14, marginBottom:8 }}>
@@ -258,6 +296,57 @@ function RequestAccessModal({ session, resource, onClose, onDone }) {
         <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="Why you want it / how you'll use it *" value={reason} onChange={e=>setReason(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
         <Btn full onClick={submit} disabled={busy || !reqName.trim() || !reason.trim()}>{busy ? 'Sending…' : 'Send request'}</Btn>
+      </div>
+    </div>
+  )
+}
+
+// ── Post an opportunity: member submits; admin approves before it appears ─────
+function PostOpportunityModal({ session, onClose }) {
+  const [title, setTitle] = useState('')
+  const [kind, setKind] = useState('funding')
+  const [org, setOrg] = useState('')
+  const [desc, setDesc] = useState('')
+  const [deadline, setDeadline] = useState('')
+  const [link, setLink] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  const submit = async () => {
+    if (!title.trim()) { setMsg('Title is required.'); return }
+    setBusy(true); setMsg('')
+    const { error } = await sb.from('opportunities').insert({
+      title: title.trim(), kind, org: org.trim() || null, description: desc.trim() || null,
+      deadline: deadline || null, link: link.trim() || null,
+      status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
+    })
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    logActivity('resource_upload', `\u{1F3AF} ${session.name || 'A member'} posted an opportunity: ${title.trim()}`, title.trim(), 'gold')
+    toast('✓ Submitted — an admin reviews it before it appears', 'green')
+    onClose()
+  }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
+        borderRadius:16, padding:22, width:'100%', maxWidth:420, maxHeight:'90vh', overflowY:'auto' }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Post an opportunity</p>
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
+          Share a funding call, consultancy, conference or scholarship. An admin reviews it before it appears.
+        </p>
+        <input style={inputStyle} placeholder="Title *" value={title} onChange={e=>setTitle(e.target.value)}/>
+        <select style={inputStyle} value={kind} onChange={e=>setKind(e.target.value)}>
+          {Object.entries(OPP_KINDS).map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
+        <input style={inputStyle} placeholder="Organization / funder" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <input style={inputStyle} placeholder="Link to apply / details" value={link} onChange={e=>setLink(e.target.value)}/>
+        <label style={{ display:'block', fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 4px' }}>Deadline (optional)</label>
+        <input style={inputStyle} type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)}/>
+        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
+        <Btn full onClick={submit} disabled={busy || !title.trim()}>{busy ? 'Submitting…' : 'Submit for review'}</Btn>
       </div>
     </div>
   )
