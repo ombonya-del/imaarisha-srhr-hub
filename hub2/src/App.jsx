@@ -37,8 +37,31 @@ export default function App() {
     return () => { mq.removeEventListener('change', fn); stop() }
   }, [])
 
+  // Auto sign-out after 5 minutes of inactivity (members handle sensitive data).
+  useEffect(() => {
+    if (!session.user) return
+    let timer
+    const IDLE_MS = 5 * 60 * 1000
+    const reset = () => {
+      clearTimeout(timer)
+      timer = setTimeout(async () => {
+        await sb.auth.signOut()
+        toast('Signed out after 5 minutes of inactivity', 'gold')
+      }, IDLE_MS)
+    }
+    const evs = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click']
+    evs.forEach(e => window.addEventListener(e, reset, { passive: true }))
+    reset()
+    return () => { clearTimeout(timer); evs.forEach(e => window.removeEventListener(e, reset)) }
+  }, [session.user])
+
   const visibleNav = NAV.filter(n => !n.adminOnly || session.isAdmin)
   const Active = (visibleNav.find(n => n.id === tab) || NAV[0]).screen
+
+  // Access gate: the hub does not open without a signed-in, approved member.
+  if (session.loading) return <Splash/>
+  if (!session.user) return <Landing/>
+  if (!session.approved) return <PendingScreen name={session.name} onSignOut={()=>sb.auth.signOut()}/>
 
   return (
     <div style={{ background:C.bg, minHeight:'100vh', fontFamily:C.sans, color:C.txt }}>
@@ -148,13 +171,14 @@ export default function App() {
   )
 }
 
-// ── Auth modal: magic link (members) + password + sign up ────────────────────
-function AuthModal({ onClose }) {
+// ── Auth form (reused by the modal + the landing gate) ───────────────────────
+function AuthForm({ onSignedIn }) {
   const [mode, setMode] = useState('magic')   // magic | password | signup
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [org, setOrg] = useState('')
+  const [reason, setReason] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -166,39 +190,97 @@ function AuthModal({ onClose }) {
         setMsg(error ? error.message : '✓ Check your email for the sign-in link.')
       } else if (mode === 'password') {
         const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
-        if (error) setMsg(error.message); else onClose()
+        if (error) setMsg(error.message); else onSignedIn && onSignedIn()
       } else {
-        const { error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { full_name: fullName.trim(), org_name: org.trim() } } })
-        setMsg(error ? error.message : '✓ Account created — check your email to confirm.')
+        const { error } = await sb.auth.signUp({ email: email.trim(), password,
+          options: { data: { full_name: fullName.trim(), org_name: org.trim(), reason: reason.trim() } } })
+        setMsg(error ? error.message : '✓ Request submitted — confirm your email, then an admin reviews your membership before access is granted.')
       }
     } catch (e) { setMsg(String(e.message || e)) }
     setBusy(false)
   }
 
   return (
+    <div>
+      <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Member access</p>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px' }}>The hub is members-only. Sign in, or request to join.</p>
+      <div style={{ display:'flex', gap:6, marginBottom:14 }}>
+        {[['magic','✨ Magic link'],['password','🔑 Password'],['signup','＋ Request to join']].map(([k,l]) => (
+          <button key={k} onClick={()=>{ setMode(k); setMsg('') }}
+            style={{ flex:1, fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'8px 0', borderRadius:8,
+              border:'none', cursor:'pointer', background: mode===k?C.gold:C.card, color: mode===k?'#171204':C.mut }}>{l}</button>
+        ))}
+      </div>
+      {mode === 'signup' && <input style={inputStyle} placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)}/>}
+      {mode === 'signup' && <input style={inputStyle} placeholder="Organization (e.g. NAYA Kenya)" value={org} onChange={e=>setOrg(e.target.value)}/>}
+      {mode === 'signup' && <input style={inputStyle} placeholder="Who referred you, and why you want to join" value={reason} onChange={e=>setReason(e.target.value)}/>}
+      {mode === 'signup' && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'-4px 0 10px', lineHeight:1.45 }}>An admin reviews every request before access is granted.</p>}
+      <input style={inputStyle} type="email" placeholder="you@organisation.org" value={email} onChange={e=>setEmail(e.target.value)}/>
+      {mode !== 'magic' && <input style={inputStyle} type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/>}
+      {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color: msg.startsWith('✓') ? C.mint : C.coral, margin:'0 0 10px', lineHeight:1.5 }}>{msg}</p>}
+      <Btn full onClick={go} disabled={busy || !email.trim()}>
+        {busy ? 'Working…' : mode === 'magic' ? 'Send magic link' : mode === 'password' ? 'Sign in' : 'Submit request'}
+      </Btn>
+    </div>
+  )
+}
+
+function AuthModal({ onClose }) {
+  return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
       <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
         borderRadius:16, padding:22, width:'100%', maxWidth:380 }}>
-        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Member sign-in</p>
-        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px' }}>The ops room is members-only for posting. Reading is open.</p>
-        <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-          {[['magic','✨ Magic link'],['password','🔑 Password'],['signup','＋ Sign up']].map(([k,l]) => (
-            <button key={k} onClick={()=>{ setMode(k); setMsg('') }}
-              style={{ flex:1, fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'8px 0', borderRadius:8,
-                border:'none', cursor:'pointer', background: mode===k?C.gold:C.card, color: mode===k?'#171204':C.mut }}>{l}</button>
-          ))}
-        </div>
-        {mode === 'signup' && <input style={inputStyle} placeholder="Full name" value={fullName} onChange={e=>setFullName(e.target.value)}/>}
-        {mode === 'signup' && <input style={inputStyle} placeholder="Organization (e.g. NAYA Kenya)" value={org} onChange={e=>setOrg(e.target.value)}/>}
-        {mode === 'signup' && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'-4px 0 10px', lineHeight:1.45 }}>Your organization joins the member Directory once an admin approves it.</p>}
-        <input style={inputStyle} type="email" placeholder="you@organisation.org" value={email} onChange={e=>setEmail(e.target.value)}/>
-        {mode !== 'magic' && <input style={inputStyle} type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)}/>}
-        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color: msg.startsWith('✓') ? C.mint : C.coral, margin:'0 0 10px', lineHeight:1.5 }}>{msg}</p>}
-        <Btn full onClick={go} disabled={busy || !email.trim()}>
-          {busy ? 'Working…' : mode === 'magic' ? 'Send magic link' : mode === 'password' ? 'Sign in' : 'Create account'}
-        </Btn>
+        <AuthForm onSignedIn={onClose}/>
       </div>
+    </div>
+  )
+}
+
+const STRIPE = { position:'fixed', top:0, left:0, right:0, height:4, zIndex:30,
+  background:'linear-gradient(90deg, #E8B14B 0%, #D99A26 25%, #3E9B4F 55%, #E2552F 100%)' }
+
+function Splash() {
+  return <div style={{ minHeight:'100vh', background:C.bg, display:'flex', alignItems:'center',
+    justifyContent:'center', fontFamily:C.sans, color:C.mut }}>Loading…</div>
+}
+
+// ── Landing gate: the site does not open without sign-in ─────────────────────
+function Landing() {
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:C.sans, color:C.txt,
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:20 }}>
+      <div style={STRIPE}/>
+      <img src="/logo-mark.png" alt="" style={{ height:64, marginBottom:14 }}/>
+      <h1 style={{ fontFamily:C.serif, fontSize:30, fontWeight:700, margin:'0 0 4px', textAlign:'center' }}>
+        Imaarisha<span style={{ color:'#D99A26' }}>SRHR</span> Collective Hub
+      </h1>
+      <p style={{ fontSize:12.5, color:C.mut, margin:'0 0 22px', textAlign:'center', maxWidth:340, lineHeight:1.6 }}>
+        A vetted, members-only space. Sign in to continue, or request to join.
+      </p>
+      <div style={{ width:'100%', maxWidth:380, background:C.surf, border:`1px solid ${C.line}`, borderRadius:16, padding:22 }}>
+        <AuthForm/>
+      </div>
+      <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
+        style={{ fontSize:11, color:C.mut, textDecoration:'none', marginTop:18 }}>Privacy Policy</a>
+    </div>
+  )
+}
+
+// ── Pending gate: signed in, awaiting admin approval ─────────────────────────
+function PendingScreen({ name, onSignOut }) {
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:C.sans, color:C.txt,
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24, textAlign:'center' }}>
+      <div style={STRIPE}/>
+      <div style={{ fontSize:44, marginBottom:12 }}>⏳</div>
+      <h1 style={{ fontFamily:C.serif, fontSize:26, fontWeight:700, margin:'0 0 8px' }}>Membership under review</h1>
+      <p style={{ fontSize:13, color:C.mut, maxWidth:360, lineHeight:1.7, marginBottom:22 }}>
+        Thanks{name ? `, ${name.split(' ')[0]}` : ''} — your request to join the ImaarishaSRHR hub is with an admin.
+        You'll get access the moment it's approved. This vetting keeps the collective safe.
+      </p>
+      <button onClick={onSignOut} style={{ fontFamily:C.sans, fontSize:12, fontWeight:800, padding:'9px 18px',
+        borderRadius:16, border:`1px solid ${C.line}`, background:'transparent', color:C.mut, cursor:'pointer' }}>Sign out</button>
     </div>
   )
 }

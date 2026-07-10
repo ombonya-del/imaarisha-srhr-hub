@@ -62,14 +62,16 @@ export async function logActivity(activity_type, description, entity_title = nul
 export function useSession() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    sb.auth.getSession().then(({ data }) => setUser(data.session?.user || null))
-    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setUser(s?.user || null))
+    sb.auth.getSession().then(({ data }) => { setUser(data.session?.user || null); if (!data.session?.user) setLoading(false) })
+    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => { setUser(s?.user || null); if (!s?.user) setLoading(false) })
     return () => sub.subscription.unsubscribe()
   }, [])
   useEffect(() => {
     if (!user) { setProfile(null); return }
-    sb.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => setProfile(data || null))
+    setLoading(true)
+    sb.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => { setProfile(data || null); setLoading(false) })
     // Auto-add the member's organization to the Directory as a PENDING entry
     // (an admin approves it before it shows publicly). Idempotent — only inserts
     // if no org with that name exists yet.
@@ -84,7 +86,10 @@ export function useSession() {
     }
   }, [user])
   const name = profile?.full_name || user?.user_metadata?.full_name || user?.email || ''
-  return { user, profile, name, isAdmin: !!profile?.is_admin }
+  const isAdmin = !!profile?.is_admin
+  // Admins and grandfathered members are approved; new sign-ups are pending.
+  const approved = isAdmin || !!profile?.approved
+  return { user, profile, name, isAdmin, approved, loading }
 }
 
 // ── Toast bus — popups for activity while online ─────────────────────────────
