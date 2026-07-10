@@ -9,12 +9,12 @@ const fmtFull  = (d) => new Date(d + 'T00:00:00').toLocaleDateString(['en-KE','e
 const EVENT_TYPES = ['Convening','Training','Webinar','Workshop','Conference','March / action','Launch','Community dialogue','Other']
 const mapsUrl = (loc) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`
 
-export default function Events({ session }) {
+export default function Events({ session, go, eventId }) {
   const { user, name } = session
   const [events, setEvents] = useState([])
   const [myRsvps, setMyRsvps] = useState({})
   const [showPast, setShowPast] = useState(false)
-  const [open, setOpen] = useState(null)     // event being viewed in detail
+  const [open, setOpen] = useState(null)     // event being viewed on its own page
   const [posting, setPosting] = useState(false)
 
   const load = async () => {
@@ -28,10 +28,19 @@ export default function Events({ session }) {
   }
   useEffect(() => { load() }, [user])
 
-  // keep the open event fresh if the list reloads
+  // The open event is driven by the URL (#event/<id>) so it's bookmarkable.
   useEffect(() => {
-    if (open) { const fresh = events.find(x => x.id === open.id); if (fresh) setOpen(fresh) }
-  }, [events]) // eslint-disable-line
+    if (!eventId) { setOpen(null); return }
+    const found = events.find(x => x.id === eventId)
+    if (found) { setOpen(found); return }
+    let alive = true
+    sb.from('events').select('*').eq('id', eventId).eq('status','approved').maybeSingle()
+      .then(({ data }) => { if (alive && data) setOpen(data) })
+    return () => { alive = false }
+  }, [eventId, events])
+
+  const openEvent = (e) => go ? go('event/' + e.id) : setOpen(e)
+  const backToList = () => go ? go('events') : setOpen(null)
 
   const today = new Date().toISOString().split('T')[0]
   const upcoming = events.filter(e => (e.end_date || e.event_date) >= today)
@@ -66,8 +75,8 @@ export default function Events({ session }) {
   )
 
   const Card = ({ e }) => (
-    <div onClick={() => setOpen(e)} role="button" tabIndex={0}
-      onKeyDown={ev => { if (ev.key === 'Enter') setOpen(e) }}
+    <div onClick={() => openEvent(e)} role="button" tabIndex={0}
+      onKeyDown={ev => { if (ev.key === 'Enter') openEvent(e) }}
       style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:16,
         marginBottom:9, display:'flex', gap:14, cursor:'pointer', transition:'border-color .15s' }}
       onMouseEnter={ev => ev.currentTarget.style.borderColor = C.mint}
@@ -86,15 +95,15 @@ export default function Events({ session }) {
           {e.event_type ? ` · ${e.event_type}` : ''}
         </p>
         {e.description && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'0 0 8px', lineHeight:1.55 }}>{e.description.slice(0,150)}{e.description?.length > 150 ? '…' : ''}</p>}
-        <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }} onClick={ev => ev.stopPropagation()}>
-          <RsvpRow e={e}/>
-          <span style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mint }}>Details →</span>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', justifyContent:'space-between' }}>
+          <div onClick={ev => ev.stopPropagation()}><RsvpRow e={e}/></div>
+          <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.mint, whiteSpace:'nowrap' }}>Open event →</span>
         </div>
       </div>
     </div>
   )
 
-  if (open) return <EventPage e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onBack={() => setOpen(null)}/>
+  if (open) return <EventPage e={open} myStatus={myRsvps[open.id]} onRsvp={rsvp} onBack={backToList}/>
 
   return (
     <div>
@@ -133,11 +142,22 @@ function EventPage({ e, myStatus, onRsvp, onBack }) {
     ? `${fmtFull(e.event_date)} – ${fmtFull(e.end_date)}`
     : fmtFull(e.event_date)
   const isPast = (e.end_date || e.event_date) < new Date().toISOString().split('T')[0]
+  const share = async () => {
+    const url = `${window.location.origin}/#event/${e.id}`
+    try {
+      if (navigator.share) { await navigator.share({ title: e.title, url }); return }
+      await navigator.clipboard.writeText(url); toast('🔗 Event link copied', 'green')
+    } catch { /* user dismissed the share sheet — no-op */ }
+  }
   return (
     <div>
-      <button onClick={onBack} style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:C.sans,
-        fontSize:12, fontWeight:800, color:C.mut, background:'none', border:'none', cursor:'pointer',
-        padding:0, marginBottom:16 }}>← All events</button>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <button onClick={onBack} style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:C.sans,
+          fontSize:12, fontWeight:800, color:C.mut, background:'none', border:'none', cursor:'pointer', padding:0 }}>← All events</button>
+        <button onClick={share} style={{ display:'inline-flex', alignItems:'center', gap:5, fontFamily:C.sans,
+          fontSize:11.5, fontWeight:800, color:C.mint, background:'none', border:`1px solid ${C.line}`,
+          borderRadius:16, cursor:'pointer', padding:'5px 12px' }}>🔗 Share</button>
+      </div>
 
       <span style={{ display:'inline-block', fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.14em',
         textTransform:'uppercase', color:isPast ? C.mut : C.mint }}>

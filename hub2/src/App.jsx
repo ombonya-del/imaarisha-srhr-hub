@@ -23,9 +23,20 @@ const NAV = [
   { id:'admin',    icon:'👑', label:'Admin',    screen: Admin, adminOnly: true },
 ]
 
+const parseHash = () => {
+  const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '')
+  const [seg, id] = raw.split('/')
+  return { seg: seg || 'pulse', id: id || null }
+}
+
 export default function App() {
   const session = useSession()
-  const [tab, setTab] = useState('pulse')
+  // URL hash is the source of truth for navigation, so tabs and individual
+  // events are bookmarkable / shareable and the browser back button works.
+  const [route, setRoute] = useState(parseHash)
+  const navigate = (to) => { window.location.hash = to }
+  const tab = route.seg === 'event' ? 'events' : route.seg
+  const eventId = route.seg === 'event' ? route.id : null
   const [authOpen, setAuthOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900)
@@ -35,7 +46,9 @@ export default function App() {
     const fn = e => setIsDesktop(e.matches)
     mq.addEventListener('change', fn)
     const stop = startNotifier()
-    return () => { mq.removeEventListener('change', fn); stop() }
+    const onHash = () => setRoute(parseHash())
+    window.addEventListener('hashchange', onHash)
+    return () => { mq.removeEventListener('change', fn); stop(); window.removeEventListener('hashchange', onHash) }
   }, [])
 
   // Auto sign-out after 5 minutes of inactivity (members handle sensitive data).
@@ -106,7 +119,7 @@ export default function App() {
               {visibleNav.map(n => {
                 const on = tab === n.id
                 return (
-                  <button key={n.id} onClick={()=>setTab(n.id)}
+                  <button key={n.id} onClick={()=>navigate(n.id)}
                     className={'navlink' + (on ? ' on' : '')}
                     style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, padding:'11px 17px',
                       border:'none', cursor:'pointer', background:'transparent', letterSpacing:'.02em' }}>
@@ -147,7 +160,7 @@ export default function App() {
       {/* ── Screen ── */}
       <main style={{ maxWidth: isDesktop ? 1100 : 480, margin:'0 auto',
         padding: isDesktop ? '24px 16px 60px' : '18px 16px 96px' }}>
-        <Active go={setTab} session={session}/>
+        <Active go={navigate} session={session} eventId={eventId}/>
         <div style={{ textAlign:'center', marginTop:28, paddingTop:14, borderTop:`1px solid ${C.line}` }}>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
             style={{ fontFamily:C.sans, fontSize:11, color:C.mut, textDecoration:'none' }}>Privacy Policy</a>
@@ -163,7 +176,7 @@ export default function App() {
           {visibleNav.map(n => {
             const on = tab === n.id
             return (
-              <button key={n.id} onClick={()=>setTab(n.id)}
+              <button key={n.id} onClick={()=>navigate(n.id)}
                 style={{ background:'none', border:'none', cursor:'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   padding:'4px 6px', flex:1 }}>
