@@ -5,6 +5,8 @@ import { ScreenTitle, Chip, Btn, inputStyle } from '../lib/components'
 const TYPE_ICONS = { report:'📊', toolkit:'🧰', research:'🔬', policy:'📜', guide:'📘', data:'📈', video:'🎬', link:'🔗' }
 const RES_TYPES = ['report','toolkit','research','policy','guide','data','video','link']
 const OPP_KINDS = { funding:'💰 Funding', consultancy:'🧑‍💼 Consultancy', conference:'🎤 Conference', scholarship:'🎓 Scholarship', fellowship:'🏅 Fellowship', job:'💼 Job', other:'✨ Other' }
+// links may lack a scheme ("example.com") — make them openable URLs
+const withHttp = (u) => !u ? '' : (/^https?:\/\//i.test(u) ? u : 'https://' + String(u).replace(/^\/+/, ''))
 
 export default function Exchange({ session }) {
   const { user, name, isAdmin } = session
@@ -118,7 +120,14 @@ export default function Exchange({ session }) {
             const days = o.deadline ? Math.ceil((new Date(o.deadline) - Date.now()) / 86400000) : null
             const closed = days !== null && days < 0
             return (
-              <div key={o.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:16 }}>
+              <div key={o.id}
+                onClick={() => o.link && window.open(withHttp(o.link), '_blank', 'noopener,noreferrer')}
+                role={o.link ? 'button' : undefined} tabIndex={o.link ? 0 : undefined}
+                onKeyDown={ev => { if (o.link && ev.key === 'Enter') window.open(withHttp(o.link), '_blank', 'noopener,noreferrer') }}
+                style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:16,
+                  cursor: o.link ? 'pointer' : 'default', transition:'border-color .15s' }}
+                onMouseEnter={ev => { if (o.link) ev.currentTarget.style.borderColor = C.lilac }}
+                onMouseLeave={ev => { ev.currentTarget.style.borderColor = C.line }}>
                 <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:C.lilac, margin:'0 0 5px' }}>
                   {OPP_KINDS[o.kind] || '✨ Opportunity'}
                 </p>
@@ -129,8 +138,9 @@ export default function Exchange({ session }) {
                   {o.deadline && <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color: (closed || days<=7) ? C.coral : C.mint }}>
                     {closed ? '⛔ Closed' : (days === 0 ? '⏳ Closes today' : `⏳ ${days} days left`)} · {new Date(o.deadline).toLocaleDateString()}
                   </span>}
-                  {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'6px 13px', borderRadius:10, background:C.lilac, color:'#fff', textDecoration:'none' }}>Apply / details ↗</a>}
-                  {isAdmin && <Btn small ghost color={C.coral} onClick={async()=>{ if(!confirm('Delete opportunity?'))return; const {error}=await sb.from('opportunities').delete().eq('id',o.id); if(error)toast(error.message,'red'); else{toast('Deleted','gold'); setOpps(l=>l.filter(x=>x.id!==o.id))} }}>🗑</Btn>}
+                  {o.link && <a href={withHttp(o.link)} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()}
+                    style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'6px 13px', borderRadius:10, background:C.lilac, color:'#fff', textDecoration:'none' }}>Apply / details ↗</a>}
+                  {isAdmin && <Btn small ghost color={C.coral} onClick={async(ev)=>{ ev.stopPropagation(); if(!confirm('Delete opportunity?'))return; const {error}=await sb.from('opportunities').delete().eq('id',o.id); if(error)toast(error.message,'red'); else{toast('Deleted','gold'); setOpps(l=>l.filter(x=>x.id!==o.id))} }}>🗑</Btn>}
                 </div>
               </div>
             )
