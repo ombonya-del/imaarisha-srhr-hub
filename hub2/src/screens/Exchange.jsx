@@ -88,7 +88,7 @@ export default function Exchange({ session }) {
         sub="Open it, share it, build with it. Every open and share is counted — evidence of a living commons."/>
 
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
-      {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}
+      {reqFor && <RequestAccessModal session={session} resource={reqFor} isAdmin={isAdmin} onClose={()=>setReqFor(null)} onDone={loadMyReq}
         onGranted={(res)=>{ trackOpen(res); res.file_path ? downloadStored(res) : window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
       {oppOpen && <PostOpportunityModal session={session} onClose={()=>setOppOpen(false)}/>}
 
@@ -128,8 +128,8 @@ export default function Exchange({ session }) {
               </p>
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                 {(r.file_url || r.file_path) && (
-                  (isAdmin || myReq[r.id] === 'approved') ? DL(r)
-                  : r.is_restricted ? (
+                  myReq[r.id] === 'approved' ? DL(r)
+                  : (r.is_restricted && !isAdmin) ? (
                       myReq[r.id] === 'pending' ? <Btn small ghost disabled>⏳ Request pending</Btn>
                       : myReq[r.id] === 'denied' ? <Btn small ghost color={C.coral} onClick={()=>openRequest(r)}>Denied · ask again</Btn>
                       : <Btn small color={C.coral} onClick={()=>openRequest(r)}>🔐 Request access</Btn>
@@ -310,8 +310,8 @@ function AddResourceModal({ session, onClose }) {
 // ── Download gate: capture who/why/what-for before any resource opens ─────────
 // A normal resource logs the intent and downloads immediately (status 'approved');
 // a 🔐 restricted resource stays 'pending' until an admin approves.
-function RequestAccessModal({ session, resource, onClose, onDone, onGranted }) {
-  const restricted = !!resource.is_restricted
+function RequestAccessModal({ session, resource, onClose, onDone, onGranted, isAdmin }) {
+  const restricted = !!resource.is_restricted && !isAdmin  // admins log intent but skip the approval wait
   const [reqName, setReqName] = useState(session.name || '')
   const [org, setOrg] = useState('')
   const [reason, setReason] = useState('')
