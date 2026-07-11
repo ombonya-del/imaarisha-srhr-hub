@@ -38,7 +38,7 @@ COLUMN_CONTRACTS = {
 
 # ── Existence-only checks: other tables the apps + radar pipeline depend on. ─
 EXISTENCE_ONLY = [
-    "unado_posts", "organizations", "profiles", "uliza_questions", "unado",
+    "unado_posts", "organizations", "profiles", "uliza_questions",
     "radar_items", "radar_index", "resources", "fika_suggestions",
     "fika_reviews", "disinformation_claims", "ukweli_cards", "events",
     "discussion_replies", "tracker_submissions", "marketplace_listings",
