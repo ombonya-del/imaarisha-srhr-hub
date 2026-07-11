@@ -57,7 +57,8 @@ export default function Exchange({ session }) {
         sub="Open it, share it, build with it. Every open and share is counted — evidence of a living commons."/>
 
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
-      {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}/>}
+      {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}
+        onGranted={(res)=>{ trackOpen(res); window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
       {oppOpen && <PostOpportunityModal session={session} onClose={()=>setOppOpen(false)}/>}
 
       <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
@@ -95,12 +96,15 @@ export default function Exchange({ session }) {
                 {r.source_org || ''}{r.file_type ? ` · ${r.file_type}` : ''}{r.file_size ? ` · ${r.file_size}` : ''} · {timeAgo(r.created_at)}
               </p>
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {r.is_restricted && !isAdmin ? (
-                  myReq[r.id] === 'approved' ? (r.file_url && DL(r))
-                  : myReq[r.id] === 'pending' ? <Btn small ghost disabled>⏳ Request pending</Btn>
-                  : myReq[r.id] === 'denied'  ? <Btn small ghost color={C.coral} onClick={()=>openRequest(r)}>Denied · ask again</Btn>
-                  : <Btn small color={C.coral} onClick={()=>openRequest(r)}>🔐 Request access</Btn>
-                ) : (r.file_url && DL(r))}
+                {r.file_url && (
+                  (isAdmin || myReq[r.id] === 'approved') ? DL(r)
+                  : r.is_restricted ? (
+                      myReq[r.id] === 'pending' ? <Btn small ghost disabled>⏳ Request pending</Btn>
+                      : myReq[r.id] === 'denied' ? <Btn small ghost color={C.coral} onClick={()=>openRequest(r)}>Denied · ask again</Btn>
+                      : <Btn small color={C.coral} onClick={()=>openRequest(r)}>🔐 Request access</Btn>
+                    )
+                  : <Btn small onClick={()=>openRequest(r)}>⬇ Download</Btn>
+                )}
                 <Btn small ghost onClick={()=>share(r)}>↗ Share</Btn>
                 {isAdmin && <Btn small ghost color={C.coral} onClick={async()=>{
                   if (!confirm('Delete resource?')) return
@@ -269,43 +273,62 @@ function AddResourceModal({ session, onClose }) {
   )
 }
 
-// ── Request access to a restricted resource (name / org / reason → admin) ─────
-function RequestAccessModal({ session, resource, onClose, onDone }) {
+// ── Download gate: capture who/why/what-for before any resource opens ─────────
+// A normal resource logs the intent and downloads immediately (status 'approved');
+// a 🔐 restricted resource stays 'pending' until an admin approves.
+function RequestAccessModal({ session, resource, onClose, onDone, onGranted }) {
+  const restricted = !!resource.is_restricted
   const [reqName, setReqName] = useState(session.name || '')
   const [org, setOrg] = useState('')
   const [reason, setReason] = useState('')
+  const [use, setUse] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
   const submit = async () => {
-    if (!reqName.trim() || !reason.trim()) { setMsg('Your name and a reason are required.'); return }
+    if (!reqName.trim() || !org.trim() || !reason.trim() || !use.trim()) { setMsg('Please fill in all four fields.'); return }
     setBusy(true); setMsg('')
     const { error } = await sb.from('resource_requests').insert({
       resource_id: String(resource.id), resource_title: resource.title,
       requester_id: session.user?.id, requester_name: reqName.trim(),
-      org: org.trim() || null, reason: reason.trim(), status: 'pending',
+      org: org.trim(), reason: reason.trim(), intended_use: use.trim(),
+      status: restricted ? 'pending' : 'approved',
     })
     setBusy(false)
     if (error) { setMsg(error.message); return }
-    logActivity('resource_upload', `\u{1F510} ${reqName.trim()} requested access to "${resource.title}"`, resource.title, 'red')
-    toast('✓ Request sent — an admin will review it', 'green')
+    if (restricted) {
+      logActivity('resource_upload', `\u{1F510} ${reqName.trim()} (${org.trim()}) requested access to "${resource.title}"`, resource.title, 'red')
+      toast('✓ Request sent — an admin will review it', 'green')
+    } else {
+      logActivity('resource_upload', `\u{1F4C2} ${reqName.trim()} (${org.trim()}) downloaded "${resource.title}" — ${use.trim()}`, resource.title, 'gold')
+      onGranted && onGranted(resource)
+      toast('✓ Thanks — your download is starting', 'green')
+    }
     onDone && onDone(); onClose()
   }
 
+  const ok = reqName.trim() && org.trim() && reason.trim() && use.trim()
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
       <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
-        borderRadius:16, padding:22, width:'100%', maxWidth:400 }}>
-        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Request access</p>
+        borderRadius:16, padding:22, width:'100%', maxWidth:400, maxHeight:'90vh', overflowY:'auto' }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>
+          {restricted ? 'Request access' : 'Before you download'}
+        </p>
         <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
-          "{resource.title}" is restricted. Tell us who you are and how you'll use it — an admin approves before you can download.
+          {restricted
+            ? `“${resource.title}” is restricted. Tell us who you are and how you'll use it — an admin approves before you can download.`
+            : `Tell us who you are and how you'll use “${resource.title}”. This keeps the commons trusted; your download starts right after.`}
         </p>
         <input style={inputStyle} placeholder="Your name *" value={reqName} onChange={e=>setReqName(e.target.value)}/>
-        <input style={inputStyle} placeholder="Your organization" value={org} onChange={e=>setOrg(e.target.value)}/>
-        <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="Why you want it / how you'll use it *" value={reason} onChange={e=>setReason(e.target.value)}/>
+        <input style={inputStyle} placeholder="Your organization (or ‘Independent’) *" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:64 }} placeholder="Why do you want this resource? *" value={reason} onChange={e=>setReason(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:64 }} placeholder="What will you use it for? *" value={use} onChange={e=>setUse(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
-        <Btn full onClick={submit} disabled={busy || !reqName.trim() || !reason.trim()}>{busy ? 'Sending…' : 'Send request'}</Btn>
+        <Btn full onClick={submit} disabled={busy || !ok}>
+          {busy ? (restricted ? 'Sending…' : 'Preparing…') : (restricted ? 'Send request' : '⬇ Get the download')}
+        </Btn>
       </div>
     </div>
   )

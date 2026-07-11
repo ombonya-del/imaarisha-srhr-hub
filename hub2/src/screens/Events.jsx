@@ -276,6 +276,7 @@ function PostEventModal({ session, onClose }) {
   const [virtual, setVirtual] = useState(false)
   const [location, setLocation] = useState('')
   const [link, setLink] = useState('')
+  const [noWebsite, setNoWebsite] = useState(false)
   const [capacity, setCapacity] = useState('')
   const [desc, setDesc] = useState('')
   const [busy, setBusy] = useState(false)
@@ -285,6 +286,7 @@ function PostEventModal({ session, onClose }) {
     if (!title.trim()) { setMsg('Title is required.'); return }
     if (!date) { setMsg('Pick a date.'); return }
     if (endDate && endDate < date) { setMsg('End date can’t be before the start date.'); return }
+    if (!noWebsite && !link.trim()) { setMsg('Add the event’s website link so people can reach it — or tick “no website”.'); return }
     setBusy(true); setMsg('')
     const { error } = await sb.from('events').insert({
       title: title.trim(), event_type: type,
@@ -335,7 +337,13 @@ function PostEventModal({ session, onClose }) {
           🌐 This is an online event
         </label>
         {!virtual && <input style={inputStyle} placeholder="📍 Location (venue, city)" value={location} onChange={e=>setLocation(e.target.value)}/>}
-        <input style={inputStyle} placeholder={virtual ? 'Event website / join link (https://…)' : 'Event website link (where people register) — recommended'} value={link} onChange={e=>setLink(e.target.value)}/>
+        <input style={inputStyle} disabled={noWebsite}
+          placeholder={noWebsite ? 'No website — opens the in-hub detail page' : (virtual ? 'Event website / join link (https://…) *' : 'Event website link — where people register *')}
+          value={link} onChange={e=>setLink(e.target.value)}/>
+        <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 10px', cursor:'pointer' }}>
+          <input type="checkbox" checked={noWebsite} onChange={e=>setNoWebsite(e.target.checked)}/>
+          This event has no website (community / internal only)
+        </label>
         <input style={inputStyle} type="number" min="0" placeholder="Capacity (optional)" value={capacity} onChange={e=>setCapacity(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="What's it about? Who should come?" value={desc} onChange={e=>setDesc(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
