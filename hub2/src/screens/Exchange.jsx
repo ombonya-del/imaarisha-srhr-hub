@@ -246,7 +246,19 @@ function EditResourceModal({ resource, onClose, onSaved }) {
   const [link, setLink] = useState(resource.file_url || '')
   const [restricted, setRestricted] = useState(!!resource.is_restricted)
   const [busy, setBusy] = useState(false)
+  const [hosting, setHosting] = useState(false)
   const [msg, setMsg] = useState('')
+  const hostAsFile = async () => {
+    if (!link.trim()) { setMsg('Paste the direct PDF link first, then host it.'); return }
+    setHosting(true); setMsg('')
+    const { data, error } = await sb.functions.invoke('ingest-resource', { body: { resource_id: resource.id, url: withHttp(link.trim()) } })
+    setHosting(false)
+    if (error) { setMsg('Ingest failed: ' + (error.message || 'try again')); return }
+    if (!data?.ok) { setMsg(data?.error || 'Could not host this file.'); return }
+    toast(`✓ Hosted as a watermarked file · ${data.size}`, 'green')
+    onSaved({ ...resource, file_path: data.path, file_url: null, file_type: 'PDF', file_size: data.size })
+    onClose()
+  }
   const save = async () => {
     if (!title.trim()) { setMsg('Title is required.'); return }
     setBusy(true); setMsg('')
@@ -270,8 +282,21 @@ function EditResourceModal({ resource, onClose, onSaved }) {
         <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)}/>
         {isFile
-          ? <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px' }}>📎 Uploaded file — link can’t be changed here.</p>
-          : <input style={inputStyle} placeholder="Link (https://…)" value={link} onChange={e=>setLink(e.target.value)}/>}
+          ? <p style={{ fontFamily:C.sans, fontSize:11, color:C.mint, margin:'0 0 10px' }}>🔒 Hosted file — downloads are watermarked & tracked.</p>
+          : (
+            <>
+              <input style={inputStyle} placeholder="Link (https://…)" value={link} onChange={e=>setLink(e.target.value)}/>
+              <button onClick={hostAsFile} disabled={hosting || !link.trim()}
+                style={{ width:'100%', fontFamily:C.sans, fontSize:11.5, fontWeight:800, padding:'9px', borderRadius:10,
+                  border:`1px solid ${C.mint}`, background:'transparent', color:C.mint, cursor: hosting?'default':'pointer',
+                  opacity: (hosting||!link.trim())?.5:1, marginBottom:10 }}>
+                {hosting ? 'Fetching & hosting…' : '📥 Host this PDF as a watermarked file'}
+              </button>
+              <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'-4px 0 10px', lineHeight:1.4 }}>
+                Turns a direct PDF link into a private, watermarked, trackable download. Only works on real PDF links.
+              </p>
+            </>
+          )}
         <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:12, color:C.txt, margin:'2px 0 12px', cursor:'pointer' }}>
           <input type="checkbox" checked={restricted} onChange={e=>setRestricted(e.target.checked)}/>
           🔐 Restricted — members must request access
