@@ -8,6 +8,21 @@ const OPP_KINDS = { funding:'💰 Funding', consultancy:'🧑‍💼 Consultancy
 // links may lack a scheme ("example.com") — make them openable URLs
 const withHttp = (u) => !u ? '' : (/^https?:\/\//i.test(u) ? u : 'https://' + String(u).replace(/^\/+/, ''))
 
+// display-only title tidy: strip leading #/@, trailing colon, and de-shout
+// ALL-CAPS titles while preserving known acronyms.
+const ACRONYMS = /\b(SRHR|HIV|AIDS|WHO|UNFPA|KDHS|ICPD|FP2030|FCDO|USAID|IPPF|NACC|ASRH|GBV|FGM|MOH|CSE|UNAIDS|UK|US|UN|PDF|Q&A)\b/gi
+const tidyTitle = (t = '') => {
+  let s = String(t).trim().replace(/^[#@]+\s*/, '').replace(/\s*[:：]\s*$/, '')
+  const letters = s.replace(/[^a-zA-Z]/g, '')
+  const upper = (s.match(/[A-Z]/g) || []).length
+  if (letters.length > 3 && upper / letters.length > 0.7) {
+    s = s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase()).replace(ACRONYMS, (m) => m.toUpperCase())
+  }
+  return s
+}
+const typeTint = { report:'#3A5B8C22', toolkit:'#2E7D3E22', research:'#8B5CF622', policy:'#B4530022',
+  guide:'#0E766622', data:'#C2571022', video:'#B4235122', link:'#3A5B8C22' }
+
 export default function Exchange({ session }) {
   const { user, name, isAdmin } = session
   const [view, setView] = useState('resources')
@@ -17,6 +32,7 @@ export default function Exchange({ session }) {
   const [addOpen, setAddOpen] = useState(false)
   const [myReq, setMyReq] = useState({})      // resource_id -> status (pending|approved|denied)
   const [reqFor, setReqFor] = useState(null)  // the resource being requested
+  const [editRes, setEditRes] = useState(null)  // admin: resource being edited
   const [opps, setOpps] = useState([])
   const [oppOpen, setOppOpen] = useState(false)
 
@@ -90,6 +106,8 @@ export default function Exchange({ session }) {
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
       {reqFor && <RequestAccessModal session={session} resource={reqFor} isAdmin={isAdmin} onClose={()=>setReqFor(null)} onDone={loadMyReq}
         onGranted={(res)=>{ trackOpen(res); res.file_path ? downloadStored(res) : window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
+      {editRes && <EditResourceModal resource={editRes} onClose={()=>setEditRes(null)}
+        onSaved={(u)=>setResources(list=>list.map(x=>x.id===u.id?u:x))}/>}
       {oppOpen && <PostOpportunityModal session={session} onClose={()=>setOppOpen(false)}/>}
 
       <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
@@ -113,20 +131,28 @@ export default function Exchange({ session }) {
       </div>
 
       {view === 'resources' && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:10 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(290px, 1fr))', gap:12 }}>
           {resources.map(r => (
-            <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:16,
-              display:'flex', flexDirection:'column' }}>
-              <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em',
-                textTransform:'uppercase', color:C.sky, margin:'0 0 6px' }}>
-                {(TYPE_ICONS[r.type] || '📄')} {r.type || 'document'}{r.is_restricted ? ' · 🔐 restricted' : ''}
+            <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:14,
+              display:'flex', flexDirection:'column', overflow:'hidden' }}>
+              <div style={{ display:'flex', gap:12, padding:'15px 15px 0' }}>
+                <div style={{ flexShrink:0, width:44, height:44, borderRadius:12, display:'grid', placeItems:'center',
+                  fontSize:21, background: typeTint[r.type] || C.card2 }}>{TYPE_ICONS[r.type] || '📄'}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <p style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:800, letterSpacing:'.1em',
+                    textTransform:'uppercase', color:C.sky, margin:'2px 0 3px' }}>
+                    {r.type || 'document'}{r.is_restricted ? ' · 🔐 restricted' : ''}
+                  </p>
+                  <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:0, lineHeight:1.35,
+                    overflowWrap:'anywhere' }}>{tidyTitle(r.title)}</p>
+                </div>
+              </div>
+              {r.description && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'10px 15px 0', lineHeight:1.55,
+                display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden', flex:1 }}>{r.description}</p>}
+              <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'10px 15px 0' }}>
+                {[r.source_org, r.file_type, r.file_size].filter(Boolean).join(' · ')}{(r.source_org||r.file_type||r.file_size) ? ' · ' : ''}{timeAgo(r.created_at)}
               </p>
-              <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 6px', lineHeight:1.4 }}>{r.title}</p>
-              {r.description && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'0 0 10px', lineHeight:1.55, flex:1 }}>{r.description}</p>}
-              <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 10px' }}>
-                {r.source_org || ''}{r.file_type ? ` · ${r.file_type}` : ''}{r.file_size ? ` · ${r.file_size}` : ''} · {timeAgo(r.created_at)}
-              </p>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', padding:'12px 15px 14px', marginTop:8 }}>
                 {(r.file_url || r.file_path) && (
                   myReq[r.id] === 'approved' ? DL(r)
                   : (r.is_restricted && !isAdmin) ? (
@@ -137,11 +163,13 @@ export default function Exchange({ session }) {
                   : <Btn small onClick={()=>openRequest(r)}>⬇ Download</Btn>
                 )}
                 <Btn small ghost onClick={()=>share(r)}>↗ Share</Btn>
-                {isAdmin && <Btn small ghost color={C.coral} onClick={async()=>{
+                {isAdmin && <button onClick={()=>setEditRes(r)} title="Edit this resource"
+                  style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.mut }}>✏️</button>}
+                {isAdmin && <button onClick={async()=>{
                   if (!confirm('Delete resource?')) return
                   const { error } = await sb.from('resources').delete().eq('id', r.id)
                   if (error) toast(error.message,'red'); else { toast('Deleted','gold'); setResources(list=>list.filter(x=>x.id!==r.id)) }
-                }}>🗑</Btn>}
+                }} title="Delete" style={{ fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.coral }}>🗑</button>}
               </div>
             </div>
           ))}
@@ -207,6 +235,53 @@ export default function Exchange({ session }) {
   )
 }
 const Empty = () => <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing here yet.</p>
+
+// ── Admin: tidy up a resource (title, description, org, type, link) ───────────
+function EditResourceModal({ resource, onClose, onSaved }) {
+  const isFile = !!resource.file_path
+  const [title, setTitle] = useState(resource.title || '')
+  const [desc, setDesc] = useState(resource.description || '')
+  const [org, setOrg] = useState(resource.source_org || '')
+  const [type, setType] = useState(resource.type || 'report')
+  const [link, setLink] = useState(resource.file_url || '')
+  const [restricted, setRestricted] = useState(!!resource.is_restricted)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const save = async () => {
+    if (!title.trim()) { setMsg('Title is required.'); return }
+    setBusy(true); setMsg('')
+    const patch = { title: title.trim(), description: desc.trim() || null, source_org: org.trim() || null, type, is_restricted: restricted }
+    if (!isFile) patch.file_url = link.trim() ? withHttp(link.trim()) : null
+    const { error } = await sb.from('resources').update(patch).eq('id', resource.id)
+    setBusy(false)
+    if (error) { setMsg(error.message); return }
+    toast('✓ Resource updated', 'green'); onSaved({ ...resource, ...patch }); onClose()
+  }
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.surf, border:`1px solid ${C.line}`,
+        borderRadius:16, padding:22, width:'100%', maxWidth:420, maxHeight:'90vh', overflowY:'auto' }}>
+        <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 12px' }}>Edit resource</p>
+        <input style={inputStyle} placeholder="Title *" value={title} onChange={e=>setTitle(e.target.value)}/>
+        <select style={inputStyle} value={type} onChange={e=>setType(e.target.value)}>
+          {RES_TYPES.map(t => <option key={t} value={t}>{(TYPE_ICONS[t]||'📄')} {t}</option>)}
+        </select>
+        <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <textarea style={{ ...inputStyle, minHeight:80 }} placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)}/>
+        {isFile
+          ? <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px' }}>📎 Uploaded file — link can’t be changed here.</p>
+          : <input style={inputStyle} placeholder="Link (https://…)" value={link} onChange={e=>setLink(e.target.value)}/>}
+        <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:12, color:C.txt, margin:'2px 0 12px', cursor:'pointer' }}>
+          <input type="checkbox" checked={restricted} onChange={e=>setRestricted(e.target.checked)}/>
+          🔐 Restricted — members must request access
+        </label>
+        {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
+        <Btn full onClick={save} disabled={busy || !title.trim()}>{busy ? 'Saving…' : 'Save changes'}</Btn>
+      </div>
+    </div>
+  )
+}
 
 // ── Add resource: file upload OR link; stays pending until an admin approves ──
 function AddResourceModal({ session, onClose }) {
