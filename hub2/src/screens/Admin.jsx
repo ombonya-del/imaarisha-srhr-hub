@@ -608,6 +608,7 @@ function ResourceDesk({ onChange }) {
   const [reqs, setReqs] = useState([])
   const [opps, setOpps] = useState([])
   const [evs, setEvs] = useState([])
+  const [unhosted, setUnhosted] = useState([])
   const [busy, setBusy] = useState(null)
   const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
   const load = () => {
@@ -619,6 +620,12 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setOpps(data || []))
     sb.from('events').select('*').eq('status','pending').order('event_date',{ascending:true})
       .then(({data}) => setEvs(data || []))
+    // Approved document resources still stored as external links (not hosted as
+    // watermarked files) — usually because the source site blocks auto-download.
+    sb.from('resources').select('id,title,type,file_url,source_org')
+      .eq('status','approved').is('file_path',null).not('file_url','is',null)
+      .in('type',['report','policy','research','guide','toolkit','data']).order('title')
+      .then(({data}) => setUnhosted(data || []))
   }
   useEffect(() => { load() }, [])
   const decideEvent = async (e, approve) => {
@@ -747,6 +754,20 @@ function ResourceDesk({ onChange }) {
               <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
             </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section id="unhosted" color={C.gold} icon="📥" label="Documents needing manual upload" count={unhosted.length} {...secProps}>
+        <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px', lineHeight:1.5 }}>
+          These are document links the hub couldn’t auto-host as watermarked files — usually because the source site blocks automated downloads (e.g. IPPF, some govt/NGO portals).
+          To fix: open the source, download the PDF, then re-add it via <strong>＋ Add resource → Upload file</strong> and delete the old link. (Try the ✏️ Edit → 📥 Host button first — cooperative sites will just work.)
+        </p>
+        {unhosted.map(r => (
+          <div key={r.id} style={cardS(C.gold)}>
+            <p style={ttlS}>{r.title}</p>
+            <p style={metaS}>{r.type || 'document'}{r.source_org ? ` · ${r.source_org}` : ''}</p>
+            {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.gold)}>Open source ↗</a>}
           </div>
         ))}
       </Section>
