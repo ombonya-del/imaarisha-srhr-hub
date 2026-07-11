@@ -312,36 +312,51 @@ function AddResourceModal({ session, onClose }) {
 // a 🔐 restricted resource stays 'pending' until an admin approves.
 function RequestAccessModal({ session, resource, onClose, onDone, onGranted, isAdmin }) {
   const restricted = !!resource.is_restricted && !isAdmin  // admins log intent but skip the approval wait
-  const [reqName, setReqName] = useState(session.name || '')
-  const [org, setOrg] = useState('')
+  // Identity is taken from the signed-in, vetted account — it can't be faked.
+  const acctName = session.name || session.user?.email || 'member'
+  const acctOrg = (session.profile?.org_name || session.user?.user_metadata?.org_name || '').trim()
+  const [org, setOrg] = useState(acctOrg)
   const [reason, setReason] = useState('')
   const [use, setUse] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // Reject placeholder / gibberish (xxxx, zzz, single repeated chars). Can't
+  // verify truthfulness of free text, but this stops obvious junk.
+  const looksReal = (t) => {
+    const s = (t || '').trim()
+    if (s.length < 10) return false
+    const letters = s.toLowerCase().replace(/[^a-z]/g, '')
+    if (new Set(letters).size < 5) return false                       // xxxx / zzz / yyy
+    if (s.split(/\s+/).filter(w => /[a-z]{3,}/i.test(w)).length < 2) return false  // need a couple of real words
+    return true
+  }
+
   const submit = async () => {
-    if (!reqName.trim() || !org.trim() || !reason.trim() || !use.trim()) { setMsg('Please fill in all four fields.'); return }
+    if (!org.trim()) { setMsg('Add your organization (or “Independent”).'); return }
+    if (!looksReal(reason)) { setMsg('Please give a genuine reason — a short sentence, not placeholder text.'); return }
+    if (!looksReal(use)) { setMsg('Please describe how you’ll actually use it — a short sentence.'); return }
     setBusy(true); setMsg('')
     const { error } = await sb.from('resource_requests').insert({
       resource_id: String(resource.id), resource_title: resource.title,
-      requester_id: session.user?.id, requester_name: reqName.trim(),
+      requester_id: session.user?.id, requester_name: acctName,
       org: org.trim(), reason: reason.trim(), intended_use: use.trim(),
       status: restricted ? 'pending' : 'approved',
     })
     setBusy(false)
     if (error) { setMsg(error.message); return }
     if (restricted) {
-      logActivity('resource_upload', `\u{1F510} ${reqName.trim()} (${org.trim()}) requested access to "${resource.title}"`, resource.title, 'red')
+      logActivity('resource_upload', `\u{1F510} ${acctName} (${org.trim()}) requested access to "${resource.title}"`, resource.title, 'red')
       toast('✓ Request sent — an admin will review it', 'green')
     } else {
-      logActivity('resource_upload', `\u{1F4C2} ${reqName.trim()} (${org.trim()}) downloaded "${resource.title}" — ${use.trim()}`, resource.title, 'gold')
+      logActivity('resource_upload', `\u{1F4C2} ${acctName} (${org.trim()}) downloaded "${resource.title}" — ${use.trim()}`, resource.title, 'gold')
       onGranted && onGranted(resource)
       toast('✓ Thanks — your download is starting', 'green')
     }
     onDone && onDone(); onClose()
   }
 
-  const ok = reqName.trim() && org.trim() && reason.trim() && use.trim()
+  const ok = org.trim() && looksReal(reason) && looksReal(use)
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
       display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
@@ -350,13 +365,20 @@ function RequestAccessModal({ session, resource, onClose, onDone, onGranted, isA
         <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>
           {restricted ? 'Request access' : 'Before you download'}
         </p>
-        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
+        <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 12px', lineHeight:1.5 }}>
           {restricted
-            ? `“${resource.title}” is restricted. Tell us who you are and how you'll use it — an admin approves before you can download.`
-            : `Tell us who you are and how you'll use “${resource.title}”. This keeps the commons trusted; your download starts right after.`}
+            ? `“${resource.title}” is restricted. Confirm how you'll use it — an admin approves before you can download.`
+            : `This is logged against your account. Tell us how you'll use “${resource.title}”; your download starts right after.`}
         </p>
-        <input style={inputStyle} placeholder="Your name *" value={reqName} onChange={e=>setReqName(e.target.value)}/>
-        <input style={inputStyle} placeholder="Your organization (or ‘Independent’) *" value={org} onChange={e=>setOrg(e.target.value)}/>
+        {/* Identity from the account — not editable */}
+        <div style={{ background:C.card2, border:`1px solid ${C.line}`, borderRadius:10, padding:'9px 12px', marginBottom:8 }}>
+          <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:C.mut, margin:'0 0 2px' }}>Requesting as</p>
+          <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:700, color:C.txt, margin:0 }}>{acctName}</p>
+          {session.user?.email && <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'1px 0 0' }}>{session.user.email}</p>}
+        </div>
+        {acctOrg
+          ? <div style={{ ...inputStyle, color:C.mut, display:'flex', alignItems:'center' }}>🏛 {acctOrg}</div>
+          : <input style={inputStyle} placeholder="Your organization (or ‘Independent’) *" value={org} onChange={e=>setOrg(e.target.value)}/>}
         <textarea style={{ ...inputStyle, minHeight:64 }} placeholder="Why do you want this resource? *" value={reason} onChange={e=>setReason(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:64 }} placeholder="What will you use it for? *" value={use} onChange={e=>setUse(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
