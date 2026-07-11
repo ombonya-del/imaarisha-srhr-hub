@@ -1,0 +1,37 @@
+name: Resource ingest sweep
+
+# Hands-off conversion of document resources into private, watermarked, hosted
+# files. Runs weekly (and on demand). Idempotent — already-hosted resources are
+# skipped, and only real PDFs (direct or discovered on a publication page) are
+# converted; videos / web pages stay as tracked links.
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # Mondays 04:00 UTC
+  workflow_dispatch:
+
+env:
+  SUPABASE_URL: https://uwxtqyqyrhhxqagaqelg.supabase.co
+  ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eHRxeXF5cmhoeHFhZ2FxZWxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTA3MTUsImV4cCI6MjA4OTIyNjcxNX0.dLa7RY6awZC4HXnyUtoIXPZ8KJV0EEpPQR8YdOQ3hdA
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep eligible resources into hosted files
+        env:
+          CRON_SECRET: ${{ secrets.INGEST_CRON_SECRET }}
+        run: |
+          set -e
+          for i in $(seq 1 15); do
+            RESP=$(curl -sS -X POST "$SUPABASE_URL/functions/v1/ingest-resource" \
+              -H "Authorization: Bearer $ANON_KEY" \
+              -H "apikey: $ANON_KEY" \
+              -H "x-cron-secret: $CRON_SECRET" \
+              -H "Content-Type: application/json" \
+              -d '{"all":true,"limit":5}' --max-time 180)
+            echo "$RESP"
+            REM=$(echo "$RESP" | grep -o '"remaining":[0-9]*' | grep -o '[0-9]*' | head -n1)
+            [ "${REM:-0}" -eq 0 ] && { echo "Sweep complete."; break; }
+            sleep 3
+          done

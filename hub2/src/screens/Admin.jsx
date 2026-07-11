@@ -659,7 +659,13 @@ function ResourceDesk({ onChange }) {
   const approve = async (r) => {
     setBusy(r.id)
     const { error } = await sb.from('resources').update({ status:'approved' }).eq('id', r.id)
-    if (error) toast(error.message,'red'); else { toast('✓ Published to the Exchange','green'); load() }
+    if (error) toast(error.message,'red')
+    else {
+      toast('✓ Published to the Exchange','green'); load()
+      // Auto-host document links as private, watermarked files (fire-and-forget;
+      // skips videos/web pages that have no PDF). No manual conversion needed.
+      if (r.file_url && !r.file_path) sb.functions.invoke('ingest-resource', { body:{ resource_id: r.id } }).catch(()=>{})
+    }
     setBusy(null)
   }
   const reject = async (r) => {
