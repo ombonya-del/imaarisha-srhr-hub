@@ -15,7 +15,7 @@ import Admin from './screens/Admin'
 const NAV = [
   { id:'pulse',    icon:'◉',  label:'Pulse',    screen: Pulse },
   { id:'radar',    icon:'⦿',  label:'Radar',    screen: Radar },
-  { id:'watch',    icon:'🚩', label:'Disinfo Watch', screen: Watch },
+  { id:'watch',    icon:'🚩', label:'Disinfo Watch', short:'Watch', screen: Watch },
   { id:'forum',    icon:'💬', label:'Forum',    screen: Forum },
   { id:'unado',    icon:'📸', label:'UnaDO?',   screen: Unado },
   { id:'tracker',  icon:'📊', label:'Tracker',  screen: Tracker },
@@ -115,7 +115,7 @@ export default function App() {
           <div style={{ display:'flex', alignItems:'center', gap:11, whiteSpace:'nowrap' }}>
             <img src="/logo-mark.png" alt="" style={{ height: isDesktop ? 44 : 36, display:'block' }}/>
             <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
-              <span style={{ fontFamily:C.serif, fontSize: isDesktop ? 31 : 24, fontWeight:700, color:'#F6F2E8' }}>
+              <span style={{ fontFamily:C.serif, fontSize: isDesktop ? 27 : 24, fontWeight:700, color:'#F6F2E8' }}>
                 Imaarisha<span style={{ color:'#E8B14B' }}>SRHR</span>
               </span>
               <span style={{ fontFamily:C.sans, fontSize: isDesktop ? 9.5 : 8, fontWeight:800,
@@ -125,15 +125,15 @@ export default function App() {
 
           {/* Desktop nav inline — orange, lights up white on hover */}
           {isDesktop && (
-            <nav style={{ display:'flex', gap:2, flex:1, justifyContent:'center' }}>
+            <nav style={{ display:'flex', gap:1, flex:1, justifyContent:'center' }}>
               {visibleNav.map(n => {
                 const on = tab === n.id
                 return (
-                  <button key={n.id} onClick={()=>navigate(n.id)}
+                  <button key={n.id} onClick={()=>navigate(n.id)} title={n.label}
                     className={'navlink' + (on ? ' on' : '')}
-                    style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, padding:'11px 17px',
-                      border:'none', cursor:'pointer', background:'transparent', letterSpacing:'.02em' }}>
-                    {n.icon} {n.label}
+                    style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, padding:'8px 10px', whiteSpace:'nowrap',
+                      border:'none', cursor:'pointer', background:'transparent', letterSpacing:'.01em' }}>
+                    {n.icon} {n.short || n.label}
                   </button>
                 )
               })}
@@ -150,18 +150,20 @@ export default function App() {
               </button>
             )}
             <button onClick={()=>setInviteOpen(true)} title="Recommend a member to join"
-              style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'6px 12px', borderRadius:16,
+              style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding: isDesktop ? '6px 12px' : '6px 9px', borderRadius:16,
                 border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8',
                 cursor:'pointer', whiteSpace:'nowrap' }}>
-              ＋ Invite
+              {isDesktop ? '＋ Invite' : '＋'}
             </button>
             {session.user ? (
               <button onClick={async()=>{ await sb.auth.signOut(); toast('Signed out', 'gold') }}
-                title={session.name}
-                style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'6px 12px', borderRadius:16,
+                title={`${session.name || 'Member'} — sign out`}
+                style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding: isDesktop ? '6px 12px' : '6px 9px', borderRadius:16,
                   border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8',
                   cursor:'pointer', whiteSpace:'nowrap' }}>
-                {session.isAdmin ? '👑 ' : '✓ '}{(session.name || '').split(' ')[0] || 'Member'} · out
+                {isDesktop
+                  ? `${session.isAdmin ? '👑 ' : '✓ '}${((session.name || 'Member').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)) || 'M'} · out`
+                  : (session.isAdmin ? '👑' : '↩')}
               </button>
             ) : (
               <button onClick={()=>setAuthOpen(true)}
@@ -190,17 +192,17 @@ export default function App() {
         <nav style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:480,
           background:'rgba(34,39,54,0.97)', backdropFilter:'blur(10px)', borderTop:'1px solid rgba(255,255,255,0.08)',
           boxShadow:'0 -2px 16px rgba(20,24,38,0.3)',
-          display:'flex', justifyContent:'space-around', padding:'7px 0 calc(7px + env(safe-area-inset-bottom))', zIndex:20 }}>
+          display:'flex', justifyContent:'space-around', padding:'6px 0 calc(6px + env(safe-area-inset-bottom))', zIndex:20 }}>
           {visibleNav.map(n => {
             const on = tab === n.id
             return (
               <button key={n.id} onClick={()=>navigate(n.id)}
                 style={{ background:'none', border:'none', cursor:'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
-                  padding:'4px 6px', flex:1 }}>
-                <span style={{ fontSize:16, lineHeight:1, color: on?'#FFFFFF':'#C4C8D4',
+                  padding:'4px 2px', flex:1, minWidth:0 }}>
+                <span style={{ fontSize:15, lineHeight:1, color: on?'#FFFFFF':'#C4C8D4',
                   filter: on ? 'none' : 'grayscale(1) opacity(.95)' }}>{n.icon}</span>
-                <span style={{ fontFamily:C.sans, fontSize:9, fontWeight: on?800:700, color: on?'#FFFFFF':'#C4C8D4' }}>{n.label}</span>
+                <span style={{ fontFamily:C.sans, fontSize:8.5, fontWeight: on?800:700, color: on?'#FFFFFF':'#C4C8D4', whiteSpace:'nowrap' }}>{n.short || n.label}</span>
               </button>
             )
           })}
