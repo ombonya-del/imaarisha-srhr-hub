@@ -55,8 +55,21 @@ export default function Exchange({ session }) {
     else { try { await navigator.clipboard.writeText(url); toast('✓ Link copied — paste anywhere', 'green') } catch {} }
   }
   const openRequest = (r) => { if (!user) { toast('Sign in to request access', 'red'); return } setReqFor(r) }
-  // Private files: mint a 60-second signed URL at click time and pull the file.
+  // Private files. PDFs are pulled through the edge function so each copy is
+  // personally watermarked; other file types get a 60-second signed URL.
   const downloadStored = async (r) => {
+    const isPdf = (r.file_type || '').toUpperCase() === 'PDF' || (r.file_path || '').toLowerCase().endsWith('.pdf')
+    if (isPdf) {
+      toast('Preparing your watermarked copy…', 'gold')
+      const { data, error } = await sb.functions.invoke('resource-download', { body: { resource_id: r.id } })
+      if (error) { toast('Could not prepare the file' + (error.message ? ': ' + error.message : ''), 'red'); return }
+      const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/pdf' })
+      const objUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a'); a.href = objUrl
+      a.download = (r.title || 'resource').replace(/[^a-z0-9._ -]/gi, '_').slice(0, 80) + '.pdf'
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(objUrl), 15000)
+      return
+    }
     const { data, error } = await sb.storage.from('resources').createSignedUrl(r.file_path, 60, { download: true })
     if (error || !data?.signedUrl) { toast('Could not prepare this file. If it is restricted, you may need admin approval first.', 'red'); return }
     const a = document.createElement('a'); a.href = data.signedUrl; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove()

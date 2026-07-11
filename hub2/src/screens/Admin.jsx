@@ -29,7 +29,7 @@ export default function Admin({ session }) {
         sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
       <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
-          ['resources','📚 Submissions',counts.resources],
+          ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
           ['unado','📸 UnaDO?',counts.unado]].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
@@ -41,6 +41,7 @@ export default function Admin({ session }) {
       {view === 'metrics'   && <Metrics/>}
       {view === 'members'   && <Members/>}
       {view === 'resources' && <ResourceDesk onChange={loadCounts}/>}
+      {view === 'notify'    && <Broadcast/>}
       {view === 'uliza'     && <UlizaDesk session={session} onChange={loadCounts}/>}
       {view === 'fika'      && <FikaDesk onChange={loadCounts}/>}
       {view === 'unado'     && <UnadoDesk session={session} onChange={loadCounts}/>}
@@ -52,6 +53,36 @@ export default function Admin({ session }) {
 function Badge({ n }) {
   return <span style={{ marginLeft:6, fontFamily:C.sans, fontSize:9.5, fontWeight:800, color:'#fff',
     background:C.coral, borderRadius:9, padding:'1px 6px', lineHeight:1.5 }}>{n}</span>
+}
+
+// ── 📣 Broadcast a push notification to members who opted in ──────────────────
+function Broadcast() {
+  const [title, setTitle] = useState('📣 ImaarishaSRHR')
+  const [body, setBody] = useState('')
+  const [busy, setBusy] = useState(false)
+  const send = async () => {
+    if (!body.trim()) { toast('Write a short message first.', 'red'); return }
+    if (!confirm('Send this notification to every member who has notifications on?')) return
+    setBusy(true)
+    const { data, error } = await sb.functions.invoke('send-push', {
+      body: { title: title.trim() || 'ImaarishaSRHR', body: body.trim(), url: '/#pulse', group: 'hub_members' },
+    })
+    setBusy(false)
+    if (error) { toast(error.message, 'red'); return }
+    toast(`✓ Sent to ${data?.sent ?? 0} device(s)`, 'green'); setBody('')
+  }
+  return (
+    <div>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.6 }}>
+        Send a push notification to members who turned on 🔔 notifications. New events already notify automatically —
+        use this for Pulse announcements, alerts or reminders. Keep it short; it lands on their lock screen.
+      </p>
+      <input style={inputStyle} value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" maxLength={60}/>
+      <textarea style={{ ...inputStyle, minHeight:90 }} value={body} onChange={e=>setBody(e.target.value)}
+        placeholder="Message — e.g. “New disinformation alert on the Radar. Tap to review.”" maxLength={180}/>
+      <Btn color={C.lilac} onClick={send} disabled={busy || !body.trim()}>{busy ? 'Sending…' : '📣 Send to members'}</Btn>
+    </div>
+  )
 }
 
 // ── Full activity log with filters — who posted/uploaded/did what ────────────
@@ -594,7 +625,12 @@ function ResourceDesk({ onChange }) {
     setBusy(e.id)
     if (approve) {
       const { error } = await sb.from('events').update({ status:'approved' }).eq('id', e.id)
-      if (error) toast(error.message,'red'); else { toast('✓ Published to the Events calendar','green'); load(); onChange?.() }
+      if (error) toast(error.message,'red')
+      else {
+        toast('✓ Published to the Events calendar','green'); load(); onChange?.()
+        // notify members who opted in (fire-and-forget; ignore if push not set up)
+        sb.functions.invoke('send-push', { body: { title:'📅 New event', body: e.title, url:'/#event/'+e.id, tag:'event-'+e.id, group:'hub_members' } }).catch(()=>{})
+      }
     } else {
       if (!confirm(`Reject "${e.title}"?`)) { setBusy(null); return }
       const { error } = await sb.from('events').delete().eq('id', e.id)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sb, C, useSession, startNotifier, toast } from './lib/supabase'
 import { Toasts, Btn, inputStyle } from './lib/components'
+import { enablePush, disablePush, isPushOn, pushSupported } from './lib/push'
 import Pulse from './screens/Pulse'
 import Radar from './screens/Radar'
 import Watch from './screens/Watch'
@@ -39,7 +40,16 @@ export default function App() {
   const eventId = route.seg === 'event' ? route.id : null
   const [authOpen, setAuthOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [pushOn, setPushOn] = useState(false)
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900)
+
+  useEffect(() => { if (session.user) isPushOn().then(setPushOn) }, [session.user])
+  const togglePush = async () => {
+    try {
+      if (pushOn) { await disablePush(); setPushOn(false); toast('🔕 Notifications off', 'gold') }
+      else { await enablePush(session.user.id); setPushOn(true); toast('🔔 Notifications on — you’ll hear about new events & activity', 'green') }
+    } catch (e) { toast(String(e.message || e), 'red') }
+  }
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 900px)')
@@ -131,6 +141,14 @@ export default function App() {
           )}
 
           <div style={{ marginLeft: isDesktop ? 0 : 'auto', display:'flex', alignItems:'center', gap:8 }}>
+            {session.user && pushSupported() && (
+              <button onClick={togglePush} title={pushOn ? 'Notifications on — tap to turn off' : 'Turn on notifications for new events & activity'}
+                style={{ fontFamily:C.sans, fontSize:14, padding:'5px 9px', borderRadius:16, lineHeight:1,
+                  border:'1px solid rgba(255,255,255,0.22)', background: pushOn ? 'rgba(111,212,155,0.22)' : 'transparent',
+                  color:'#F6F2E8', cursor:'pointer' }}>
+                {pushOn ? '🔔' : '🔕'}
+              </button>
+            )}
             <button onClick={()=>setInviteOpen(true)} title="Recommend a member to join"
               style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'6px 12px', borderRadius:16,
                 border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8',
