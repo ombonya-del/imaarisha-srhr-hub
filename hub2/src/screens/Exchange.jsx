@@ -37,19 +37,37 @@ export default function Exchange({ session }) {
   // Every open + share is logged to activity_log → quantifiable from the admin portal
   const trackOpen = (r) => logActivity('resource_upload', `📂 ${name || 'A visitor'} opened resource: ${r.title}`, r.title, 'gold')
   const share = async (r) => {
+    // A stored file is private (members-only) — never hand out the file itself,
+    // only a link to the hub, which requires a vetted account to open.
+    if (r.file_path) {
+      logActivity('resource_upload', `🔗 ${name || 'A visitor'} shared the hub link for: ${r.title}`, r.title, 'gold')
+      const url = window.location.origin
+      try {
+        if (navigator.share) await navigator.share({ title: r.title, text: `“${r.title}” — on the ImaarishaSRHR hub`, url })
+        else await navigator.clipboard.writeText(url)
+      } catch {}
+      toast('🔒 Members-only file — shared the hub link, not the file', 'gold')
+      return
+    }
     const url = r.file_url || window.location.href
     logActivity('resource_upload', `🔗 ${name || 'A visitor'} shared resource: ${r.title}`, r.title, 'gold')
     if (navigator.share) { try { await navigator.share({ title: r.title, url }) } catch {} }
     else { try { await navigator.clipboard.writeText(url); toast('✓ Link copied — paste anywhere', 'green') } catch {} }
   }
   const openRequest = (r) => { if (!user) { toast('Sign in to request access', 'red'); return } setReqFor(r) }
-  const DL = (r) => (
-    <a href={r.file_url} target="_blank" rel="noopener noreferrer" onClick={()=>trackOpen(r)}
-      style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'7px 14px', borderRadius:10,
-        background:C.gold, color:'#171204', textDecoration:'none' }}>
-      {r.file_url && r.file_url.startsWith('http') && !r.file_url.includes('supabase') ? '🔗 Open' : '⬇ Download'}
-    </a>
-  )
+  // Private files: mint a 60-second signed URL at click time and pull the file.
+  const downloadStored = async (r) => {
+    const { data, error } = await sb.storage.from('resources').createSignedUrl(r.file_path, 60, { download: true })
+    if (error || !data?.signedUrl) { toast('Could not prepare this file. If it is restricted, you may need admin approval first.', 'red'); return }
+    const a = document.createElement('a'); a.href = data.signedUrl; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove()
+  }
+  const btnStyle = { fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'7px 14px', borderRadius:10,
+    background:C.gold, color:'#171204', textDecoration:'none', border:'none', cursor:'pointer' }
+  const DL = (r) => r.file_path
+    ? <button onClick={()=>{ trackOpen(r); downloadStored(r) }} style={btnStyle}>🔒 Download</button>
+    : <a href={r.file_url} target="_blank" rel="noopener noreferrer" onClick={()=>trackOpen(r)} style={btnStyle}>
+        {r.file_url && r.file_url.startsWith('http') && !r.file_url.includes('supabase') ? '🔗 Open' : '⬇ Download'}
+      </a>
 
   return (
     <div>
@@ -58,7 +76,7 @@ export default function Exchange({ session }) {
 
       {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
       {reqFor && <RequestAccessModal session={session} resource={reqFor} onClose={()=>setReqFor(null)} onDone={loadMyReq}
-        onGranted={(res)=>{ trackOpen(res); window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
+        onGranted={(res)=>{ trackOpen(res); res.file_path ? downloadStored(res) : window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
       {oppOpen && <PostOpportunityModal session={session} onClose={()=>setOppOpen(false)}/>}
 
       <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
@@ -96,7 +114,7 @@ export default function Exchange({ session }) {
                 {r.source_org || ''}{r.file_type ? ` · ${r.file_type}` : ''}{r.file_size ? ` · ${r.file_size}` : ''} · {timeAgo(r.created_at)}
               </p>
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {r.file_url && (
+                {(r.file_url || r.file_path) && (
                   (isAdmin || myReq[r.id] === 'approved') ? DL(r)
                   : r.is_restricted ? (
                       myReq[r.id] === 'pending' ? <Btn small ghost disabled>⏳ Request pending</Btn>
@@ -195,7 +213,7 @@ function AddResourceModal({ session, onClose }) {
   const submit = async () => {
     if (!title.trim()) { setMsg('Title is required.'); return }
     setBusy(true); setMsg('')
-    let file_url = url.trim(), file_type = null, file_size = null
+    let file_url = url.trim() || null, file_path = null, file_type = null, file_size = null
     if (mode === 'file') {
       if (!file) { setMsg('Choose a file to upload.'); setBusy(false); return }
       if (file.size > 50 * 1048576) { setMsg('File is over 50 MB — please share a link instead.'); setBusy(false); return }
@@ -203,7 +221,10 @@ function AddResourceModal({ session, onClose }) {
       const path = `${session.user?.id || 'anon'}/${Date.now()}-${safe}`
       const { error: upErr } = await sb.storage.from('resources').upload(path, file, { upsert: false })
       if (upErr) { setMsg('Upload failed: ' + upErr.message); setBusy(false); return }
-      file_url  = sb.storage.from('resources').getPublicUrl(path).data.publicUrl
+      // private bucket: store the storage key, not a public URL (downloads go
+      // through a short-lived signed URL so the file can't be shared out)
+      file_path = path
+      file_url  = null
       file_type = (file.name.split('.').pop() || '').toUpperCase()
       file_size = humanSize(file.size)
     } else if (!file_url) {
@@ -211,7 +232,7 @@ function AddResourceModal({ session, onClose }) {
     }
     const { error } = await sb.from('resources').insert({
       title: title.trim(), type, description: desc.trim() || null,
-      source_org: org.trim() || null, file_url, file_type, file_size,
+      source_org: org.trim() || null, file_url, file_path, file_type, file_size,
       is_restricted: restricted, status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
     })
     setBusy(false)

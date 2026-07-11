@@ -649,7 +649,10 @@ function ResourceDesk({ onChange }) {
             <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
             <p style={metaS}>{r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
             {r.description && <p style={descS}>{r.description}</p>}
-            {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.sky)}>Preview link ↗</a>}
+            {r.file_path
+              ? <button onClick={async()=>{ const {data,error}=await sb.storage.from('resources').createSignedUrl(r.file_path,60); if(error||!data?.signedUrl){toast('Could not open file','red');return} window.open(data.signedUrl,'_blank','noopener') }}
+                  style={{ ...linkS(C.sky), background:'none', border:'none', cursor:'pointer', padding:0 }}>Preview file ↗</button>
+              : r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.sky)}>Preview link ↗</a>}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
