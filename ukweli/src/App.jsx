@@ -54,7 +54,7 @@ export default function App() {
   }, [])
 
   const quickExit = () => { try { window.location.replace('https://www.google.com/search?q=weather+nairobi') } catch {} }
-  const maxW = isDesktop ? 760 : 480
+  const maxW = isDesktop ? 900 : 480
 
   return (
     <div style={{ background:Y.bg, minHeight:'100vh', fontFamily:Y.sans, color:Y.txt, position:'relative', overflowX:'hidden' }}>
@@ -83,7 +83,7 @@ export default function App() {
         backdropFilter:'blur(14px)', borderBottom:`1px solid ${Y.line}` }}>
         <div style={{ maxWidth:maxW, margin:'0 auto', padding: isDesktop?'12px 16px':'10px 12px',
           display:'flex', alignItems:'center', justifyContent:'space-between', gap: isDesktop?12:8 }}>
-          <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink:1 }}>
+          <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink: isDesktop?0:1 }}>
             <img src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:30}
               style={{ display:'block', flexShrink:0, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
             <div style={{ display:'flex', flexDirection:'column', lineHeight:1, minWidth:0 }}>
@@ -100,13 +100,13 @@ export default function App() {
 
           {/* Desktop inline nav */}
           {isDesktop && (
-            <nav style={{ display:'flex', gap:4, flex:1, justifyContent:'center' }}>
+            <nav style={{ display:'flex', gap:7, flex:1, justifyContent:'center' }}>
               {TABS.map(([id,icon]) => {
                 const on = tab === id, acc = TAB_ACCENT[id]
                 return (
                   <button key={id} onClick={()=>setTab(id)} className="uk-navlink uk-press"
-                    style={{ fontFamily:Y.disp, fontSize:14.5, fontWeight:600, padding:'9px 16px', borderRadius:12,
-                      border:'none', cursor:'pointer', letterSpacing:'.01em',
+                    style={{ fontFamily:Y.disp, fontSize:14.5, fontWeight:600, padding:'9px 14px', borderRadius:12,
+                      border:'none', cursor:'pointer', letterSpacing:'.01em', whiteSpace:'nowrap',
                       background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
                       boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
                     <span style={{ marginRight:6, filter:on?'none':'grayscale(1) opacity(.7)' }}>{icon}</span>{navLabel(tr, id)}
