@@ -5,6 +5,7 @@ import { enablePush, disablePush, isPushOn, pushSupported } from './lib/push'
 import Pulse from './screens/Pulse'
 import Radar from './screens/Radar'
 import Watch from './screens/Watch'
+import TikTok from './screens/TikTok'
 import Forum from './screens/Forum'
 import Tracker from './screens/Tracker'
 import Exchange from './screens/Exchange'
@@ -16,6 +17,7 @@ const NAV = [
   { id:'pulse',    icon:'◉',  label:'Pulse',    screen: Pulse },
   { id:'radar',    icon:'⦿',  label:'Radar',    screen: Radar },
   { id:'watch',    icon:'🚩', label:'Disinfo Watch', short:'Disinfo', screen: Watch },
+  { id:'tiktok',   icon:'♪',  label:'TikTok',   screen: TikTok },
   { id:'forum',    icon:'💬', label:'Forum',    screen: Forum },
   { id:'unado',    icon:'📸', label:'UnaDO?',   screen: Unado },
   { id:'tracker',  icon:'📊', label:'Tracker',  screen: Tracker },
