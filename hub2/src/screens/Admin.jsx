@@ -690,7 +690,10 @@ function ResourceDesk({ onChange }) {
   const OPP_TLD = /\.(gm|ng|za|gh|ug|tz|rw|et|zm|zw|mw|mz|ao|cm|sn|ml|ne|ma|tn|dz|lr|sl|gn|ci|tg|bj|bf|td|cg|cd|ga|mg|na|bw|ls|sz|mu|sc|dj|er|km|cv|mr|in|pk|bd|np|ph|id|vn|au|ca|us|uk|nz|jp|sg)\b/
   const OPP_SIGNAL = ['call for','grant','fund','fellowship','scholarship','apply','proposal','award','opportunit','vacancy','consultanc','deadline','inviting','nominations open','expression of interest','request for','submissions open','open for applications','cash prize']
   const OPP_JUNK = /\btop \d+|\b\d+ best|\bbest \d+|\b\d+ (grant|funding|fellowship|opportunit)|roundup|list of|^how to |how to (get|access|apply|find|win|secure)/
-  const OPP_CORE = ['reproductive','sexual health','srhr','family planning','contracept','maternal','abortion','hiv','hpv','adolescent','teen pregnancy','teenage pregnancy','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','harassment','gender equality','gender justice','women','girls','fgm','female genital','child marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','youth','fellowship','scholarship']
+  // Genuine SRHR / GBV topics only. Deliberately NOT 'youth'/'fellowship'/'scholarship'
+  // (those are opportunity *types*, handled by OPP_SIGNAL) nor bare 'women'/'girls' —
+  // they were waving through youth contests, journalism fellowships and climate funds.
+  const OPP_CORE = ['reproductive','sexual health','sexual and reproductive','srhr','family planning','contracept','maternal','abortion','hiv','hpv','sti','adolescent health','adolescent sexual','teen pregnancy','teenage pregnancy','menstrual','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','defilement','domestic violence','harassment','gender equality','gender justice',"women's rights","women’s rights","girls' rights",'girl child','women empowerment','fgm','female genital','child marriage','early marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','sexuality education']
   const oppRelevant = (o) => {
     const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
     // Geo: Kenya/East-Africa explicit wins; a specific OTHER country/region excludes;
@@ -705,8 +708,12 @@ function ResourceDesk({ onChange }) {
     const isOpp = OPP_SIGNAL.some(k=>s.includes(k)) && !OPP_JUNK.test(s)
     return geoOK && current && onTopic && isOpp
   }
-  const oppsRelevant = opps.filter(oppRelevant)
-  const oppsHidden   = opps.filter(o => !oppRelevant(o))
+  // De-dupe repeated submissions (the scanner stores the same call more than once) by
+  // normalised title, then split into the relevant queue vs the hidden pile.
+  const _seenOpp = new Set()
+  const oppsUniq = opps.filter(o => { const k=(o.title||'').toLowerCase().replace(/\s+/g,' ').trim().slice(0,70); if(!k||_seenOpp.has(k))return false; _seenOpp.add(k); return true })
+  const oppsRelevant = oppsUniq.filter(oppRelevant)
+  const oppsHidden   = oppsUniq.filter(o => !oppRelevant(o))
   const bulkRejectHiddenOpps = async () => {
     if (!oppsHidden.length) return
     if (!confirm(`Reject ${oppsHidden.length} off-region / expired / off-topic submission(s)? This clears them from the queue.`)) return
