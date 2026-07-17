@@ -78,6 +78,8 @@ function RadarCurate() {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [items, setItems] = useState([])
+  const [editId, setEditId] = useState(null)
+  const [edit, setEdit] = useState({ title:'', url:'', typology:'contraceptive_myth', snippet:'', is_disinfo:true })
 
   const load = () => sb.from('radar_items').select('*').in('platform', CURATE_SOCIAL)
     .order('scanned_at', { ascending:false }).limit(30).then(({ data }) => setItems(data || []))
@@ -110,6 +112,22 @@ function RadarCurate() {
     if (error) toast(error.message, 'red'); else { toast('Removed', 'gold'); load() }
   }
 
+  const startEdit = (it) => {
+    setEditId(it.id)
+    setEdit({ title:it.title||'', url:it.url||'', typology:it.typology||'contraceptive_myth', snippet:it.snippet||'', is_disinfo: it.is_disinfo !== false })
+  }
+  const saveEdit = async () => {
+    const u = edit.url.trim()
+    if (!/^https?:\/\//.test(u)) { toast('Post URL must start with https://', 'red'); return }
+    const { error } = await sb.from('radar_items').update({
+      title: edit.title.trim() || ('Flagged ' + platformOfUrl(u) + ' post'),
+      url: u, platform: platformOfUrl(u), typology: edit.typology,
+      snippet: edit.snippet.trim() || null, is_disinfo: edit.is_disinfo,
+    }).eq('id', editId)
+    if (error) { toast(error.message, 'red'); return }
+    toast('✓ Updated', 'green'); setEditId(null); load()
+  }
+
   return (
     <div>
       <SectionLabel color={C.coral}>🚩 Curate a social post for Trending</SectionLabel>
@@ -136,15 +154,36 @@ function RadarCurate() {
         <SectionLabel color={C.gold}>Curated &amp; social items ({items.length})</SectionLabel>
       </div>
       {items.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>Nothing yet — paste a post above.</p>}
-      {items.map(it => (
+      {items.map(it => editId === it.id ? (
+        <div key={it.id} style={{ background:C.card, border:`1px solid ${C.gold}`, borderRadius:10, padding:'12px', marginBottom:8 }}>
+          <input value={edit.title} onChange={e=>setEdit({ ...edit, title:e.target.value })} placeholder="Title / claim" style={inputStyle}/>
+          <input value={edit.url} onChange={e=>setEdit({ ...edit, url:e.target.value })} placeholder="Post URL" style={{ ...inputStyle, marginTop:8 }}/>
+          <input value={edit.snippet} onChange={e=>setEdit({ ...edit, snippet:e.target.value })} placeholder="Description (optional)" style={{ ...inputStyle, marginTop:8 }}/>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'8px 0' }}>
+            <select value={edit.typology} onChange={e=>setEdit({ ...edit, typology:e.target.value })} style={{ ...inputStyle, width:'auto', flex:'1 1 200px' }}>
+              {CURATE_TY.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+            <label style={{ fontFamily:C.sans, fontSize:12, fontWeight:700, color:C.txt, display:'flex', alignItems:'center', gap:6 }}>
+              <input type="checkbox" checked={edit.is_disinfo} onChange={e=>setEdit({ ...edit, is_disinfo:e.target.checked })}/> flag as disinfo
+            </label>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <Btn small color={C.teal} onClick={saveEdit}>Save</Btn>
+            <Btn small ghost color={C.mut} onClick={()=>setEditId(null)}>Cancel</Btn>
+          </div>
+        </div>
+      ) : (
         <div key={it.id} style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between',
           background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'10px 12px', marginBottom:8 }}>
           <div style={{ minWidth:0 }}>
-            <div style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, color:C.coral, textTransform:'uppercase', letterSpacing:'.04em' }}>{it.platform} · {it.typology}</div>
+            <div style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, color:C.coral, textTransform:'uppercase', letterSpacing:'.04em' }}>{it.platform} · {it.typology}{it.is_disinfo ? '' : ' · not flagged'}</div>
             <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:600, overflowWrap:'anywhere', margin:'2px 0' }}>{it.title}</div>
             <a href={it.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, overflowWrap:'anywhere' }}>{it.url}</a>
           </div>
-          <Btn small ghost color={C.coral} onClick={()=>remove(it.id)}>Remove</Btn>
+          <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+            <Btn small ghost color={C.gold} onClick={()=>startEdit(it)}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>remove(it.id)}>Remove</Btn>
+          </div>
         </div>
       ))}
     </div>
