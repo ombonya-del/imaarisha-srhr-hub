@@ -31,7 +31,7 @@ export default function Admin({ session }) {
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
           ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
-          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending']].map(([k,l,n]) => (
+          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths']].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
             {l}{n > 0 && <Badge n={n}/>}
           </Chip>
@@ -46,6 +46,7 @@ export default function Admin({ session }) {
       {view === 'fika'      && <FikaDesk onChange={loadCounts}/>}
       {view === 'unado'     && <UnadoDesk session={session} onChange={loadCounts}/>}
       {view === 'radar'     && <RadarCurate/>}
+      {view === 'myths'     && <MythsDesk/>}
     </div>
   )
 }
@@ -183,6 +184,120 @@ function RadarCurate() {
           <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
             <Btn small ghost color={C.gold} onClick={()=>startEdit(it)}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>remove(it.id)}>Remove</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+// ── ⚡ Myths authoring desk — CRUD the ukweli_cards the youth app shows, with media ─
+const MYTH_LANGS = [['en','English'],['sw','Kiswahili'],['sheng','Sheng']]
+const EMPTY_MYTH = { claim:'', why_it_feels_true:'', truth:'', what_to_do:'', language:'en', sort_order:0, active:true, media_url:null, media_type:null }
+
+function MythsDesk() {
+  const [cards, setCards] = useState([])
+  const [form, setForm] = useState(EMPTY_MYTH)
+  const [editId, setEditId] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [lang, setLang] = useState('en')
+
+  const load = () => sb.from('ukweli_cards').select('*').order('language').order('sort_order').then(({ data }) => setCards(data || []))
+  useEffect(() => { load() }, [])
+
+  const upFile = async (file) => {
+    if (!file) return
+    setUploading(true)
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+    const path = `myths/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`
+    const { error } = await sb.storage.from('ukweli-media').upload(path, file, { contentType:file.type, upsert:false })
+    if (error) { setUploading(false); toast(error.message, 'red'); return }
+    const url = sb.storage.from('ukweli-media').getPublicUrl(path).data.publicUrl
+    const type = file.type.startsWith('image') ? 'image' : file.type.startsWith('video') ? 'video' : 'file'
+    setForm(f => ({ ...f, media_url:url, media_type:type }))
+    setUploading(false); toast('✓ Media uploaded', 'green')
+  }
+
+  const save = async () => {
+    if (!form.claim.trim() || !form.truth.trim()) { toast('Claim and Truth are required', 'red'); return }
+    setBusy(true)
+    const payload = {
+      claim:form.claim.trim(), why_it_feels_true:form.why_it_feels_true.trim() || null, truth:form.truth.trim(),
+      what_to_do:form.what_to_do.trim() || null, language:form.language, sort_order:Number(form.sort_order) || 0,
+      active:form.active, media_url:form.media_url, media_type:form.media_type,
+    }
+    let error
+    if (editId) ({ error } = await sb.from('ukweli_cards').update(payload).eq('id', editId))
+    else ({ error } = await sb.from('ukweli_cards').insert(payload))
+    setBusy(false)
+    if (error) { toast(error.message, 'red'); return }
+    toast(editId ? '✓ Updated' : '✓ Card added', 'green'); setForm(EMPTY_MYTH); setEditId(null); load()
+  }
+
+  const editCard = (c) => {
+    setEditId(c.id)
+    setForm({ claim:c.claim||'', why_it_feels_true:c.why_it_feels_true||'', truth:c.truth||'', what_to_do:c.what_to_do||'',
+      language:c.language||'en', sort_order:c.sort_order||0, active:c.active!==false, media_url:c.media_url||null, media_type:c.media_type||null })
+    window.scrollTo({ top:0, behavior:'smooth' })
+  }
+  const reset = () => { setEditId(null); setForm(EMPTY_MYTH) }
+  const del = async (id) => { const { error } = await sb.from('ukweli_cards').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); if (editId===id) reset(); load() } }
+
+  const shown = cards.filter(c => c.language === lang)
+
+  return (
+    <div>
+      <SectionLabel color={C.gold}>⚡ Myths — author the youth myth-buster cards</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 14px' }}>
+        These are the cards young people tap in the Ukweli “Myths” tab. Add an image, video or file to make them land.
+      </p>
+
+      <div style={{ background:C.card, border:`1px solid ${editId?C.gold:C.line}`, borderRadius:12, padding:14, marginBottom:18 }}>
+        <input value={form.claim} onChange={e=>setForm({ ...form, claim:e.target.value })} placeholder="The myth, in people's words *" style={inputStyle}/>
+        <textarea value={form.why_it_feels_true} onChange={e=>setForm({ ...form, why_it_feels_true:e.target.value })} placeholder="Why it feels true (optional)" style={{ ...inputStyle, minHeight:52, marginTop:8 }}/>
+        <textarea value={form.truth} onChange={e=>setForm({ ...form, truth:e.target.value })} placeholder="The truth *" style={{ ...inputStyle, minHeight:64, marginTop:8 }}/>
+        <textarea value={form.what_to_do} onChange={e=>setForm({ ...form, what_to_do:e.target.value })} placeholder="What to do (optional)" style={{ ...inputStyle, minHeight:52, marginTop:8 }}/>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'10px 0' }}>
+          <select value={form.language} onChange={e=>setForm({ ...form, language:e.target.value })} style={{ ...inputStyle, width:'auto' }}>
+            {MYTH_LANGS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <input type="number" value={form.sort_order} onChange={e=>setForm({ ...form, sort_order:e.target.value })} placeholder="Order" style={{ ...inputStyle, width:88 }}/>
+          <label style={{ fontFamily:C.sans, fontSize:12, fontWeight:700, color:C.txt, display:'flex', alignItems:'center', gap:6 }}>
+            <input type="checkbox" checked={form.active} onChange={e=>setForm({ ...form, active:e.target.checked })}/> live
+          </label>
+        </div>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+          <label className="uk-press" style={{ fontFamily:C.sans, fontSize:12.5, fontWeight:700, color:C.sky, cursor:'pointer', border:`1px dashed ${C.line}`, borderRadius:10, padding:'8px 12px' }}>
+            {uploading ? 'Uploading…' : (form.media_url ? '↻ Replace media' : '＋ Image / video / file')}
+            <input type="file" accept="image/*,video/*,.pdf,.doc,.docx" style={{ display:'none' }} onChange={e=>upFile(e.target.files?.[0])}/>
+          </label>
+          {form.media_url && <span style={{ fontFamily:C.sans, fontSize:11, color:C.teal }}>● {form.media_type} attached
+            <button onClick={()=>setForm({ ...form, media_url:null, media_type:null })} style={{ marginLeft:6, background:'none', border:'none', color:C.coral, cursor:'pointer', fontWeight:700 }}>remove</button>
+          </span>}
+        </div>
+        {form.media_url && form.media_type==='image' && <img src={form.media_url} alt="" style={{ marginTop:10, maxWidth:'100%', maxHeight:170, borderRadius:8, display:'block' }}/>}
+        <div style={{ display:'flex', gap:8, marginTop:12 }}>
+          <Btn color={C.gold} onClick={save} disabled={busy || !form.claim.trim() || !form.truth.trim()}>{busy ? 'Saving…' : (editId ? 'Save changes' : '＋ Add card')}</Btn>
+          {editId && <Btn ghost color={C.mut} onClick={reset}>Cancel</Btn>}
+        </div>
+      </div>
+
+      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+        {MYTH_LANGS.map(([k,l]) => <Chip key={k} active={lang===k} onClick={()=>setLang(k)} color={C.gold}>{l}</Chip>)}
+      </div>
+      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>No cards in this language yet.</p>}
+      {shown.map(c => (
+        <div key={c.id} style={{ display:'flex', gap:10, justifyContent:'space-between', alignItems:'flex-start',
+          background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'10px 12px', marginBottom:8, opacity:c.active?1:0.5 }}>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:700, overflowWrap:'anywhere' }}>“{c.claim}”</div>
+            <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginTop:2 }}>#{c.sort_order}{c.media_url ? ' · ' + (c.media_type || 'media') : ''}{c.active ? '' : ' · hidden'}</div>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+            <Btn small ghost color={C.gold} onClick={()=>editCard(c)}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>del(c.id)}>Delete</Btn>
           </div>
         </div>
       ))}
