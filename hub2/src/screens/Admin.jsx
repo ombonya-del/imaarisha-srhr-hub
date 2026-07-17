@@ -607,6 +607,7 @@ function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
   const [reqs, setReqs] = useState([])
   const [opps, setOpps] = useState([])
+  const [showHiddenOpps, setShowHiddenOpps] = useState(false)
   const [evs, setEvs] = useState([])
   const [unhosted, setUnhosted] = useState([])
   const [busy, setBusy] = useState(null)
@@ -682,7 +683,30 @@ function ResourceDesk({ onChange }) {
     if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
     setBusy(null)
   }
-  const total = pending.length + reqs.length + opps.length + evs.length
+  // ── Opportunity queue triage: hide off-region / expired / off-topic pending
+  //    submissions so only the relevant ones (Kenya + current + SRHR) need review.
+  const OPP_OK = ['kenya','kenyan','east africa','eastern africa','africa','african','sub-saharan','sub saharan','pan-african','global','international','worldwide','commonwealth','anglophone','remote']
+  const OPP_OTHER = ['nigeria','ghana','south africa','egypt','ethiopia','india','pakistan','bangladesh','nepal','philippines','indonesia','vietnam','cambodia','brazil','mexico','colombia','ukraine','syria','yemen','afghanistan','myanmar','united states','usa','europe','european','caribbean','pacific','latin america','south asia','southeast asia','middle east']
+  const OPP_CORE = ['reproductive','sexual health','srhr','family planning','contracept','maternal','abortion','hiv','hpv','adolescent','teen pregnancy','teenage pregnancy','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','harassment','gender equality','gender justice','women','girls','fgm','female genital','child marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','youth','fellowship','scholarship']
+  const oppRelevant = (o) => {
+    const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
+    const geoOK   = OPP_OK.some(k=>s.includes(k)) || !OPP_OTHER.some(k=>s.includes(k))
+    const current = !o.deadline || new Date(o.deadline).getTime() >= Date.now() - 2*86400000
+    const onTopic = OPP_CORE.some(k=>s.includes(k))
+    return geoOK && current && onTopic
+  }
+  const oppsRelevant = opps.filter(oppRelevant)
+  const oppsHidden   = opps.filter(o => !oppRelevant(o))
+  const bulkRejectHiddenOpps = async () => {
+    if (!oppsHidden.length) return
+    if (!confirm(`Reject ${oppsHidden.length} off-region / expired / off-topic submission(s)? This clears them from the queue.`)) return
+    setBusy('bulk')
+    const { error } = await sb.from('opportunities').delete().in('id', oppsHidden.map(o=>o.id))
+    if (error) toast(error.message,'red'); else { toast(`Cleared ${oppsHidden.length} irrelevant`,'gold'); load() }
+    setBusy(null)
+  }
+
+  const total = pending.length + reqs.length + oppsRelevant.length + evs.length
   const secProps = { openSec, setOpenSec }
 
   return (
@@ -724,8 +748,15 @@ function ResourceDesk({ onChange }) {
         ))}
       </Section>
 
-      <Section id="opps" color={C.lilac} icon="🎯" label="Opportunity submissions" count={opps.length} {...secProps}>
-        {opps.map(o => (
+      <Section id="opps" color={C.lilac} icon="🎯" label="Opportunity submissions" count={oppsRelevant.length} {...secProps}>
+        {oppsHidden.length > 0 && (
+          <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:12, padding:'8px 12px', background:'#f6f0fa', borderRadius:8 }}>
+            <span style={{ fontFamily:C.sans, fontSize:12, color:C.mut }}>{oppsHidden.length} hidden - off-region / expired / off-topic</span>
+            <Btn small ghost color={C.coral} onClick={bulkRejectHiddenOpps} disabled={busy==='bulk'}>{busy==='bulk' ? '...' : 'Reject all ' + oppsHidden.length}</Btn>
+            <Btn small ghost color={C.lilac} onClick={()=>setShowHiddenOpps(v=>!v)}>{showHiddenOpps ? 'Hide them' : 'Show them'}</Btn>
+          </div>
+        )}
+        {(showHiddenOpps ? opps : oppsRelevant).map(o => (
           <div key={o.id} style={cardS(C.lilac)}>
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>{o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}</p>
