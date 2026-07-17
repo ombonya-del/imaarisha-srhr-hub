@@ -46,7 +46,16 @@ export default function Exchange({ session }) {
     sb.from('resources').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
     sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
-    sb.from('opportunities').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setOpps(data||[]))
+    sb.from('opportunities').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(120).then(({data})=>{
+      const now = Date.now()
+      const STALE_MS = 300 * 86400000 // ~10 months: drop undated posts older than this
+      const fresh = (data||[]).filter(o => {
+        if (o.deadline) return new Date(o.deadline).getTime() >= now - 2*86400000 // hide expired (2-day grace)
+        if (o.created_at) return (now - new Date(o.created_at).getTime()) < STALE_MS // drop old undated
+        return true
+      })
+      setOpps(fresh.slice(0, 60))
+    })
   }, [])
   useEffect(() => { loadMyReq() }, [user])
 
