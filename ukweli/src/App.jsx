@@ -488,34 +488,48 @@ function Block({ label, text, color }) {
 // ── Learn: real SRHR explainers (from lib/learn.js) ──────────────────────────
 function Learn({ tr, lang, isDesktop }) {
   const [open, setOpen] = useState(null)
+  const [db, setDb] = useState([])
+  useEffect(() => {
+    sb.from('ukweli_learn').select('*').eq('active', true).order('sort_order').then(({ data }) => setDb(data || []))
+  }, [])
+
+  const staticTopics = LEARN.map(topic => {
+    const t = topic[lang] || topic.en
+    return { key:topic.id, color:topic.color, emoji:topic.emoji, title:t.title, intro:t.intro, points:t.points, media_url:null, media_type:null }
+  })
+  const dbLang = db.filter(d => d.language === lang)
+  const dbRows = dbLang.length ? dbLang : db.filter(d => d.language === 'en')
+  const dbTopics = dbRows.map(d => ({ key:'db-'+d.id, color:d.color || Y.green, emoji:d.emoji || '📖', title:d.title, intro:d.intro || '', points:Array.isArray(d.points) ? d.points : [], media_url:d.media_url, media_type:d.media_type }))
+  const topics = [...staticTopics, ...dbTopics]
+
   return (
     <div>
       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 18px', lineHeight:1.6, fontWeight:500 }}>
         {tr('learn_intro')}
       </p>
       <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
-        {LEARN.map(topic => {
-          const t = topic[lang] || topic.en
-          const isOpen = open === topic.id
+        {topics.map(topic => {
+          const isOpen = open === topic.key
           return (
-            <div key={topic.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
+            <div key={topic.key} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderTop:`3px solid ${topic.color}`, borderRadius:16, overflow:'hidden', alignSelf:'start',
               boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
-              <button onClick={()=>setOpen(isOpen?null:topic.id)} className="uk-press"
+              <button onClick={()=>setOpen(isOpen?null:topic.key)} className="uk-press"
                 style={{ width:'100%', textAlign:'left', cursor:'pointer', border:'none', background:'transparent',
                   display:'flex', alignItems:'center', gap:13, padding:'15px 16px' }}>
                 <span style={{ width:44, height:44, borderRadius:13, flexShrink:0, fontSize:22,
                   display:'flex', alignItems:'center', justifyContent:'center',
                   background:topic.color + '26', border:`1px solid ${topic.color}55` }}>{topic.emoji}</span>
                 <span style={{ flex:1 }}>
-                  <span style={{ display:'block', fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, lineHeight:1.2 }}>{t.title}</span>
-                  <span style={{ display:'block', fontFamily:Y.sans, fontSize:12, color:Y.mut, marginTop:3, lineHeight:1.45 }}>{t.intro}</span>
+                  <span style={{ display:'block', fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, lineHeight:1.2 }}>{topic.title}</span>
+                  <span style={{ display:'block', fontFamily:Y.sans, fontSize:12, color:Y.mut, marginTop:3, lineHeight:1.45 }}>{topic.intro}</span>
                 </span>
                 <span style={{ fontFamily:Y.disp, fontSize:18, color:topic.color, fontWeight:600 }}>{isOpen ? '–' : '+'}</span>
               </button>
               {isOpen && (
                 <div style={{ padding:'2px 16px 16px' }}>
-                  {t.points.map(([head, body], j) => (
+                  {topic.media_url && <MythMedia url={topic.media_url} type={topic.media_type}/>}
+                  {topic.points.map(([head, body], j) => (
                     <div key={j} style={{ marginBottom:12, paddingLeft:13, borderLeft:`3px solid ${topic.color}66` }}>
                       <p style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, color:topic.color, margin:'0 0 3px' }}>{head}</p>
                       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.82 }}>{body}</p>
