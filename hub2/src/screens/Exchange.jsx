@@ -46,10 +46,21 @@ export default function Exchange({ session }) {
     sb.from('resources').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(60).then(({data})=>setResources(data||[]))
     sb.from('marketplace_listings').select('*, organizations(short_name)').order('created_at',{ascending:false}).limit(40).then(({data})=>setListings(data||[]))
     sb.from('organizations').select('*').eq('approved', true).order('short_name').limit(200).then(({data})=>setOrgs(data||[]))
-    sb.from('opportunities').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(120).then(({data})=>{
+    sb.from('opportunities').select('*').eq('status','approved').order('created_at',{ascending:false}).limit(150).then(({data})=>{
       const now = Date.now()
       const STALE_MS = 300 * 86400000 // ~10 months: drop undated posts older than this
+      // Kenya-eligibility: keep Kenya/East Africa/pan-African/global calls; drop ones
+      // scoped to another country/region. Applies to existing rows the scanner already stored.
+      const OK = ['kenya','kenyan','east africa','eastern africa','africa','african','sub-saharan','sub saharan','pan-african','global','international','worldwide','commonwealth','anglophone','remote']
+      const OTHER = ['nigeria','ghana','south africa','egypt','ethiopia','india','pakistan','bangladesh','nepal','philippines','indonesia','vietnam','cambodia','brazil','mexico','colombia','ukraine','syria','yemen','afghanistan','myanmar','united states','usa','europe','european','caribbean','pacific','latin america','south asia','southeast asia','middle east']
+      const kenyaOK = (o) => {
+        const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
+        if (OK.some(k => s.includes(k))) return true
+        if (OTHER.some(k => s.includes(k))) return false
+        return true // no geography named -> keep
+      }
       const fresh = (data||[]).filter(o => {
+        if (!kenyaOK(o)) return false
         if (o.deadline) return new Date(o.deadline).getTime() >= now - 2*86400000 // hide expired (2-day grace)
         if (o.created_at) return (now - new Date(o.created_at).getTime()) < STALE_MS // drop old undated
         return true
