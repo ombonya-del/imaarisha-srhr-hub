@@ -19,6 +19,7 @@ const Y = {
   teal:  '#2FD0C4',
   coral: '#FF6F61',
   gold:  '#F2C75C',
+  rose:  '#FF5C8A',   // alert accent — the Trending / disinfo tab
   txt:   '#F1F5EE',
   mut:   '#88AE9D',
   disp:  "'Space Grotesk', system-ui, sans-serif",
@@ -35,8 +36,8 @@ function Bolt({ size = 12, color = '#F2C75C' }) {
   )
 }
 
-const TABS = [['ask','💬'],['myths','⚡'],['learn','📖'],['fika','📍']]
-const TAB_ACCENT = { ask: Y.green, myths: Y.coral, learn: Y.teal, fika: Y.gold }
+const TABS = [['ask','💬'],['myths','⚡'],['disinfo','🚩'],['learn','📖'],['fika','📍']]
+const TAB_ACCENT = { ask: Y.green, myths: Y.coral, disinfo: Y.rose, learn: Y.teal, fika: Y.gold }
 const MYTH_COLORS = [Y.coral, Y.green, Y.teal, Y.gold]
 const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fika_nav' : id)
 
@@ -142,6 +143,7 @@ export default function App() {
         </p>
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} />}
+        {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} />}
         {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} />}
         <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
@@ -303,6 +305,101 @@ function Myths({ tr, lang, isDesktop }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ── Trending: live SRHR disinfo the Radar catches on TikTok & socials ─────────
+const DTY = {
+  contraceptive_myth: { key:'ty_contra', color:Y.coral },
+  fertility_abortion: { key:'ty_fert',   color:Y.gold },
+  anti_cse:           { key:'ty_cse',    color:Y.teal },
+  faith_healing:      { key:'ty_faith',  color:Y.rose },
+}
+const DPLAT = {
+  tiktok:{ label:'TikTok', icon:'♪' }, youtube:{ label:'YouTube', icon:'▶' },
+  reddit:{ label:'Reddit', icon:'↗' }, x:{ label:'X', icon:'𝕏' },
+  facebook:{ label:'Facebook', icon:'f' }, instagram:{ label:'Instagram', icon:'◎' },
+}
+const DSOCIAL = Object.keys(DPLAT)
+
+function Disinfo({ tr, lang, isDesktop }) {
+  const [items, setItems] = useState(null)
+  const [ty, setTy] = useState('all')
+
+  useEffect(() => {
+    sb.from('radar_items').select('*').in('platform', DSOCIAL)
+      .order('scanned_at', { ascending:false }).limit(60)
+      .then(({ data }) => setItems((data || []).filter(i => i.is_disinfo || i.harm_score >= 5)))
+      .catch(() => setItems([]))
+  }, [])
+
+  const list = (items || []).filter(i => ty === 'all' || i.typology === ty)
+  const chip = (on, color) => ({
+    fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'7px 13px', borderRadius:20,
+    cursor:'pointer', whiteSpace:'nowrap', border:'none',
+    background: on ? color : 'rgba(255,255,255,0.06)', color: on ? '#06241C' : Y.mut,
+    boxShadow: on ? `0 4px 12px ${color}44` : 'none',
+  })
+
+  return (
+    <div>
+      <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 16px', lineHeight:1.6, fontWeight:500 }}>
+        {tr('disinfo_intro')}
+      </p>
+
+      {/* typology filter */}
+      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, marginBottom:16 }}>
+        <button onClick={()=>setTy('all')} className="uk-press" style={chip(ty==='all', Y.green)}>{tr('disinfo_all')}</button>
+        {Object.entries(DTY).map(([k,v]) => (
+          <button key={k} onClick={()=>setTy(k)} className="uk-press" style={chip(ty===k, v.color)}>{tr(v.key)}</button>
+        ))}
+      </div>
+
+      {items === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
+      {items !== null && list.length === 0 && (
+        <div className="uk-card" style={{ background:Y.card, border:`1px dashed ${Y.line}`, borderRadius:16, padding:20, textAlign:'center' }}>
+          <p style={{ fontSize:26, margin:'0 0 6px' }}>🚩</p>
+          <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.mut, lineHeight:1.6, margin:0 }}>{tr('disinfo_empty')}</p>
+        </div>
+      )}
+
+      <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
+        {list.map(it => {
+          const t = DTY[it.typology]
+          const acc = t ? t.color : Y.rose
+          const pl = DPLAT[it.platform] || { label:it.platform, icon:'•' }
+          return (
+            <div key={it.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
+              borderLeft:`4px solid ${acc}`, borderRadius:16, padding:16, alignSelf:'start',
+              boxShadow:'0 6px 18px rgba(0,0,0,0.20)', overflowWrap:'anywhere' }}>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:7, alignItems:'center', marginBottom:9 }}>
+                <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color:'#06241C',
+                  background:acc, borderRadius:8, padding:'2px 9px' }}>
+                  <span aria-hidden style={{ marginRight:4 }}>{pl.icon}</span>{pl.label}
+                </span>
+                {t && <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.03em',
+                  textTransform:'uppercase', color:acc, border:`1px solid ${acc}66`, borderRadius:8, padding:'2px 8px' }}>{tr(t.key)}</span>}
+                {it.harm_score >= 7 && <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, color:Y.coral }}>{tr('disinfo_flag')}</span>}
+              </div>
+              <p style={{ fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.32 }}>{it.title}</p>
+              {it.snippet && <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.txt, opacity:.75, lineHeight:1.6, margin:'8px 0 0' }}>
+                {it.snippet.slice(0,180)}{it.snippet.length>180?'…':''}</p>}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginTop:11 }}>
+                <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{it.source_name} · {timeAgo(it.scanned_at)}</span>
+                {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
+                  style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>See post ↗</a>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {items !== null && list.length > 0 && (
+        <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'18px 4px 0', textAlign:'center' }}>
+          {tr('disinfo_footer')}
+        </p>
+      )}
     </div>
   )
 }
