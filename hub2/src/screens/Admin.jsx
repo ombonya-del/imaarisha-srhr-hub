@@ -31,7 +31,7 @@ export default function Admin({ session }) {
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
           ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
-          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths']].map(([k,l,n]) => (
+          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths'],['learn','📖 Learn']].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
             {l}{n > 0 && <Badge n={n}/>}
           </Chip>
@@ -47,6 +47,7 @@ export default function Admin({ session }) {
       {view === 'unado'     && <UnadoDesk session={session} onChange={loadCounts}/>}
       {view === 'radar'     && <RadarCurate/>}
       {view === 'myths'     && <MythsDesk/>}
+      {view === 'learn'     && <LearnDesk/>}
     </div>
   )
 }
@@ -298,6 +299,123 @@ function MythsDesk() {
           <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
             <Btn small ghost color={C.gold} onClick={()=>editCard(c)}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>del(c.id)}>Delete</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+// ── 📖 Learn authoring desk — DB-backed Learn topics (with media) ─────────────
+const EMPTY_LEARN = { title:'', intro:'', pointsText:'', color:'#3FE0A0', emoji:'📖', language:'en', sort_order:0, active:true, media_url:null, media_type:null }
+const parsePoints = (txt) => (txt || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => { const i = l.indexOf('::'); return i >= 0 ? [l.slice(0,i).trim(), l.slice(i+2).trim()] : ['', l] })
+const pointsToText = (pts) => (Array.isArray(pts) ? pts : []).map(p => (p[0] ? p[0] + ' :: ' : '') + (p[1] || '')).join('\n')
+
+function LearnDesk() {
+  const [rows, setRows] = useState([])
+  const [form, setForm] = useState(EMPTY_LEARN)
+  const [editId, setEditId] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [lang, setLang] = useState('en')
+
+  const load = () => sb.from('ukweli_learn').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+
+  const upFile = async (file) => {
+    if (!file) return
+    setUploading(true)
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+    const path = `learn/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`
+    const { error } = await sb.storage.from('ukweli-media').upload(path, file, { contentType:file.type, upsert:false })
+    if (error) { setUploading(false); toast(error.message, 'red'); return }
+    const url = sb.storage.from('ukweli-media').getPublicUrl(path).data.publicUrl
+    const type = file.type.startsWith('image') ? 'image' : file.type.startsWith('video') ? 'video' : 'file'
+    setForm(f => ({ ...f, media_url:url, media_type:type }))
+    setUploading(false); toast('✓ Media uploaded', 'green')
+  }
+
+  const save = async () => {
+    if (!form.title.trim()) { toast('Title is required', 'red'); return }
+    setBusy(true)
+    const payload = {
+      title:form.title.trim(), intro:form.intro.trim() || null, points:parsePoints(form.pointsText),
+      color:form.color || '#3FE0A0', emoji:form.emoji || '📖', language:form.language, sort_order:Number(form.sort_order) || 0,
+      active:form.active, media_url:form.media_url, media_type:form.media_type,
+    }
+    let error
+    if (editId) ({ error } = await sb.from('ukweli_learn').update(payload).eq('id', editId))
+    else ({ error } = await sb.from('ukweli_learn').insert(payload))
+    setBusy(false)
+    if (error) { toast(error.message, 'red'); return }
+    toast(editId ? '✓ Updated' : '✓ Topic added', 'green'); setForm(EMPTY_LEARN); setEditId(null); load()
+  }
+  const editRow = (r) => {
+    setEditId(r.id)
+    setForm({ title:r.title||'', intro:r.intro||'', pointsText:pointsToText(r.points), color:r.color||'#3FE0A0', emoji:r.emoji||'📖',
+      language:r.language||'en', sort_order:r.sort_order||0, active:r.active!==false, media_url:r.media_url||null, media_type:r.media_type||null })
+    window.scrollTo({ top:0, behavior:'smooth' })
+  }
+  const reset = () => { setEditId(null); setForm(EMPTY_LEARN) }
+  const del = async (id) => { const { error } = await sb.from('ukweli_learn').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); if (editId===id) reset(); load() } }
+
+  const shown = rows.filter(r => r.language === lang)
+
+  return (
+    <div>
+      <SectionLabel color={C.gold}>📖 Learn — author explainer topics (with media)</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 14px' }}>
+        These appear in the Ukweli “Learn” tab alongside the built-in topics. Points: one per line as <b>Head :: Body</b>.
+      </p>
+
+      <div style={{ background:C.card, border:`1px solid ${editId?C.gold:C.line}`, borderRadius:12, padding:14, marginBottom:18 }}>
+        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
+          <input value={form.emoji} onChange={e=>setForm({ ...form, emoji:e.target.value })} placeholder="📖" style={{ ...inputStyle, width:56, textAlign:'center' }}/>
+          <input value={form.title} onChange={e=>setForm({ ...form, title:e.target.value })} placeholder="Topic title *" style={inputStyle}/>
+        </div>
+        <textarea value={form.intro} onChange={e=>setForm({ ...form, intro:e.target.value })} placeholder="Short intro" style={{ ...inputStyle, minHeight:48 }}/>
+        <textarea value={form.pointsText} onChange={e=>setForm({ ...form, pointsText:e.target.value })} placeholder={"Points — one per line:\nCondoms :: The only method that also protects against HIV…"} style={{ ...inputStyle, minHeight:96, marginTop:8, fontFamily:'monospace', fontSize:12.5 }}/>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'10px 0' }}>
+          <select value={form.language} onChange={e=>setForm({ ...form, language:e.target.value })} style={{ ...inputStyle, width:'auto' }}>
+            {MYTH_LANGS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <input value={form.color} onChange={e=>setForm({ ...form, color:e.target.value })} placeholder="#3FE0A0" style={{ ...inputStyle, width:110 }}/>
+          <input type="number" value={form.sort_order} onChange={e=>setForm({ ...form, sort_order:e.target.value })} placeholder="Order" style={{ ...inputStyle, width:88 }}/>
+          <label style={{ fontFamily:C.sans, fontSize:12, fontWeight:700, color:C.txt, display:'flex', alignItems:'center', gap:6 }}>
+            <input type="checkbox" checked={form.active} onChange={e=>setForm({ ...form, active:e.target.checked })}/> live
+          </label>
+        </div>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+          <label className="uk-press" style={{ fontFamily:C.sans, fontSize:12.5, fontWeight:700, color:C.sky, cursor:'pointer', border:`1px dashed ${C.line}`, borderRadius:10, padding:'8px 12px' }}>
+            {uploading ? 'Uploading…' : (form.media_url ? '↻ Replace media' : '＋ Image / video / file')}
+            <input type="file" accept="image/*,video/*,.pdf,.doc,.docx" style={{ display:'none' }} onChange={e=>upFile(e.target.files?.[0])}/>
+          </label>
+          {form.media_url && <span style={{ fontFamily:C.sans, fontSize:11, color:C.teal }}>● {form.media_type} attached
+            <button onClick={()=>setForm({ ...form, media_url:null, media_type:null })} style={{ marginLeft:6, background:'none', border:'none', color:C.coral, cursor:'pointer', fontWeight:700 }}>remove</button>
+          </span>}
+        </div>
+        {form.media_url && form.media_type==='image' && <img src={form.media_url} alt="" style={{ marginTop:10, maxWidth:'100%', maxHeight:170, borderRadius:8, display:'block' }}/>}
+        <div style={{ display:'flex', gap:8, marginTop:12 }}>
+          <Btn color={C.gold} onClick={save} disabled={busy || !form.title.trim()}>{busy ? 'Saving…' : (editId ? 'Save changes' : '＋ Add topic')}</Btn>
+          {editId && <Btn ghost color={C.mut} onClick={reset}>Cancel</Btn>}
+        </div>
+      </div>
+
+      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+        {MYTH_LANGS.map(([k,l]) => <Chip key={k} active={lang===k} onClick={()=>setLang(k)} color={C.gold}>{l}</Chip>)}
+      </div>
+      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>No custom topics in this language yet (built-in topics still show in the app).</p>}
+      {shown.map(r => (
+        <div key={r.id} style={{ display:'flex', gap:10, justifyContent:'space-between', alignItems:'flex-start',
+          background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'10px 12px', marginBottom:8, opacity:r.active?1:0.5 }}>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:700, overflowWrap:'anywhere' }}>{r.emoji} {r.title}</div>
+            <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginTop:2 }}>#{r.sort_order} · {(r.points||[]).length} point{(r.points||[]).length===1?'':'s'}{r.media_url ? ' · ' + (r.media_type || 'media') : ''}{r.active ? '' : ' · hidden'}</div>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+            <Btn small ghost color={C.gold} onClick={()=>editRow(r)}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
           </div>
         </div>
       ))}
