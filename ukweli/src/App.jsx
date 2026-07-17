@@ -293,6 +293,7 @@ function Myths({ tr, lang, isDesktop }) {
               </div>
               {isOpen && (
                 <div style={{ marginTop:13, paddingTop:13, borderTop:`1px solid ${Y.line}` }}>
+                  {c.media_url && <MythMedia url={c.media_url} type={c.media_type}/>}
                   <Block label={tr('why_feels_true')} text={c.why_it_feels_true} color={Y.gold}/>
                   <Block label={tr('the_truth')} text={c.truth} color={Y.green}/>
                   <Block label={tr('what_to_do')} text={c.what_to_do} color={Y.teal}/>
@@ -463,6 +464,14 @@ function Disinfo({ tr, lang, isDesktop }) {
       )}
     </div>
   )
+}
+
+function MythMedia({ url, type }) {
+  if (!url) return null
+  const box = { borderRadius:12, overflow:'hidden', marginBottom:12, border:`1px solid ${Y.line}`, display:'block', width:'100%' }
+  if (type === 'image') return <img src={url} alt="" loading="lazy" style={{ ...box, maxHeight:320, objectFit:'cover' }}/>
+  if (type === 'video') return <video src={url} controls preload="metadata" style={{ ...box, background:'#000' }}/>
+  return <a href={url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-block', fontFamily:Y.disp, fontSize:13, fontWeight:600, color:Y.teal, textDecoration:'none', marginBottom:12 }}>📎 Open attachment ↗</a>
 }
 
 function Block({ label, text, color }) {
