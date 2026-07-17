@@ -338,7 +338,7 @@ function reloadScript(id, src) {
   const s = document.createElement('script'); s.id = id; s.src = src; s.async = true; document.body.appendChild(s)
 }
 
-function SocialEmbed({ url, platform, tr, accent }) {
+function SocialEmbed({ url, platform, tr, accent, typoColor }) {
   const [show, setShow] = useState(false)
   const box = useRef(null)
   useEffect(() => {
@@ -357,17 +357,30 @@ function SocialEmbed({ url, platform, tr, accent }) {
     }
   }, [show, url, platform])
 
-  if (!show) return (
-    <div style={{ marginTop:11 }}>
-      <button onClick={()=>setShow(true)} className="uk-press"
-        style={{ width:'100%', fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'10px 0', borderRadius:12,
-          cursor:'pointer', color:'#06241C', background:accent, border:'none' }}>
-        ▶ {tr('load_post')}
-      </button>
-      <p style={{ fontFamily:Y.sans, fontSize:10, color:Y.mut, textAlign:'center', margin:'5px 0 0' }}>{tr('load_hint')}</p>
-    </div>
-  )
-  return <div ref={box} style={{ marginTop:12, background:'#fff', borderRadius:12, overflow:'hidden', minHeight:60 }} />
+  if (!show) {
+    const yt = platform === 'youtube' ? ytId(url) : ''
+    const thumb = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : ''
+    const pic = DPLAT[platform] || { icon:'▶' }
+    const acc = typoColor || accent || Y.coral
+    return (
+      <div>
+        <button onClick={()=>setShow(true)} className="uk-press" aria-label={tr('load_post')}
+          style={{ position:'relative', display:'block', width:'100%', padding:0, border:'none', cursor:'pointer',
+            borderRadius:12, overflow:'hidden', lineHeight:0, background:acc }}>
+          {thumb
+            ? <img src={thumb} alt="" loading="lazy" style={{ width:'100%', aspectRatio:'16 / 9', objectFit:'cover', display:'block' }}/>
+            : <div style={{ width:'100%', aspectRatio:'16 / 9', display:'flex', alignItems:'center', justifyContent:'center',
+                background:`linear-gradient(135deg, ${acc}, ${Y.bg})`, fontSize:46 }}>{pic.icon}</div>}
+          <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }} aria-hidden>
+            <span style={{ width:54, height:54, borderRadius:'50%', background:'rgba(6,36,28,0.72)', color:'#fff',
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>▶</span>
+          </span>
+        </button>
+        <p style={{ fontFamily:Y.sans, fontSize:10, color:Y.mut, textAlign:'center', margin:'6px 0 0' }}>{tr('load_hint')}</p>
+      </div>
+    )
+  }
+  return <div ref={box} style={{ background:'#fff', borderRadius:12, overflow:'hidden', minHeight:60 }} />
 }
 
 function Disinfo({ tr, lang, isDesktop }) {
@@ -420,6 +433,7 @@ function Disinfo({ tr, lang, isDesktop }) {
             <div key={it.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderLeft:`4px solid ${acc}`, borderRadius:16, padding:16, alignSelf:'start',
               boxShadow:'0 6px 18px rgba(0,0,0,0.20)', overflowWrap:'anywhere' }}>
+              {canEmbedItem(it) && <div style={{ marginBottom:11 }}><SocialEmbed url={it.url} platform={it.platform} tr={tr} accent={acc} typoColor={acc} /></div>}
               <div style={{ display:'flex', flexWrap:'wrap', gap:7, alignItems:'center', marginBottom:9 }}>
                 <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color:'#06241C',
                   background:acc, borderRadius:8, padding:'2px 9px' }}>
@@ -437,7 +451,6 @@ function Disinfo({ tr, lang, isDesktop }) {
                 {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
                   style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>See post ↗</a>}
               </div>
-              {canEmbedItem(it) && <SocialEmbed url={it.url} platform={it.platform} tr={tr} accent={acc} />}
             </div>
           )
         })}
