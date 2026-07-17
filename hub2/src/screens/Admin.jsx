@@ -685,13 +685,18 @@ function ResourceDesk({ onChange }) {
   }
   // ── Opportunity queue triage: hide off-region / expired / off-topic pending
   //    submissions so only the relevant ones (Kenya + current + SRHR) need review.
-  const OPP_OK = ['kenya','kenyan','east africa','eastern africa','africa','african','sub-saharan','sub saharan','pan-african','global','international','worldwide','commonwealth','anglophone','remote']
-  const OPP_OTHER = ['nigeria','ghana','south africa','egypt','ethiopia','india','pakistan','bangladesh','nepal','philippines','indonesia','vietnam','cambodia','brazil','mexico','colombia','ukraine','syria','yemen','afghanistan','myanmar','united states','usa','europe','european','caribbean','pacific','latin america','south asia','southeast asia','middle east']
+  const OPP_KENYA = ['kenya','kenyan','east africa','eastern africa','nairobi','mombasa','kisumu','nakuru','eldoret']
+  const OPP_OTHER = ['nigeria','ghana','south africa','southern africa','west africa','central africa','north africa','egypt','ethiopia','uganda','tanzania','rwanda','burundi','south sudan','somalia','sudan','zimbabwe','zambia','malawi','mozambique','angola','cameroon','senegal','mali','niger','morocco','tunisia','algeria','india','pakistan','bangladesh','nepal','sri lanka','philippines','indonesia','vietnam','cambodia','myanmar','thailand','china','brazil','mexico','colombia','peru','argentina','ukraine','moldova','georgia','armenia','syria','yemen','iraq','afghanistan','palestine','lebanon','jordan','asia','europe','european','caribbean','pacific','latin america','mena','middle east','south asia','southeast asia','balkans','sahel']
   const OPP_CORE = ['reproductive','sexual health','srhr','family planning','contracept','maternal','abortion','hiv','hpv','adolescent','teen pregnancy','teenage pregnancy','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','harassment','gender equality','gender justice','women','girls','fgm','female genital','child marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','youth','fellowship','scholarship']
   const oppRelevant = (o) => {
     const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
-    const geoOK   = OPP_OK.some(k=>s.includes(k)) || !OPP_OTHER.some(k=>s.includes(k))
-    const current = !o.deadline || new Date(o.deadline).getTime() >= Date.now() - 2*86400000
+    // Geo: Kenya/East-Africa explicit wins; a specific OTHER country/region excludes;
+    // global / pan-African / no-geography keeps. (Bare "africa" is NOT a keeper — it
+    // was matching "south/west/southern africa".)
+    const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : !OPP_OTHER.some(k=>s.includes(k))
+    // Stale: a past year (2010-2024) in the text with no 2025-2029 present => old cohort.
+    const stale = /\b20(1\d|2[0-4])\b/.test(s) && !/\b202[5-9]\b/.test(s)
+    const current = (!o.deadline || new Date(o.deadline).getTime() >= Date.now() - 2*86400000) && !stale
     const onTopic = OPP_CORE.some(k=>s.includes(k))
     return geoOK && current && onTopic
   }
