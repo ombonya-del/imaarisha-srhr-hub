@@ -686,19 +686,24 @@ function ResourceDesk({ onChange }) {
   // ── Opportunity queue triage: hide off-region / expired / off-topic pending
   //    submissions so only the relevant ones (Kenya + current + SRHR) need review.
   const OPP_KENYA = ['kenya','kenyan','east africa','eastern africa','nairobi','mombasa','kisumu','nakuru','eldoret']
-  const OPP_OTHER = ['nigeria','ghana','south africa','southern africa','west africa','central africa','north africa','egypt','ethiopia','uganda','tanzania','rwanda','burundi','south sudan','somalia','sudan','zimbabwe','zambia','malawi','mozambique','angola','cameroon','senegal','mali','niger','morocco','tunisia','algeria','india','pakistan','bangladesh','nepal','sri lanka','philippines','indonesia','vietnam','cambodia','myanmar','thailand','china','brazil','mexico','colombia','peru','argentina','ukraine','moldova','georgia','armenia','syria','yemen','iraq','afghanistan','palestine','lebanon','jordan','asia','europe','european','caribbean','pacific','latin america','mena','middle east','south asia','southeast asia','balkans','sahel']
+  const OPP_OTHER = ['nigeria','ghana','south africa','southern africa','west africa','central africa','north africa','egypt','ethiopia','uganda','tanzania','rwanda','burundi','south sudan','somalia','sudan','zimbabwe','zambia','malawi','mozambique','angola','cameroon','senegal','mali','niger','morocco','tunisia','algeria','gambia','liberia','sierra leone','guinea','ivory coast','cote d','togo','benin','burkina','chad','congo','drc','gabon','madagascar','namibia','botswana','lesotho','eswatini','swaziland','mauritius','seychelles','djibouti','eritrea','comoros','cape verde','mauritania','india','pakistan','bangladesh','nepal','sri lanka','philippines','indonesia','vietnam','cambodia','myanmar','thailand','china','laos','mongolia','kazakhstan','uzbekistan','kyrgyz','tajikistan','brazil','mexico','colombia','peru','argentina','bolivia','ecuador','venezuela','guatemala','honduras','haiti','jamaica','trinidad','dominican','ukraine','moldova','georgia','armenia','azerbaijan','belarus','serbia','kosovo','albania','bosnia','croatia','romania','bulgaria','turkey','turkiye','syria','yemen','iraq','iran','afghanistan','palestine','lebanon','jordan','oman','kuwait','bahrain','qatar','saudi','uae','emirates','canada','australia','united states','usa','united kingdom','new zealand','japan','singapore','south korea','ireland','germany','france','italy','spain','netherlands','sweden','norway','switzerland','fiji','papua','timor','asia','europe','european','caribbean','pacific','latin america','mena','middle east','south asia','southeast asia','balkans','sahel']
+  const OPP_TLD = /\.(gm|ng|za|gh|ug|tz|rw|et|zm|zw|mw|mz|ao|cm|sn|ml|ne|ma|tn|dz|lr|sl|gn|ci|tg|bj|bf|td|cg|cd|ga|mg|na|bw|ls|sz|mu|sc|dj|er|km|cv|mr|in|pk|bd|np|ph|id|vn|au|ca|us|uk|nz|jp|sg)\b/
+  const OPP_SIGNAL = ['call for','grant','fund','fellowship','scholarship','apply','proposal','award','opportunit','vacancy','consultanc','deadline','inviting','nominations open','expression of interest','request for','submissions open','open for applications','cash prize']
+  const OPP_JUNK = /\btop \d+|\b\d+ best|\bbest \d+|\b\d+ (grant|funding|fellowship|opportunit)|roundup|list of|^how to |how to (get|access|apply|find|win|secure)/
   const OPP_CORE = ['reproductive','sexual health','srhr','family planning','contracept','maternal','abortion','hiv','hpv','adolescent','teen pregnancy','teenage pregnancy','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','harassment','gender equality','gender justice','women','girls','fgm','female genital','child marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','youth','fellowship','scholarship']
   const oppRelevant = (o) => {
     const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
     // Geo: Kenya/East-Africa explicit wins; a specific OTHER country/region excludes;
     // global / pan-African / no-geography keeps. (Bare "africa" is NOT a keeper — it
     // was matching "south/west/southern africa".)
-    const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : !OPP_OTHER.some(k=>s.includes(k))
+    const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : (!OPP_OTHER.some(k=>s.includes(k)) && !OPP_TLD.test(s))
     // Stale: a past year (2010-2024) in the text with no 2025-2029 present => old cohort.
     const stale = /\b20(1\d|2[0-4])\b/.test(s) && !/\b202[5-9]\b/.test(s)
     const current = (!o.deadline || new Date(o.deadline).getTime() >= Date.now() - 2*86400000) && !stale
     const onTopic = OPP_CORE.some(k=>s.includes(k))
-    return geoOK && current && onTopic
+    // Must read as a real opportunity (grant/fellowship/call…), not a news article or listicle.
+    const isOpp = OPP_SIGNAL.some(k=>s.includes(k)) && !OPP_JUNK.test(s)
+    return geoOK && current && onTopic && isOpp
   }
   const oppsRelevant = opps.filter(oppRelevant)
   const oppsHidden   = opps.filter(o => !oppRelevant(o))
