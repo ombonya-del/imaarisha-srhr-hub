@@ -31,7 +31,7 @@ export default function Admin({ session }) {
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
           ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
-          ['unado','📸 UnaDO?',counts.unado]].map(([k,l,n]) => (
+          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending']].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
             {l}{n > 0 && <Badge n={n}/>}
           </Chip>
@@ -45,6 +45,108 @@ export default function Admin({ session }) {
       {view === 'uliza'     && <UlizaDesk session={session} onChange={loadCounts}/>}
       {view === 'fika'      && <FikaDesk onChange={loadCounts}/>}
       {view === 'unado'     && <UnadoDesk session={session} onChange={loadCounts}/>}
+      {view === 'radar'     && <RadarCurate/>}
+    </div>
+  )
+}
+
+
+// ── 🚩 Curate real social posts into the Ukweli "Trending" tab ────────────────
+// The free auto-feeds can't reach TikTok, so admins hand-paste post URLs here; they
+// insert as radar_items (platform-tagged, embeddable) and surface in the youth app.
+const CURATE_TY = [
+  ['contraceptive_myth','Contraceptive myths'],
+  ['fertility_abortion','Fertility & abortion fear'],
+  ['anti_cse','Anti-CSE rhetoric'],
+  ['faith_healing','Faith-healing claims'],
+]
+const CURATE_SOCIAL = ['tiktok','youtube','x','reddit','facebook','instagram']
+function platformOfUrl(u) {
+  u = (u || '').toLowerCase()
+  if (u.includes('tiktok')) return 'tiktok'
+  if (u.includes('youtube') || u.includes('youtu.be')) return 'youtube'
+  if (u.includes('twitter.com') || u.includes('x.com')) return 'x'
+  if (u.includes('reddit')) return 'reddit'
+  if (u.includes('facebook') || u.includes('fb.watch')) return 'facebook'
+  if (u.includes('instagram')) return 'instagram'
+  return 'news'
+}
+
+function RadarCurate() {
+  const [url, setUrl] = useState('')
+  const [typology, setTypology] = useState('contraceptive_myth')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [items, setItems] = useState([])
+
+  const load = () => sb.from('radar_items').select('*').in('platform', CURATE_SOCIAL)
+    .order('scanned_at', { ascending:false }).limit(30).then(({ data }) => setItems(data || []))
+  useEffect(() => { load() }, [])
+
+  const plat = platformOfUrl(url)
+  const embeddable = ['tiktok','youtube','x'].includes(plat)
+
+  const add = async () => {
+    const u = url.trim()
+    if (!/^https?:\/\//.test(u)) { toast('Paste a full post URL (https://…)', 'red'); return }
+    setBusy(true)
+    const now = new Date().toISOString()
+    const { error } = await sb.from('radar_items').insert({
+      source_name: 'Curated · ' + plat,
+      title: note.trim() || ('Flagged ' + plat + ' post'),
+      snippet: note.trim() || null,
+      url: u, platform: plat, published_at: now,
+      srhr_relevance: 8, harm_score: 8, sentiment: 'alarming',
+      typology, is_disinfo: true, languages: ['en'], scanned_at: now,
+    })
+    setBusy(false)
+    if (error) { toast(error.message, 'red'); return }
+    toast('✓ Added to the Radar & Ukweli Trending', 'green')
+    setUrl(''); setNote(''); load()
+  }
+
+  const remove = async (id) => {
+    const { error } = await sb.from('radar_items').delete().eq('id', id)
+    if (error) toast(error.message, 'red'); else { toast('Removed', 'gold'); load() }
+  }
+
+  return (
+    <div>
+      <SectionLabel color={C.coral}>🚩 Curate a social post for Trending</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 12px' }}>
+        Paste a TikTok, YouTube or X post that's spreading SRHR disinfo. It appears — embedded — in
+        the youth app's Trending tab and on the Radar. The free auto-feeds can't reach TikTok, so this
+        is how real posts get in.
+      </p>
+      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.tiktok.com/@user/video/…" style={inputStyle}/>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'10px 0' }}>
+        <select value={typology} onChange={e=>setTypology(e.target.value)} style={{ ...inputStyle, width:'auto', flex:'1 1 220px' }}>
+          {CURATE_TY.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
+        {url && <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:700, color: embeddable ? C.teal : C.gold }}>
+          {embeddable ? '● embeds as ' + plat : '● ' + plat + ' — link only'}
+        </span>}
+      </div>
+      <input value={note} onChange={e=>setNote(e.target.value)} placeholder="Short description of the claim (optional)" style={inputStyle}/>
+      <div style={{ marginTop:10 }}>
+        <Btn color={C.coral} onClick={add} disabled={busy || !url.trim()}>{busy ? 'Adding…' : '🚩 Add to Trending'}</Btn>
+      </div>
+
+      <div style={{ marginTop:20 }}>
+        <SectionLabel color={C.gold}>Curated &amp; social items ({items.length})</SectionLabel>
+      </div>
+      {items.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>Nothing yet — paste a post above.</p>}
+      {items.map(it => (
+        <div key={it.id} style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between',
+          background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'10px 12px', marginBottom:8 }}>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, color:C.coral, textTransform:'uppercase', letterSpacing:'.04em' }}>{it.platform} · {it.typology}</div>
+            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:600, overflowWrap:'anywhere', margin:'2px 0' }}>{it.title}</div>
+            <a href={it.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, overflowWrap:'anywhere' }}>{it.url}</a>
+          </div>
+          <Btn small ghost color={C.coral} onClick={()=>remove(it.id)}>Remove</Btn>
+        </div>
+      ))}
     </div>
   )
 }
