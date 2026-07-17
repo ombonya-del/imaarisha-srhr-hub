@@ -5,7 +5,7 @@ name: Opportunity Scanner
 
 on:
   schedule:
-    - cron: '30 6 * * 1'   # Mondays 06:30 UTC
+    - cron: '30 6 * * 1,4'   # Mondays & Thursdays 06:30 UTC (twice-weekly, keeps the desk fresh)
   workflow_dispatch:
 
 env:
