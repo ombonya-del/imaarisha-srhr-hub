@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { sb, timeAgo } from './lib/supabase'
 import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
@@ -323,6 +323,53 @@ const DPLAT = {
 }
 const DSOCIAL = Object.keys(DPLAT)
 
+// Direct post embeds — TikTok / YouTube / X. Click-to-load so we never silently
+// connect a young reader's device to these platforms just for opening the tab
+// (the app promises "no trace"); the real inline player loads only on tap.
+const EMBEDDABLE = new Set(['tiktok','youtube','x'])
+const ytId = (u) => { const m = (u||'').match(/(?:v=|youtu\.be\/|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/); return m ? m[1] : '' }
+const tkId = (u) => { const m = (u||'').match(/\/video\/(\d+)/); return m ? m[1] : '' }
+const canEmbedItem = (it) => !!it.url && (
+  (it.platform==='tiktok'  && /tiktok\.com/.test(it.url)) ||
+  (it.platform==='youtube' && !!ytId(it.url)) ||
+  (it.platform==='x'       && /(twitter|x)\.com/.test(it.url)))
+function reloadScript(id, src) {
+  const old = document.getElementById(id); if (old) old.remove()
+  const s = document.createElement('script'); s.id = id; s.src = src; s.async = true; document.body.appendChild(s)
+}
+
+function SocialEmbed({ url, platform, tr, accent }) {
+  const [show, setShow] = useState(false)
+  const box = useRef(null)
+  useEffect(() => {
+    if (!show || !box.current) return
+    if (platform === 'tiktok') {
+      box.current.innerHTML = `<blockquote class="tiktok-embed" cite="${url}" data-video-id="${tkId(url)}" style="max-width:605px;min-width:280px;margin:0"><section></section></blockquote>`
+      reloadScript('tiktok-embed-js', 'https://www.tiktok.com/embed.js')
+    } else if (platform === 'youtube') {
+      const id = ytId(url)
+      box.current.innerHTML = id
+        ? `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px"><iframe src="https://www.youtube-nocookie.com/embed/${id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" allow="encrypted-media;picture-in-picture" allowfullscreen title="Embedded video"></iframe></div>`
+        : ''
+    } else if (platform === 'x') {
+      box.current.innerHTML = `<blockquote class="twitter-tweet" data-dnt="true" data-theme="dark"><a href="${url}"></a></blockquote>`
+      reloadScript('twitter-wjs', 'https://platform.twitter.com/widgets.js')
+    }
+  }, [show, url, platform])
+
+  if (!show) return (
+    <div style={{ marginTop:11 }}>
+      <button onClick={()=>setShow(true)} className="uk-press"
+        style={{ width:'100%', fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'10px 0', borderRadius:12,
+          cursor:'pointer', color:'#06241C', background:accent, border:'none' }}>
+        ▶ {tr('load_post')}
+      </button>
+      <p style={{ fontFamily:Y.sans, fontSize:10, color:Y.mut, textAlign:'center', margin:'5px 0 0' }}>{tr('load_hint')}</p>
+    </div>
+  )
+  return <div ref={box} style={{ marginTop:12, background:'#fff', borderRadius:12, overflow:'hidden', minHeight:60 }} />
+}
+
 function Disinfo({ tr, lang, isDesktop }) {
   const [items, setItems] = useState(null)
   const [ty, setTy] = useState('all')
@@ -390,6 +437,7 @@ function Disinfo({ tr, lang, isDesktop }) {
                 {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
                   style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>See post ↗</a>}
               </div>
+              {canEmbedItem(it) && <SocialEmbed url={it.url} platform={it.platform} tr={tr} accent={acc} />}
             </div>
           )
         })}
