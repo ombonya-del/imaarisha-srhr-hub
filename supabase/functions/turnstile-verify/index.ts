@@ -15,12 +15,13 @@ const CORS = {
 
 // Only these columns are accepted from the client, per table. Anything else is dropped.
 const ALLOWED: Record<string, string[]> = {
-  uliza_questions:  ['question', 'language'],
-  fika_suggestions: ['name', 'county', 'area', 'note', 'language'],
-  fika_reviews:     ['facility_id', 'rating', 'attributes', 'comment', 'language'],
+  uliza_questions:   ['question', 'language'],
+  fika_suggestions:  ['name', 'county', 'area', 'note', 'language'],
+  fika_reviews:      ['facility_id', 'rating', 'attributes', 'comment', 'language'],
+  ukweli_submissions:['caption', 'media_url', 'media_type', 'language'],
 }
 // Tables whose rows must always start as 'pending' (never client-controlled).
-const STATUS_PENDING = new Set(['fika_suggestions', 'fika_reviews'])
+const STATUS_PENDING = new Set(['fika_suggestions', 'fika_reviews', 'ukweli_submissions'])
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
