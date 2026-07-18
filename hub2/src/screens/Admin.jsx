@@ -31,7 +31,7 @@ export default function Admin({ session }) {
         {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
           ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
           ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
-          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths'],['learn','📖 Learn']].map(([k,l,n]) => (
+          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths'],['learn','📖 Learn'],['community','🙋 Community']].map(([k,l,n]) => (
           <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
             {l}{n > 0 && <Badge n={n}/>}
           </Chip>
@@ -48,6 +48,7 @@ export default function Admin({ session }) {
       {view === 'radar'     && <RadarCurate/>}
       {view === 'myths'     && <MythsDesk/>}
       {view === 'learn'     && <LearnDesk/>}
+      {view === 'community' && <CommunityDesk/>}
     </div>
   )
 }
@@ -416,6 +417,54 @@ function LearnDesk() {
           <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
             <Btn small ghost color={C.gold} onClick={()=>editRow(r)}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+
+// ── 🙋 Community — moderate youth-submitted myths/media before they go live ────
+function CommunityDesk() {
+  const [rows, setRows] = useState([])
+  const [filter, setFilter] = useState('pending')
+
+  const load = () => sb.from('ukweli_submissions').select('*').order('created_at', { ascending:false }).limit(80).then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+
+  const setStatus = async (id, status) => {
+    const { error } = await sb.from('ukweli_submissions').update({ status }).eq('id', id)
+    if (error) toast(error.message, 'red'); else { toast(status==='approved' ? '✓ Approved — live in Ukweli' : 'Rejected', status==='approved' ? 'green' : 'gold'); load() }
+  }
+  const del = async (id) => { const { error } = await sb.from('ukweli_submissions').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); load() } }
+
+  const shown = rows.filter(r => filter === 'all' || r.status === filter)
+  const pend = rows.filter(r => r.status === 'pending').length
+
+  return (
+    <div>
+      <SectionLabel color={C.gold}>🙋 Community submissions {pend > 0 ? `· ${pend} pending` : ''}</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 12px' }}>
+        Myths young people share from the app (with photo/video). Approve to show them in Ukweli’s “Heard on the street”; reject to hide.
+      </p>
+      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+        {[['pending','Pending'],['approved','Approved'],['rejected','Rejected'],['all','All']].map(([k,l]) =>
+          <Chip key={k} active={filter===k} onClick={()=>setFilter(k)} color={C.gold}>{l}</Chip>)}
+      </div>
+      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>Nothing here.</p>}
+      {shown.map(s => (
+        <div key={s.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'12px', marginBottom:10 }}>
+          <div style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'.04em',
+            color: s.status==='approved'?C.teal : s.status==='rejected'?C.coral : C.gold, marginBottom:5 }}>{s.status} · {s.language} · {timeAgo(s.created_at)}</div>
+          <div style={{ fontFamily:C.sans, fontSize:14, color:C.txt, fontWeight:600, overflowWrap:'anywhere', marginBottom:8 }}>“{s.caption}”</div>
+          {s.media_url && s.media_type==='image' && <img src={s.media_url} alt="" style={{ maxWidth:'100%', maxHeight:200, borderRadius:8, display:'block', marginBottom:8 }}/>}
+          {s.media_url && s.media_type==='video' && <video src={s.media_url} controls preload="metadata" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8, display:'block', marginBottom:8, background:'#000' }}/>}
+          {s.media_url && s.media_type==='file' && <a href={s.media_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:12, color:C.sky, display:'inline-block', marginBottom:8 }}>📎 {s.media_url}</a>}
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {s.status !== 'approved' && <Btn small color={C.teal} onClick={()=>setStatus(s.id, 'approved')}>Approve</Btn>}
+            {s.status !== 'rejected' && <Btn small ghost color={C.gold} onClick={()=>setStatus(s.id, 'rejected')}>Reject</Btn>}
+            <Btn small ghost color={C.coral} onClick={()=>del(s.id)}>Delete</Btn>
           </div>
         </div>
       ))}
