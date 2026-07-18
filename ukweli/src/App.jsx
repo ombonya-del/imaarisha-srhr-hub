@@ -260,6 +260,40 @@ function Uliza({ tr, lang, isDesktop }) {
 function Myths({ tr, lang, isDesktop }) {
   const [cards, setCards] = useState(null)
   const [open, setOpen] = useState(null)
+  const [community, setCommunity] = useState([])
+  const [shareOpen, setShareOpen] = useState(false)
+  const [caption, setCaption] = useState('')
+  const [subMedia, setSubMedia] = useState(null)   // { url, type }
+  const [subUploading, setSubUploading] = useState(false)
+  const [subToken, setSubToken] = useState('')
+  const [subBusy, setSubBusy] = useState(false)
+  const [sent, setSent] = useState(false)
+
+  useEffect(() => {
+    sb.from('ukweli_submissions').select('*').eq('status', 'approved').order('created_at', { ascending:false }).limit(30).then(({ data }) => setCommunity(data || []))
+  }, [])
+
+  const upSub = async (file) => {
+    if (!file) return
+    setSubUploading(true)
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+    const path = `submissions/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`
+    const { error } = await sb.storage.from('ukweli-media').upload(path, file, { contentType:file.type, upsert:false })
+    setSubUploading(false)
+    if (error) { setSubMedia(null); return }
+    const url = sb.storage.from('ukweli-media').getPublicUrl(path).data.publicUrl
+    setSubMedia({ url, type: file.type.startsWith('image') ? 'image' : file.type.startsWith('video') ? 'video' : 'file' })
+  }
+
+  const submitShare = async () => {
+    if (caption.trim().length < 4 || !subToken) return
+    setSubBusy(true)
+    const { error } = await tsInsert(sb, 'ukweli_submissions', { caption:caption.trim(), media_url:subMedia?.url || null, media_type:subMedia?.type || null, language:lang }, subToken)
+    setSubBusy(false)
+    if (error) { resetTurnstile(); setSubToken(''); return }
+    setSent(true); setCaption(''); setSubMedia(null); setShareOpen(false)
+  }
+
   useEffect(() => {
     sb.from('ukweli_cards').select('*').eq('active', true).order('sort_order')
       .then(({data}) => setCards(data || []))
@@ -272,6 +306,38 @@ function Myths({ tr, lang, isDesktop }) {
       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 18px', lineHeight:1.6, fontWeight:500 }}>
         {tr('myths_intro')}
       </p>
+      {/* Share a myth you've heard — moderated */}
+      <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.coral}`, borderRadius:16, padding:14, marginBottom:16 }}>
+        {sent ? (
+          <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, margin:0, fontWeight:500 }}>{tr('share_sent')}</p>
+        ) : !shareOpen ? (
+          <button onClick={()=>setShareOpen(true)} className="uk-press" style={{ width:'100%', textAlign:'left', background:'transparent', border:'none', cursor:'pointer', fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt }}>
+            💬 {tr('share_title')}
+          </button>
+        ) : (
+          <>
+            <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder={tr('share_ph')}
+              style={{ width:'100%', minHeight:70, resize:'vertical', background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'11px', color:Y.txt, fontFamily:Y.sans, fontSize:14, outline:'none', lineHeight:1.5 }}/>
+            <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', marginTop:8 }}>
+              <label className="uk-press" style={{ fontFamily:Y.sans, fontSize:12, fontWeight:700, color:Y.teal, cursor:'pointer', border:`1px dashed ${Y.line}`, borderRadius:10, padding:'7px 11px' }}>
+                {subUploading ? '…' : (subMedia ? '● ' + subMedia.type : tr('share_media'))}
+                <input type="file" accept="image/*,video/*,.pdf" style={{ display:'none' }} onChange={e=>upSub(e.target.files?.[0])}/>
+              </label>
+            </div>
+            <TurnstileWidget onVerify={setSubToken}/>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={submitShare} disabled={subBusy || caption.trim().length<4 || !subToken} className="uk-press"
+                style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+                  background:`linear-gradient(135deg, ${Y.coral}, ${Y.gold})`, opacity:(caption.trim().length<4||!subToken)?0.5:1 }}>
+                {subBusy ? tr('ask_sending') : tr('share_cta')}
+              </button>
+              <button onClick={()=>setShareOpen(false)} className="uk-press" style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 16px', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>{tr('close_card')}</button>
+            </div>
+            <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, margin:'8px 0 0', textAlign:'center' }}>🔒 {tr('ask_privacy')}</p>
+          </>
+        )}
+      </div>
+
       {cards === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
       {cards !== null && list.length === 0 && (
         <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('no_answers')}</p>
@@ -306,6 +372,21 @@ function Myths({ tr, lang, isDesktop }) {
           )
         })}
       </div>
+      {community.length > 0 && (
+        <div style={{ marginTop:24 }}>
+          <p style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, letterSpacing:'.08em', textTransform:'uppercase', color:Y.coral, margin:'0 0 12px' }}>{tr('community_title')}</p>
+          <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
+            {community.map(s => (
+              <div key={s.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.coral}`, borderRadius:16, padding:16, alignSelf:'start', boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+                {s.media_url && <MythMedia url={s.media_url} type={s.media_type}/>}
+                <p style={{ fontFamily:Y.disp, fontSize:15.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.35 }}>“{s.caption}”</p>
+                <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'8px 0 0' }}>{timeAgo(s.created_at)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
