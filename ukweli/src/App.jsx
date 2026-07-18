@@ -324,6 +324,9 @@ function Myths({ tr, lang, isDesktop }) {
                 <input type="file" accept="image/*,video/*,.pdf" style={{ display:'none' }} onChange={e=>upSub(e.target.files?.[0])}/>
               </label>
             </div>
+            <input value={subMedia?.url || ''} onChange={e=>{ const u=e.target.value; setSubMedia(u ? { url:u, type:inferMedia(u) } : null) }}
+              placeholder="…or paste a link (image, mp4, YouTube)"
+              style={{ width:'100%', marginTop:8, background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:10, padding:'9px 11px', color:Y.txt, fontFamily:Y.sans, fontSize:12.5, outline:'none' }}/>
             <TurnstileWidget onVerify={setSubToken}/>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={submitShare} disabled={subBusy || caption.trim().length<4 || !subToken} className="uk-press"
@@ -547,11 +550,24 @@ function Disinfo({ tr, lang, isDesktop }) {
   )
 }
 
+// Guess a media type from a pasted URL (uploads set the type explicitly).
+const inferMedia = (u) => {
+  u = (u || '').toLowerCase()
+  if (/youtube\.com|youtu\.be|vimeo\.com|tiktok\.com/.test(u)) return 'embed'
+  if (/\.(jpg|jpeg|png|gif|webp|avif|svg)(\?|#|$)/.test(u)) return 'image'
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/.test(u)) return 'video'
+  return 'file'
+}
 function MythMedia({ url, type }) {
   if (!url) return null
   const box = { borderRadius:12, overflow:'hidden', marginBottom:12, border:`1px solid ${Y.line}`, display:'block', width:'100%' }
   if (type === 'image') return <img src={url} alt="" loading="lazy" style={{ ...box, maxHeight:320, objectFit:'cover' }}/>
   if (type === 'video') return <video src={url} controls preload="metadata" style={{ ...box, background:'#000' }}/>
+  if (type === 'embed') {
+    const yt = ytId(url)
+    const src = yt ? `https://www.youtube-nocookie.com/embed/${yt}` : url
+    return <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:12, marginBottom:12, border:`1px solid ${Y.line}` }}><iframe src={src} style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0 }} loading="lazy" allow="encrypted-media;picture-in-picture" allowFullScreen title="Embedded media"/></div>
+  }
   return <a href={url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-block', fontFamily:Y.disp, fontSize:13, fontWeight:600, color:Y.teal, textDecoration:'none', marginBottom:12 }}>📎 Open attachment ↗</a>
 }
 
