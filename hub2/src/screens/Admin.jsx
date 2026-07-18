@@ -75,6 +75,15 @@ function platformOfUrl(u) {
   return 'news'
 }
 
+// Guess a media type from a pasted URL (uploads set the type explicitly).
+const inferMedia = (u) => {
+  u = (u || '').toLowerCase()
+  if (/youtube\.com|youtu\.be|vimeo\.com|tiktok\.com/.test(u)) return 'embed'
+  if (/\.(jpg|jpeg|png|gif|webp|avif|svg)(\?|#|$)/.test(u)) return 'image'
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/.test(u)) return 'video'
+  return 'file'
+}
+
 function RadarCurate() {
   const [url, setUrl] = useState('')
   const [typology, setTypology] = useState('contraceptive_myth')
@@ -279,6 +288,10 @@ function MythsDesk() {
             <button onClick={()=>setForm({ ...form, media_url:null, media_type:null })} style={{ marginLeft:6, background:'none', border:'none', color:C.coral, cursor:'pointer', fontWeight:700 }}>remove</button>
           </span>}
         </div>
+        <input value={form.media_url || ''} onChange={e=>{ const u=e.target.value; setForm(f=>({ ...f, media_url:u||null, media_type:u ? (f.media_type || inferMedia(u)) : null })) }} placeholder="…or paste a media URL (image, mp4, YouTube)" style={{ ...inputStyle, marginTop:8 }}/>
+        {form.media_url && <select value={form.media_type || 'image'} onChange={e=>setForm({ ...form, media_type:e.target.value })} style={{ ...inputStyle, width:'auto', marginTop:8 }}>
+          <option value="image">image</option><option value="video">video (mp4)</option><option value="embed">embed (YouTube…)</option><option value="file">file / link</option>
+        </select>}
         {form.media_url && form.media_type==='image' && <img src={form.media_url} alt="" style={{ marginTop:10, maxWidth:'100%', maxHeight:170, borderRadius:8, display:'block' }}/>}
         <div style={{ display:'flex', gap:8, marginTop:12 }}>
           <Btn color={C.gold} onClick={save} disabled={busy || !form.claim.trim() || !form.truth.trim()}>{busy ? 'Saving…' : (editId ? 'Save changes' : '＋ Add card')}</Btn>
@@ -396,6 +409,10 @@ function LearnDesk() {
             <button onClick={()=>setForm({ ...form, media_url:null, media_type:null })} style={{ marginLeft:6, background:'none', border:'none', color:C.coral, cursor:'pointer', fontWeight:700 }}>remove</button>
           </span>}
         </div>
+        <input value={form.media_url || ''} onChange={e=>{ const u=e.target.value; setForm(f=>({ ...f, media_url:u||null, media_type:u ? (f.media_type || inferMedia(u)) : null })) }} placeholder="…or paste a media URL (image, mp4, YouTube)" style={{ ...inputStyle, marginTop:8 }}/>
+        {form.media_url && <select value={form.media_type || 'image'} onChange={e=>setForm({ ...form, media_type:e.target.value })} style={{ ...inputStyle, width:'auto', marginTop:8 }}>
+          <option value="image">image</option><option value="video">video (mp4)</option><option value="embed">embed (YouTube…)</option><option value="file">file / link</option>
+        </select>}
         {form.media_url && form.media_type==='image' && <img src={form.media_url} alt="" style={{ marginTop:10, maxWidth:'100%', maxHeight:170, borderRadius:8, display:'block' }}/>}
         <div style={{ display:'flex', gap:8, marginTop:12 }}>
           <Btn color={C.gold} onClick={save} disabled={busy || !form.title.trim()}>{busy ? 'Saving…' : (editId ? 'Save changes' : '＋ Add topic')}</Btn>
@@ -460,6 +477,7 @@ function CommunityDesk() {
           <div style={{ fontFamily:C.sans, fontSize:14, color:C.txt, fontWeight:600, overflowWrap:'anywhere', marginBottom:8 }}>“{s.caption}”</div>
           {s.media_url && s.media_type==='image' && <img src={s.media_url} alt="" style={{ maxWidth:'100%', maxHeight:200, borderRadius:8, display:'block', marginBottom:8 }}/>}
           {s.media_url && s.media_type==='video' && <video src={s.media_url} controls preload="metadata" style={{ maxWidth:'100%', maxHeight:220, borderRadius:8, display:'block', marginBottom:8, background:'#000' }}/>}
+          {s.media_url && s.media_type==='embed' && <a href={s.media_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:12, color:C.sky, display:'inline-block', marginBottom:8 }}>▶ {s.media_url}</a>}
           {s.media_url && s.media_type==='file' && <a href={s.media_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:12, color:C.sky, display:'inline-block', marginBottom:8 }}>📎 {s.media_url}</a>}
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {s.status !== 'approved' && <Btn small color={C.teal} onClick={()=>setStatus(s.id, 'approved')}>Approve</Btn>}
