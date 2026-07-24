@@ -242,13 +242,18 @@ export default function Exchange({ session }) {
 
       {view === 'directory' && (orgs.length ? (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))', gap:10 }}>
-          {orgs.map(o => (
-            <div key={o.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:14 }}>
+          {orgs.map(o => {
+            const cardStyle = { background:C.card, border:`1px solid ${o.website ? C.mint+'66' : C.line}`, borderRadius:12, padding:14, display:'block', textDecoration:'none' }
+            const inner = (<>
               <p style={{ fontFamily:C.sans, fontSize:9, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color:C.mint, margin:'0 0 4px' }}>{o.focus_area || 'SRHR'}</p>
               <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 4px' }}>{o.short_name || o.name}</p>
               {o.description && <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:0, lineHeight:1.5 }}>{o.description.slice(0,90)}…</p>}
-            </div>
-          ))}
+              {o.website && <p style={{ fontFamily:C.sans, fontSize:11, fontWeight:700, color:C.sky, margin:'7px 0 0' }}>{o.website.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'')} ↗</p>}
+            </>)
+            return o.website
+              ? <a key={o.id} href={o.website} target="_blank" rel="noopener noreferrer" style={cardStyle}>{inner}</a>
+              : <div key={o.id} style={cardStyle}>{inner}</div>
+          })}
         </div>
       ) : <Empty/>)}
     </div>
