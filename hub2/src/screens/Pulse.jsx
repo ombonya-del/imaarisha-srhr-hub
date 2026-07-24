@@ -3,8 +3,21 @@ import { sb, C, timeAgo, logActivity, toast } from '../lib/supabase'
 import { SectionLabel, Btn, inputStyle } from '../lib/components'
 
 // Pulse — live home: index headline, weekly digest signup, activity feed.
+// Route an activity row to the admin desk that handles it, so admins jump
+// straight to the queue instead of hunting.
+const ADMIN_SECTION = (t) => {
+  t = (t || '').toLowerCase()
+  if (/resource|opportunit|event|market|listing|digest/.test(t)) return 'resources'
+  if (/member|profile|org|invite|signup/.test(t)) return 'members'
+  if (/uliza|question/.test(t)) return 'uliza'
+  if (/fika|facility|review|suggest/.test(t)) return 'fika'
+  if (/unado|photo/.test(t)) return 'unado'
+  if (/radar|disinfo|trend/.test(t)) return 'radar'
+  return 'activity'
+}
+
 export default function Pulse({ go, session }) {
-  const { user, name, profile } = session
+  const { user, name, profile, isAdmin } = session
   const [idx, setIdx] = useState(null)
   const [activity, setActivity] = useState([])
   const [orgs, setOrgs] = useState([])
@@ -119,17 +132,25 @@ export default function Pulse({ go, session }) {
       {/* Live activity feed — the heartbeat */}
       <SectionLabel color={C.mint}>● Live activity</SectionLabel>
       {activity.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Quiet for now — post something and watch this come alive.</p>}
-      {activity.map((a, i) => (
-        <div key={a.id || i} style={{ display:'flex', gap:10, alignItems:'flex-start',
-          padding:'9px 0', borderBottom:`1px solid ${C.line}` }}>
-          <span style={{ width:8, height:8, borderRadius:'50%', marginTop:5, flexShrink:0,
-            background: dotColor[a.dot_color] || C.gold }}/>
+      {activity.map((a, i) => {
+        const inner = (<>
+          <span style={{ width:8, height:8, borderRadius:'50%', marginTop:5, flexShrink:0, background: dotColor[a.dot_color] || C.gold }}/>
           <div style={{ flex:1, minWidth:0 }}>
             <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, margin:0, lineHeight:1.5 }}>{a.description}</p>
             <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'1px 0 0' }}>{timeAgo(a.created_at)}</p>
           </div>
-        </div>
-      ))}
+        </>)
+        const rowStyle = { display:'flex', gap:10, alignItems:'flex-start', padding:'9px 0', borderBottom:`1px solid ${C.line}` }
+        return isAdmin ? (
+          <button key={a.id || i} onClick={()=>go('admin/' + ADMIN_SECTION(a.activity_type))} title="Open in Admin →"
+            style={{ ...rowStyle, width:'100%', textAlign:'left', background:'none', border:'none', borderBottom:`1px solid ${C.line}`, cursor:'pointer' }}>
+            {inner}
+            <span style={{ fontFamily:C.sans, fontSize:15, color:C.lilac, marginTop:2, flexShrink:0 }}>›</span>
+          </button>
+        ) : (
+          <div key={a.id || i} style={rowStyle}>{inner}</div>
+        )
+      })}
     </div>
   )
 }
