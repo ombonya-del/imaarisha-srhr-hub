@@ -30,6 +30,7 @@ const STRINGS = {
     share_media: '＋ Add photo / video (optional)',
     share_sent: '✓ Asante! We’ll review it and may add it here.',
     community_title: 'Heard on the street',
+    trending_count: 'flagged & spreading right now',
     // disinfo (trending) tab
     disinfo: 'Trending',
     disinfo_intro: 'Lies about your body spread fast on TikTok and socials. Here’s what’s doing the rounds right now — and why it’s cap.',
@@ -102,6 +103,7 @@ const STRINGS = {
     share_media: '＋ Ongeza picha / video (hiari)',
     share_sent: '✓ Asante! Tutapitia na huenda tuiongeze hapa.',
     community_title: 'Yaliyosikika mtaani',
+    trending_count: 'zimeripotiwa zinasambaa sasa',
     // disinfo (trending) tab
     disinfo: 'Mtandaoni',
     disinfo_intro: 'Uongo kuhusu mwili wako husambaa haraka TikTok na mitandaoni. Haya ndiyo yanayozunguka sasa — na kwa nini ni uongo.',
@@ -173,6 +175,7 @@ const STRINGS = {
     share_media: '＋ Add photo / video (optional)',
     share_sent: '✓ Asante! Tutareview na tunaweza kuiongeza hapa.',
     community_title: 'Zinazosemwa mtaani',
+    trending_count: 'zime-flag zinaspread sahi',
     // disinfo (trending) tab
     disinfo: 'Trending',
     disinfo_intro: 'Ma-fake kuhusu bodi yako hu-spread fast kwa TikTok na socials. Hii ndio inazunguka sahi — na kwa nini ni cap.',
