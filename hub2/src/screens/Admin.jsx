@@ -1052,6 +1052,32 @@ function UnadoDesk({ session, onChange }) {
 }
 
 // ── Resource submissions desk — approve members' resource uploads ────────────
+// Inline preview for admin submission-review links — expand an iframe in place so a
+// resource / opportunity / event URL can be vetted without leaving the queue. Some
+// sites block embedding (X-Frame-Options); the panel keeps an "Open ↗" fallback.
+function LinkPreview({ url, color, label }) {
+  const [open, setOpen] = useState(false)
+  if (!url) return null
+  return (
+    <span style={{ display:'inline-block' }}>
+      <button onClick={()=>setOpen(o=>!o)} style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:700, color, background:'none', border:'none', cursor:'pointer', padding:0 }}>
+        {open ? '▲ Hide preview' : '👁 ' + (label || 'Preview link')}
+      </button>
+      {open && (
+        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'6px 8px', background:C.card2 }}>
+            <span style={{ fontFamily:C.sans, fontSize:10, color:C.mut, overflowWrap:'anywhere', minWidth:0 }}>{url}</span>
+            <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color, whiteSpace:'nowrap' }}>Open ↗</a>
+          </div>
+          <iframe src={url} title="preview" loading="lazy" style={{ width:'100%', height:360, border:0, display:'block', background:'#fff' }}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"/>
+          <p style={{ fontFamily:C.sans, fontSize:9.5, color:C.mut, margin:0, padding:'5px 8px', background:C.card2 }}>Blank? The site blocks embedding — use “Open ↗”.</p>
+        </div>
+      )}
+    </span>
+  )
+}
+
 function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
   const [reqs, setReqs] = useState([])
@@ -1191,7 +1217,7 @@ function ResourceDesk({ onChange }) {
             {r.file_path
               ? <button onClick={async()=>{ const {data,error}=await sb.storage.from('resources').createSignedUrl(r.file_path,60); if(error||!data?.signedUrl){toast('Could not open file','red');return} window.open(data.signedUrl,'_blank','noopener') }}
                   style={{ ...linkS(C.sky), background:'none', border:'none', cursor:'pointer', padding:0 }}>Preview file ↗</button>
-              : r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.sky)}>Preview link ↗</a>}
+              : r.file_url && <LinkPreview url={r.file_url} color={C.sky}/>}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
@@ -1227,7 +1253,7 @@ function ResourceDesk({ onChange }) {
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>{o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}</p>
             {o.description && <p style={descS}>{o.description}</p>}
-            {o.link && <a href={o.link} target="_blank" rel="noopener noreferrer" style={linkS(C.lilac)}>Preview link ↗</a>}
+            {o.link && <LinkPreview url={o.link} color={C.lilac}/>}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
@@ -1246,7 +1272,7 @@ function ResourceDesk({ onChange }) {
               {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''} · by {e.submitter_name || 'a member'}
             </p>
             {e.description && <p style={descS}>{e.description}</p>}
-            {e.link && <a href={e.link} target="_blank" rel="noopener noreferrer" style={linkS(C.mint)}>Registration link ↗</a>}
+            {e.link && <LinkPreview url={e.link} color={C.mint} label="Registration link"/>}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
@@ -1264,7 +1290,7 @@ function ResourceDesk({ onChange }) {
           <div key={r.id} style={cardS(C.gold)}>
             <p style={ttlS}>{r.title}</p>
             <p style={metaS}>{r.type || 'document'}{r.source_org ? ` · ${r.source_org}` : ''}</p>
-            {r.file_url && <a href={r.file_url} target="_blank" rel="noopener noreferrer" style={linkS(C.gold)}>Open source ↗</a>}
+            {r.file_url && <LinkPreview url={r.file_url} color={C.gold} label="Open source"/>}
           </div>
         ))}
       </Section>
