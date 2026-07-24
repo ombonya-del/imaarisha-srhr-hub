@@ -642,9 +642,9 @@ function Members() {
     if (error) toast(error.message,'red'); else { toast('Organization deleted','gold'); loadOrgs() }
   }
   const saveOrg = async () => {
-    const { id, name, short_name, focus_area } = editOrg
+    const { id, name, short_name, focus_area, website } = editOrg
     if (!name.trim()) { toast('Name cannot be empty','red'); return }
-    const { error } = await sb.from('organizations').update({ name:name.trim(), short_name:(short_name||'').trim()||name.trim(), focus_area:(focus_area||'').trim()||null }).eq('id', id)
+    const { error } = await sb.from('organizations').update({ name:name.trim(), short_name:(short_name||'').trim()||name.trim(), focus_area:(focus_area||'').trim()||null, website:(website||'').trim()||null }).eq('id', id)
     if (error) toast(error.message,'red'); else { toast('✓ Saved','green'); setEditOrg(null); loadOrgs() }
   }
 
@@ -754,6 +754,7 @@ function Members() {
           <input style={{ ...eIn, flex:'2 1 120px' }} value={editOrg.name} onChange={e=>setEditOrg({ ...editOrg, name:e.target.value })} placeholder="Name"/>
           <input style={{ ...eIn, flex:'1 1 80px' }} value={editOrg.short_name} onChange={e=>setEditOrg({ ...editOrg, short_name:e.target.value })} placeholder="Short"/>
           <input style={{ ...eIn, flex:'2 1 120px' }} value={editOrg.focus_area} onChange={e=>setEditOrg({ ...editOrg, focus_area:e.target.value })} placeholder="Focus area"/>
+          <input style={{ ...eIn, flex:'2 1 140px' }} value={editOrg.website} onChange={e=>setEditOrg({ ...editOrg, website:e.target.value })} placeholder="Website (https://…)"/>
           <Btn small color={C.mint} onClick={saveOrg}>Save</Btn>
           <Btn small ghost onClick={()=>setEditOrg(null)}>Cancel</Btn>
         </div>
@@ -761,7 +762,7 @@ function Members() {
         <div key={o.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'8px 0', borderBottom:`1px solid ${C.line}` }}>
           <span style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, minWidth:0 }}>{o.short_name || o.name}{o.focus_area ? <span style={{ color:C.mut }}> · {o.focus_area}</span> : null}</span>
           <span style={{ display:'flex', gap:6, flexShrink:0 }}>
-            <Btn small ghost onClick={()=>setEditOrg({ id:o.id, name:o.name||'', short_name:o.short_name||'', focus_area:o.focus_area||'' })}>Edit</Btn>
+            <Btn small ghost onClick={()=>setEditOrg({ id:o.id, name:o.name||'', short_name:o.short_name||'', focus_area:o.focus_area||'', website:o.website||'' })}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>deleteOrg(o)}>🗑</Btn>
           </span>
         </div>
