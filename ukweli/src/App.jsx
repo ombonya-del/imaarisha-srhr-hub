@@ -471,13 +471,23 @@ function SocialEmbed({ url, platform, tr, accent, typoColor }) {
 function Disinfo({ tr, lang, isDesktop }) {
   const [items, setItems] = useState(null)
   const [ty, setTy] = useState('all')
+  const [responses, setResponses] = useState([])
+  const [openResp, setOpenResp] = useState(null)
 
   useEffect(() => {
     sb.from('radar_items').select('*').in('platform', DSOCIAL)
       .order('scanned_at', { ascending:false }).limit(60)
       .then(({ data }) => setItems((data || []).filter(i => i.is_disinfo || i.harm_score >= 5)))
       .catch(() => setItems([]))
+    sb.from('disinfo_responses').select('*').eq('active', true).then(({ data }) => setResponses(data || [])).catch(() => {})
   }, [])
+
+  // Curated, vetted counter-response for a typology (current language, EN fallback).
+  const responseFor = (typology) => {
+    const byT = responses.filter(r => r.typology === typology)
+    return byT.find(r => r.language === lang) || byT.find(r => r.language === 'en') || null
+  }
+  const flaggedCount = (items || []).filter(i => i.is_disinfo).length
 
   const list = (items || []).filter(i => ty === 'all' || i.typology === ty)
   const chip = (on, color) => ({
@@ -492,6 +502,13 @@ function Disinfo({ tr, lang, isDesktop }) {
       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 16px', lineHeight:1.6, fontWeight:500 }}>
         {tr('disinfo_intro')}
       </p>
+      {/* trending disinfo counter */}
+      {flaggedCount > 0 && (
+        <div className="uk-card" style={{ display:'flex', alignItems:'center', gap:14, background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.rose}`, borderRadius:16, padding:'14px 16px', marginBottom:16 }}>
+          <div style={{ fontFamily:Y.disp, fontSize:40, fontWeight:700, color:Y.rose, lineHeight:1 }}>{flaggedCount}</div>
+          <div style={{ fontFamily:Y.sans, fontSize:12.5, fontWeight:600, color:Y.txt, opacity:.85 }}>{tr('trending_count')}</div>
+        </div>
+      )}
 
       {/* typology filter */}
       <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, marginBottom:16 }}>
@@ -536,6 +553,25 @@ function Disinfo({ tr, lang, isDesktop }) {
                 {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
                   style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>See post ↗</a>}
               </div>
+              {it.is_disinfo && responseFor(it.typology) && (
+                <div style={{ marginTop:11, borderTop:`1px solid ${Y.line}`, paddingTop:11 }}>
+                  <button onClick={()=>setOpenResp(openResp===it.id?null:it.id)} className="uk-press"
+                    style={{ background:'none', border:'none', cursor:'pointer', padding:0, fontFamily:Y.disp, fontSize:13, fontWeight:700, color:Y.green }}>
+                    {openResp===it.id ? '▲ ' : '✓ '}{tr('the_truth')}
+                  </button>
+                  {openResp===it.id && (() => { const r = responseFor(it.typology); return (
+                    <div style={{ marginTop:8 }}>
+                      <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.txt, opacity:.9, lineHeight:1.6, margin:0 }}>{r.response}</p>
+                      {Array.isArray(r.sources) && r.sources.length > 0 && (
+                        <div style={{ marginTop:8 }}>
+                          {r.sources.map((s, i) => <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                            style={{ display:'block', fontFamily:Y.sans, fontSize:11, fontWeight:600, color:Y.teal, textDecoration:'none', margin:'3px 0' }}>↗ {s.label}</a>)}
+                        </div>
+                      )}
+                    </div>
+                  )})()}
+                </div>
+              )}
             </div>
           )
         })}
