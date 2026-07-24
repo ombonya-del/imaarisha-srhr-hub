@@ -4,7 +4,14 @@ import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/compone
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session }) {
-  const [view, setView] = useState('activity')
+  // Open a specific desk when routed from a Pulse activity row (#admin/<desk>).
+  const deskFromHash = () => { const m = (typeof window !== 'undefined' ? window.location.hash : '').match(/#admin\/([a-z]+)/); return m ? m[1] : null }
+  const [view, setView] = useState(() => deskFromHash() || 'activity')
+  useEffect(() => {
+    const onHash = () => { const d = deskFromHash(); if (d) setView(d) }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
   const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0, resources: 0 })
 
   const loadCounts = async () => {
