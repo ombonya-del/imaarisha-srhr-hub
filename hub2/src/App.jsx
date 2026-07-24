@@ -61,22 +61,28 @@ export default function App() {
     return () => { mq.removeEventListener('change', fn); stop(); window.removeEventListener('hashchange', onHash) }
   }, [])
 
-  // Auto sign-out after 5 minutes of inactivity (members handle sensitive data).
+  // Auto sign-out after a period of genuine inactivity (members handle sensitive
+  // data). 30 min, and reading counts: we listen on the document in the capture
+  // phase (so scrolls inside inner containers reset it too) and pause the timer
+  // while the tab is hidden, so switching away and back doesn't log you out.
   useEffect(() => {
     if (!session.user) return
     let timer
-    const IDLE_MS = 5 * 60 * 1000
-    const reset = () => {
+    const IDLE_MS = 30 * 60 * 1000
+    const arm = () => {
       clearTimeout(timer)
       timer = setTimeout(async () => {
         await sb.auth.signOut()
-        toast('Signed out after 5 minutes of inactivity', 'gold')
+        toast('Signed out after 30 minutes of inactivity', 'gold')
       }, IDLE_MS)
     }
-    const evs = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click']
-    evs.forEach(e => window.addEventListener(e, reset, { passive: true }))
-    reset()
-    return () => { clearTimeout(timer); evs.forEach(e => window.removeEventListener(e, reset)) }
+    const reset = () => { if (document.visibilityState === 'visible') arm() }
+    const onVis = () => { if (document.visibilityState === 'visible') arm(); else clearTimeout(timer) }
+    const evs = ['mousemove', 'mousedown', 'keydown', 'scroll', 'wheel', 'touchstart', 'touchmove', 'click', 'focus']
+    evs.forEach(e => document.addEventListener(e, reset, { passive: true, capture: true }))
+    document.addEventListener('visibilitychange', onVis)
+    arm()
+    return () => { clearTimeout(timer); evs.forEach(e => document.removeEventListener(e, reset, { capture: true })); document.removeEventListener('visibilitychange', onVis) }
   }, [session.user])
 
   const visibleNav = NAV.filter(n => !n.adminOnly || session.isAdmin)
