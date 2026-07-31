@@ -233,14 +233,14 @@ function AuthForm({ onSignedIn }) {
     setBusy(true); setMsg('')
     try {
       if (mode === 'magic') {
-        const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false } })
-        setMsg(error ? error.message : '✓ Check your email for the sign-in link.')
+        const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: false, emailRedirectTo: window.location.href } })
+        setMsg(error ? error.message : '✓ Check your email for the sign-in link — it brings you right back to this page.')
       } else if (mode === 'password') {
         const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
         if (error) setMsg(error.message); else onSignedIn && onSignedIn()
       } else {
         const { error } = await sb.auth.signUp({ email: email.trim(), password,
-          options: { data: { full_name: fullName.trim(), org_name: org.trim(), reason: reason.trim() } } })
+          options: { emailRedirectTo: window.location.href, data: { full_name: fullName.trim(), org_name: org.trim(), reason: reason.trim() } } })
         setMsg(error ? error.message : '✓ Request submitted — confirm your email, then an admin reviews your membership before access is granted.')
       }
     } catch (e) { setMsg(String(e.message || e)) }
