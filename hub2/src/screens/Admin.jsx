@@ -1052,26 +1052,44 @@ function UnadoDesk({ session, onChange }) {
 }
 
 // ── Resource submissions desk — approve members' resource uploads ────────────
-// Inline preview for admin submission-review links — expand an iframe in place so a
-// resource / opportunity / event URL can be vetted without leaving the queue. Some
-// sites block embedding (X-Frame-Options); the panel keeps an "Open ↗" fallback.
+// Inline preview for admin submission-review links — expand a rendered screenshot
+// thumbnail of the page in place, so a resource / opportunity / event URL can be
+// vetted at a glance without leaving the queue. We use a screenshot image (not an
+// iframe) because most sites block embedding — an iframe just showed blank. The
+// image is only requested once the admin clicks "Preview" (no auto third-party
+// calls), and "Open ↗" is always there for the live page.
 function LinkPreview({ url, color, label }) {
   const [open, setOpen] = useState(false)
+  const [bust, setBust] = useState(1)
+  const [errored, setErrored] = useState(false)
   if (!url) return null
+  const shot = 'https://s.wordpress.com/mshots/v1/' + encodeURIComponent(url) + '?w=640&h=420&r=' + bust
   return (
-    <span style={{ display:'inline-block' }}>
-      <button onClick={()=>setOpen(o=>!o)} style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:700, color, background:'none', border:'none', cursor:'pointer', padding:0 }}>
+    <span style={{ display:'inline-block', maxWidth:'100%' }}>
+      <button onClick={()=>{ setOpen(o=>!o); setErrored(false) }} style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:700, color, background:'none', border:'none', cursor:'pointer', padding:0 }}>
         {open ? '▲ Hide preview' : '👁 ' + (label || 'Preview link')}
       </button>
       {open && (
-        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff' }}>
+        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff', maxWidth:360 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'6px 8px', background:C.card2 }}>
             <span style={{ fontFamily:C.sans, fontSize:10, color:C.mut, overflowWrap:'anywhere', minWidth:0 }}>{url}</span>
-            <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color, whiteSpace:'nowrap' }}>Open ↗</a>
+            <span style={{ display:'flex', gap:10, whiteSpace:'nowrap' }}>
+              <button onClick={()=>{ setErrored(false); setBust(b=>b+1) }} title="Regenerate the thumbnail"
+                style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, background:'none', border:'none', cursor:'pointer', padding:0 }}>↻ Refresh</button>
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color }}>Open ↗</a>
+            </span>
           </div>
-          <iframe src={url} title="preview" loading="lazy" style={{ width:'100%', height:360, border:0, display:'block', background:'#fff' }}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"/>
-          <p style={{ fontFamily:C.sans, fontSize:9.5, color:C.mut, margin:0, padding:'5px 8px', background:C.card2 }}>Blank? The site blocks embedding — use “Open ↗”.</p>
+          {errored ? (
+            <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:0, padding:'22px 12px', textAlign:'center' }}>
+              Couldn’t render a thumbnail — use “Open ↗” to check the page.
+            </p>
+          ) : (
+            <img key={bust} src={shot} alt="page preview" loading="lazy" onError={()=>setErrored(true)}
+              style={{ width:'100%', display:'block', background:C.card2, minHeight:180 }}/>
+          )}
+          <p style={{ fontFamily:C.sans, fontSize:9.5, color:C.mut, margin:0, padding:'5px 8px', background:C.card2 }}>
+            Live screenshot · takes a few seconds the first time — tap ↻ Refresh if it’s still grey.
+          </p>
         </div>
       )}
     </span>
