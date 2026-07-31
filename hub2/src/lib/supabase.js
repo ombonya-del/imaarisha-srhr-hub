@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+// Persist the session so navigating away / reloading / closing the tab keeps you
+// signed in (localStorage, auto-refreshed). A stable storageKey survives redeploys.
 export const sb = createClient(
   import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'imaarisha-hub-auth' } }
 )
 
 // ── Theme — light, warm, easy on the eye; accents drawn from the logo ─────────
@@ -58,7 +61,7 @@ export async function logActivity(activity_type, description, entity_title = nul
   try { await sb.from('activity_log').insert({ activity_type, description, entity_title, dot_color }) } catch {}
 }
 
-// ── Session / profile / admin ────────────────────────────────────────────────
+// ── Session / profile / admin ───────────────────────────────────────────────
 export function useSession() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
