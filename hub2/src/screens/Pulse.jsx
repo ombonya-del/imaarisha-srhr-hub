@@ -93,15 +93,25 @@ export default function Pulse({ go, session }) {
         <div style={{ marginBottom:18 }}>
           <SectionLabel color={C.lilac}>🏛 Member organizations ({orgs.length})</SectionLabel>
           <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-            {orgs.map(o => (
-              <span key={o.id} title={o.focus_area || ''} style={{ background:C.card, border:`1px solid ${C.line}`,
-                borderRadius:20, padding:'7px 13px', fontFamily:C.sans, fontSize:12, fontWeight:800, color:C.txt,
-                display:'inline-flex', alignItems:'center', gap:6, maxWidth:'100%' }}>
+            {orgs.map(o => {
+              // Pulse is where first contact happens, so make members reachable here:
+              // a chip with a website links straight to it, like the Directory.
+              const chipInner = (<>
                 {o.emoji ? <span>{o.emoji}</span> : null}
                 <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.short_name || o.name}</span>
                 {o.focus_area ? <span style={{ fontWeight:600, fontSize:10, color:C.mut }}>· {o.focus_area}</span> : null}
-              </span>
-            ))}
+                {o.website ? <span style={{ color:C.lilac, fontWeight:800 }}>↗</span> : null}
+              </>)
+              const base = { background:C.card, borderRadius:20, padding:'7px 13px', fontFamily:C.sans, fontSize:12,
+                fontWeight:800, color:C.txt, display:'inline-flex', alignItems:'center', gap:6, maxWidth:'100%', textDecoration:'none' }
+              return o.website ? (
+                <a key={o.id} href={o.website} target="_blank" rel="noopener noreferrer"
+                  title={`${o.focus_area || o.name} — open website ↗`}
+                  style={{ ...base, border:`1px solid ${C.lilac}55`, cursor:'pointer' }}>{chipInner}</a>
+              ) : (
+                <span key={o.id} title={o.focus_area || ''} style={{ ...base, border:`1px solid ${C.line}` }}>{chipInner}</span>
+              )
+            })}
           </div>
           <button onClick={()=>go('exchange')} style={{ marginTop:9, background:'none', border:'none', cursor:'pointer',
             fontFamily:C.sans, fontSize:11, fontWeight:700, color:C.lilac, padding:0 }}>
