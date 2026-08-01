@@ -1,0 +1,30 @@
+name: Imara TV Learn feed
+
+# Pulls SRHR-relevant Imara TV uploads into Ukweli Learn every 6 hours.
+on:
+  schedule:
+    - cron: '40 */6 * * *'
+  workflow_dispatch:
+
+env:
+  SUPABASE_URL: https://uwxtqyqyrhhxqagaqelg.supabase.co
+  ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3eHRxeXF5cmhoeHFhZ2FxZWxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTA3MTUsImV4cCI6MjA4OTIyNjcxNX0.dLa7RY6awZC4HXnyUtoIXPZ8KJV0EEpPQR8YdOQ3hdA
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger imara-scanner
+        run: |
+          set -e
+          RESP=$(curl -sS -w '\n%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/imara-scanner" \
+            -H "Authorization: Bearer $ANON_KEY" \
+            -H "apikey: $ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' --max-time 120)
+          BODY=$(echo "$RESP" | head -n -1)
+          CODE=$(echo "$RESP" | tail -n 1)
+          echo "imara-scanner -> HTTP $CODE"
+          echo "$BODY"
+          [ "$CODE" = "200" ] || exit 1
