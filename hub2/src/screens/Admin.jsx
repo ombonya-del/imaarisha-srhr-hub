@@ -1063,14 +1063,14 @@ function LinkPreview({ url, color, label }) {
   const [bust, setBust] = useState(1)
   const [errored, setErrored] = useState(false)
   if (!url) return null
-  const shot = 'https://s.wordpress.com/mshots/v1/' + encodeURIComponent(url) + '?w=640&h=420&r=' + bust
+  const shot = 'https://s.wordpress.com/mshots/v1/' + encodeURIComponent(url) + '?w=1280&h=1600&r=' + bust
   return (
     <span style={{ display:'inline-block', maxWidth:'100%' }}>
       <button onClick={()=>{ setOpen(o=>!o); setErrored(false) }} style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:700, color, background:'none', border:'none', cursor:'pointer', padding:0 }}>
         {open ? '▲ Hide preview' : '👁 ' + (label || 'Preview link')}
       </button>
       {open && (
-        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff', maxWidth:360 }}>
+        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff', maxWidth:'min(100%, 720px)' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'6px 8px', background:C.card2 }}>
             <span style={{ fontFamily:C.sans, fontSize:10, color:C.mut, overflowWrap:'anywhere', minWidth:0 }}>{url}</span>
             <span style={{ display:'flex', gap:10, whiteSpace:'nowrap' }}>
@@ -1085,7 +1085,7 @@ function LinkPreview({ url, color, label }) {
             </p>
           ) : (
             <img key={bust} src={shot} alt="page preview" loading="lazy" onError={()=>setErrored(true)}
-              style={{ width:'100%', display:'block', background:C.card2, minHeight:180 }}/>
+              style={{ width:'100%', display:'block', background:C.card2, minHeight:280 }}/>
           )}
           <p style={{ fontFamily:C.sans, fontSize:9.5, color:C.mut, margin:0, padding:'5px 8px', background:C.card2 }}>
             Live screenshot · takes a few seconds the first time — tap ↻ Refresh if it’s still grey.
