@@ -17,7 +17,11 @@ export default function Events({ session, go, eventId }) {
   const [myRsvps, setMyRsvps] = useState({})
   const [showPast, setShowPast] = useState(false)
   const [open, setOpen] = useState(null)     // event being viewed on its own page
-  const [posting, setPosting] = useState(false)
+  // Persist the compose form so leaving for another tab and coming back keeps it.
+  const DRAFT_OPEN = 'imaarisha:event-draft-open', DRAFT_KEY = 'imaarisha:event-draft'
+  const [posting, setPosting] = useState(() => { try { return localStorage.getItem(DRAFT_OPEN) === '1' } catch { return false } })
+  const openPost = () => { try { localStorage.setItem(DRAFT_OPEN, '1') } catch {} ; setPosting(true) }
+  const closePost = () => { try { localStorage.removeItem(DRAFT_OPEN); localStorage.removeItem(DRAFT_KEY) } catch {} ; setPosting(false) }
 
   const load = async () => {
     const { data } = await sb.from('events').select('*').eq('status','approved')
@@ -126,7 +130,7 @@ export default function Events({ session, go, eventId }) {
             sub="Convenings, trainings, marches, webinars — the collaboration points that build the network."/>
         </div>
         <div style={{ paddingTop:6, flexShrink:0 }}>
-          <Btn small color={C.mint} onClick={() => setPosting(true)}>＋ Post event</Btn>
+          <Btn small color={C.mint} onClick={openPost}>＋ Post event</Btn>
         </div>
       </div>
 
@@ -144,7 +148,7 @@ export default function Events({ session, go, eventId }) {
         </>
       )}
 
-      {posting && <PostEventModal session={session} onClose={() => setPosting(false)}/>}
+      {posting && <PostEventModal session={session} draftKey={DRAFT_KEY} onClose={closePost}/>}
     </div>
   )
 }
@@ -267,7 +271,7 @@ function Row({ icon, text }) {
 }
 
 // ── Member posts an event → PENDING until an admin approves ───────────────────
-function PostEventModal({ session, onClose }) {
+function PostEventModal({ session, onClose, draftKey }) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('Convening')
   const [date, setDate] = useState('')
@@ -281,6 +285,22 @@ function PostEventModal({ session, onClose }) {
   const [desc, setDesc] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  // Restore an in-progress draft on mount; autosave on every change.
+  useEffect(() => { try { const d = JSON.parse(localStorage.getItem(draftKey) || '{}')
+    if (d.title !== undefined) setTitle(d.title || '')
+    if (d.type) setType(d.type)
+    if (d.date !== undefined) setDate(d.date || '')
+    if (d.endDate !== undefined) setEndDate(d.endDate || '')
+    if (d.time !== undefined) setTime(d.time || '')
+    if (d.virtual !== undefined) setVirtual(!!d.virtual)
+    if (d.location !== undefined) setLocation(d.location || '')
+    if (d.link !== undefined) setLink(d.link || '')
+    if (d.noWebsite !== undefined) setNoWebsite(!!d.noWebsite)
+    if (d.capacity !== undefined) setCapacity(d.capacity || '')
+    if (d.desc !== undefined) setDesc(d.desc || '')
+  } catch {} }, [])
+  useEffect(() => { try { localStorage.setItem(draftKey, JSON.stringify({ title, type, date, endDate, time, virtual, location, link, noWebsite, capacity, desc })) } catch {} },
+    [title, type, date, endDate, time, virtual, location, link, noWebsite, capacity, desc])
 
   const submit = async () => {
     if (!title.trim()) { setMsg('Title is required.'); return }
