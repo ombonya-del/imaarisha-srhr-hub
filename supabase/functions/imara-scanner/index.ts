@@ -26,6 +26,21 @@ function isSRHR(title: string): boolean {
   return SRHR_TERMS.some(term => t.includes(term))
 }
 
+// Map an Imara TV title to one of the six Learn themes (best-effort keywords).
+const TOPIC_RULES: [string, string[]][] = [
+  ['gbv', ['harass','gbv','gender-based','gender based','rape','defilement','abuse','assault','violence','campusmetoo','sponsor','married too early','she said no']],
+  ['hiv', ['hiv','aids','arv',' sti','stis','prep','ukimwi']],
+  ['contraception', ['condom','contracept','family planning',' pill','implant','injection','morning after','emergency pill','pregnan','uzazi wa mpango','kondomu']],
+  ['consent', ['consent','healthy relationship','relationship','ridhaa']],
+  ['rights', ['your rights','the law','legal','haki']],
+  ['body', ['puberty','menstru','period','growing up','your body','adolescen','mwili']],
+]
+function classifyTopic(title: string): string | null {
+  const t = (title || '').toLowerCase()
+  for (const [cat, ws] of TOPIC_RULES) { if (ws.some(w => t.includes(w))) return cat }
+  return null
+}
+
 function decode(s: string): string {
   return (s || '')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -53,6 +68,7 @@ Deno.serve(async (_req: Request) => {
       rows.push({
         ext_id: `imara-${id}`,
         title: title.slice(0, 200),
+        topic: classifyTopic(title),
         intro: 'From Imara TV.',
         points: [],
         color: '#00C2A8',
