@@ -50,9 +50,22 @@ export default function Watch({ session }) {
   const [open, setOpen] = useState(null)
   const [reporting, setReporting] = useState(false)
 
-  const load = () => sb.from('disinformation_claims').select('*').eq('is_active', true)
-    .order('flagged_date', { ascending:false }).limit(50)
-    .then(({ data }) => setClaims(data || []))
+  // Merge member-reported claims with the automated radar's flagged items so the
+  // Watch reflects the live scan, not just manual reports.
+  const load = () => Promise.all([
+    sb.from('disinformation_claims').select('*').eq('is_active', true).order('flagged_date', { ascending:false }).limit(50),
+    sb.from('radar_items').select('*').or('is_disinfo.eq.true,harm_score.gte.6').order('scanned_at', { ascending:false }).limit(40),
+  ]).then(([c, r]) => {
+    const manual = (c.data || []).map(d => ({ ...d, _src:'manual' }))
+    const radar = (r.data || []).map(it => ({
+      id: it.id, _src:'radar', url: it.url, source_name: it.source_name, flagged_date: it.scanned_at,
+      claim: it.title, correction: it.snippet || 'Flagged by the automated SRHR radar - open the source, then use the verified response below.',
+      verdict: it.is_disinfo ? 'false' : 'misleading',
+      spread_level: it.harm_score >= 7 ? 'high' : it.harm_score >= 5 ? 'medium' : 'low',
+      platforms: it.platform ? [it.platform] : [],
+    }))
+    setClaims([...manual, ...radar].sort((a, b) => new Date(b.flagged_date) - new Date(a.flagged_date)))
+  })
   useEffect(() => { load() }, [])
 
   const copyResponse = async (d) => {
@@ -87,7 +100,7 @@ export default function Watch({ session }) {
               <span style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:800, letterSpacing:'.08em',
                 color:vColor, border:`1px solid ${vColor}`, borderRadius:5, padding:'2px 8px' }}>{vLabel}</span>
               <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>
-                {SPREAD[d.spread_level] || ''} · flagged {timeAgo(d.flagged_date)}
+                {SPREAD[d.spread_level] || ''} · {d._src==='radar'?'🛰 radar':'🚩 report'} {timeAgo(d.flagged_date)}
                 {(d.platforms || []).length ? ' · ' + d.platforms.join(', ') : ''}
               </span>
             </div>
@@ -115,7 +128,8 @@ export default function Watch({ session }) {
                 )}
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                   <Btn small onClick={() => copyResponse(d)}>📋 Copy response template</Btn>
-                  {isAdmin && (
+                  {d.url && <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:C.sky, textDecoration:'none' }}>See source ↗</a>}
+                  {isAdmin && d._src==='manual' && (
                     <Btn small ghost onClick={async () => {
                       await sb.from('disinformation_claims').update({ is_active:false }).eq('id', d.id)
                       toast('Claim archived', 'gold'); load()
