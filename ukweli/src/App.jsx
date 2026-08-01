@@ -475,8 +475,8 @@ function Disinfo({ tr, lang, isDesktop }) {
   const [openResp, setOpenResp] = useState(null)
 
   useEffect(() => {
-    sb.from('radar_items').select('*').in('platform', DSOCIAL)
-      .order('scanned_at', { ascending:false }).limit(60)
+    sb.from('radar_items').select('*')
+      .order('scanned_at', { ascending:false }).limit(120)
       .then(({ data }) => setItems((data || []).filter(i => i.is_disinfo || i.harm_score >= 5)))
       .catch(() => setItems([]))
     sb.from('disinfo_responses').select('*').eq('active', true).then(({ data }) => setResponses(data || [])).catch(() => {})
