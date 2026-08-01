@@ -80,6 +80,12 @@ const FEEDS = [
   'https://news.google.com/rss/search?q=Kenya+%22healed+of+HIV%22+OR+%22stop+taking+ARVs%22+church&hl=en-KE&gl=KE&ceid=KE:en',
   'https://news.google.com/rss/search?q=ukimwi+kuponywa+maombi+OR+muujiza+Kenya&hl=sw&gl=KE&ceid=KE:sw',
 
+  // Global — the same four typologies, any geography (disinfo travels across borders)
+  'https://news.google.com/rss/search?q=contraception+infertility+OR+cancer+myth&hl=en&ceid=US:en',
+  'https://news.google.com/rss/search?q=abortion+regret+OR+infertility+OR+danger+myth&hl=en&ceid=US:en',
+  'https://news.google.com/rss/search?q=%22sexuality+education%22+agenda+OR+ban+OR+promiscuity&hl=en&ceid=US:en',
+  'https://news.google.com/rss/search?q=HIV+cured+OR+healed+prayer+OR+miracle+pastor&hl=en&ceid=US:en',
+
   // Direct social feeds — real URLs, platform-tagged & embeddable
   ...YOUTUBE_CHANNELS.map(id => `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`),
   'https://old.reddit.com/r/Kenya/search.rss?q=contraception+OR+abortion+OR+HIV+OR+%22sexuality+education%22&restrict_sr=on&sort=new&limit=25',
@@ -96,7 +102,9 @@ const SRHR_TERMS = ['contracept','family planning','reproductive','srhr','aborti
 
 function isKenyaSRHR(title: string, snippet: string): boolean {
   const text = `${title} ${snippet}`.toLowerCase()
-  return KENYA_TERMS.some(t => text.includes(t)) && SRHR_TERMS.some(t => text.includes(t))
+  // Broadened: any SRHR item touching the four typologies qualifies regardless of
+  // geography (the disinfo crosses borders). Kenya terms no longer required.
+  return SRHR_TERMS.some(t => text.includes(t))
 }
 
 async function fetchFeed(url: string): Promise<any[]> {
