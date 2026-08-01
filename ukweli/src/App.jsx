@@ -621,18 +621,29 @@ function Block({ label, text, color }) {
 // ── Learn: real SRHR explainers (from lib/learn.js) ──────────────────────────
 function Learn({ tr, lang, isDesktop }) {
   const [open, setOpen] = useState(null)
+  const [vid, setVid] = useState(null)          // which nested video is expanded
   const [db, setDb] = useState([])
   useEffect(() => {
     sb.from('ukweli_learn').select('*').eq('active', true).order('sort_order').then(({ data }) => setDb(data || []))
   }, [])
 
+  // Media (Imara TV videos, articles) attach to one of the six themes via `topic`
+  // and render INSIDE that theme's card. Rows without a topic stay standalone.
+  const CATS = new Set(['contraception','consent','hiv','rights','gbv','body'])
+  const mediaByTopic = {}
+  db.filter(d => d.topic && CATS.has(d.topic) && d.media_url).forEach(d => {
+    (mediaByTopic[d.topic] = mediaByTopic[d.topic] || []).push(d)
+  })
+  Object.values(mediaByTopic).forEach(a => a.sort((x, y) => (x.sort_order || 0) - (y.sort_order || 0)))
+
   const staticTopics = LEARN.map(topic => {
     const t = topic[lang] || topic.en
-    return { key:topic.id, color:topic.color, emoji:topic.emoji, title:t.title, intro:t.intro, points:t.points, media_url:null, media_type:null }
+    return { key:topic.id, color:topic.color, emoji:topic.emoji, title:t.title, intro:t.intro, points:t.points, media:mediaByTopic[topic.id] || [], single:null }
   })
-  const dbLang = db.filter(d => d.language === lang)
-  const dbRows = dbLang.length ? dbLang : db.filter(d => d.language === 'en')
-  const dbTopics = dbRows.map(d => ({ key:'db-'+d.id, color:d.color || Y.green, emoji:d.emoji || '📖', title:d.title, intro:d.intro || '', points:Array.isArray(d.points) ? d.points : [], media_url:d.media_url, media_type:d.media_type }))
+  const standalone = db.filter(d => !d.topic)
+  const sLang = standalone.filter(d => d.language === lang)
+  const sRows = sLang.length ? sLang : standalone.filter(d => d.language === 'en')
+  const dbTopics = sRows.map(d => ({ key:'db-'+d.id, color:d.color || Y.green, emoji:d.emoji || '📖', title:d.title, intro:d.intro || '', points:Array.isArray(d.points) ? d.points : [], media:[], single:{ url:d.media_url, type:d.media_type } }))
   const topics = [...staticTopics, ...dbTopics]
 
   return (
@@ -661,13 +672,40 @@ function Learn({ tr, lang, isDesktop }) {
               </button>
               {isOpen && (
                 <div style={{ padding:'2px 16px 16px' }}>
-                  {topic.media_url && <MythMedia url={topic.media_url} type={topic.media_type}/>}
+                  {topic.single && topic.single.url && <MythMedia url={topic.single.url} type={topic.single.type}/>}
                   {topic.points.map(([head, body], j) => (
                     <div key={j} style={{ marginBottom:12, paddingLeft:13, borderLeft:`3px solid ${topic.color}66` }}>
                       <p style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, color:topic.color, margin:'0 0 3px' }}>{head}</p>
                       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.82 }}>{body}</p>
                     </div>
                   ))}
+                  {topic.media.length > 0 && (
+                    <div style={{ marginTop:6, borderTop:`1px solid ${Y.line}`, paddingTop:12 }}>
+                      <p style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:800, letterSpacing:'.12em', textTransform:'uppercase', color:topic.color, margin:'0 0 8px' }}>
+                        &#9654; Watch &amp; learn
+                      </p>
+                      {topic.media.map(mv => {
+                        const vOpen = vid === mv.id
+                        return (
+                          <div key={mv.id} style={{ marginBottom:8 }}>
+                            <button onClick={()=>setVid(vOpen?null:mv.id)} className="uk-press"
+                              style={{ width:'100%', textAlign:'left', cursor:'pointer', border:`1px solid ${Y.line}`, borderRadius:10,
+                                background:'transparent', color:Y.txt, fontFamily:Y.sans, fontSize:13, fontWeight:600, padding:'9px 11px',
+                                display:'flex', alignItems:'center', gap:9 }}>
+                              <span style={{ color:topic.color }}>{vOpen ? '▾' : '▸'}</span>
+                              <span style={{ flex:1 }}>{mv.title}</span>
+                            </button>
+                            {vOpen && (
+                              <div style={{ marginTop:8 }}>
+                                <MythMedia url={mv.media_url} type={mv.media_type || 'embed'}/>
+                                <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'5px 2px 0' }}>Video: Imara TV</p>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
