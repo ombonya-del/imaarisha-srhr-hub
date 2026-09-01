@@ -1105,6 +1105,20 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setUnhosted(data || []))
   }
   useEffect(() => { load() }, [])
+  // Deep-link from the Pulse activity feed: the hash carries the submission title
+  // (#admin/resources/<title>). Prefill the search and jump the accordion to the
+  // queue that actually holds it, so an admin lands straight on that card.
+  const focusTitle = () => { const m = (typeof window!=='undefined'?window.location.hash:'').match(/#admin\/[a-z]+\/(.+)$/); return m ? decodeURIComponent(m[1]) : '' }
+  useEffect(() => {
+    const f = focusTitle(); if (!f) return
+    setQ(f)
+    const lf = f.toLowerCase(), has = (arr) => arr.some(x => (x.title||'').toLowerCase().includes(lf))
+    setOpenSec(has(opps) ? 'opps' : has(evs) ? 'evs' : 'resources')
+  }, [pending, opps, evs])
+  useEffect(() => {
+    const onH = () => { const f = focusTitle(); if (f) setQ(f) }
+    window.addEventListener('hashchange', onH); return () => window.removeEventListener('hashchange', onH)
+  }, [])
   const decideEvent = async (e, approve) => {
     setBusy(e.id)
     if (approve) {

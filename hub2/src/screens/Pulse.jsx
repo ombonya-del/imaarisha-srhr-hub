@@ -152,7 +152,7 @@ export default function Pulse({ go, session }) {
         </>)
         const rowStyle = { display:'flex', gap:10, alignItems:'flex-start', padding:'9px 0', borderBottom:`1px solid ${C.line}` }
         return isAdmin ? (
-          <button key={a.id || i} onClick={()=>go('admin/' + ADMIN_SECTION(a.activity_type))} title="Open in Admin →"
+          <button key={a.id || i} onClick={()=>go('admin/' + ADMIN_SECTION(a.activity_type) + (a.entity_title ? '/' + encodeURIComponent(a.entity_title) : ''))} title="Open in Admin →"
             style={{ ...rowStyle, width:'100%', textAlign:'left', background:'none', border:'none', borderBottom:`1px solid ${C.line}`, cursor:'pointer' }}>
             {inner}
             <span style={{ fontFamily:C.sans, fontSize:15, color:C.lilac, marginTop:2, flexShrink:0 }}>›</span>

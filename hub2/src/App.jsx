@@ -12,17 +12,30 @@ import Events from './screens/Events'
 import Unado from './screens/Unado'
 import Admin from './screens/Admin'
 
+// Each id maps to the screen that renders it.
+const SCREENS = {
+  pulse: Pulse, radar: Radar, watch: Watch, forum: Forum, unado: Unado,
+  tracker: Tracker, exchange: Exchange, events: Events, admin: Admin,
+}
+// Sub-tab labels for grouped destinations (shown in the in-page sub-nav row).
+const SUB_META = {
+  radar:   { icon:'⦿',  label:'Radar' },
+  watch:   { icon:'🚩', label:'Disinfo Watch', short:'Disinfo' },
+  tracker: { icon:'📊', label:'Tracker' },
+  forum:   { icon:'💬', label:'Forum' },
+  unado:   { icon:'📸', label:'UnaDO?' },
+}
+// The bottom / top nav is five groups. Intel and Voices each collapse several
+// screens behind one tab, with an in-page sub-nav to switch between them.
 const NAV = [
-  { id:'pulse',    icon:'◉',  label:'Pulse',    screen: Pulse },
-  { id:'radar',    icon:'⦿',  label:'Radar',    screen: Radar },
-  { id:'watch',    icon:'🚩', label:'Disinfo Watch', short:'Disinfo', screen: Watch },
-  { id:'forum',    icon:'💬', label:'Forum',    screen: Forum },
-  { id:'unado',    icon:'📸', label:'UnaDO?',   screen: Unado },
-  { id:'tracker',  icon:'📊', label:'Tracker',  screen: Tracker },
-  { id:'exchange', icon:'⇄',  label:'Exchange', screen: Exchange },
-  { id:'events',   icon:'📅', label:'Events',   screen: Events },
-  { id:'admin',    icon:'👑', label:'Admin',    screen: Admin, adminOnly: true },
+  { id:'pulse',    icon:'◉',  label:'Pulse',    subs:['pulse'] },
+  { id:'intel',    icon:'⦿',  label:'Intel',    subs:['radar','watch','tracker'] },
+  { id:'voices',   icon:'💬', label:'Voices',   subs:['forum','unado'] },
+  { id:'exchange', icon:'⇄',  label:'Exchange', subs:['exchange'] },
+  { id:'events',   icon:'📅', label:'Events',   subs:['events'] },
+  { id:'admin',    icon:'👑', label:'Admin',    subs:['admin'], adminOnly: true },
 ]
+const groupOf = (seg) => NAV.find(g => g.subs.includes(seg)) || NAV[0]
 
 const parseHash = () => {
   const raw = (typeof window !== 'undefined' ? window.location.hash : '').replace(/^#\/?/, '')
@@ -36,7 +49,9 @@ export default function App() {
   // events are bookmarkable / shareable and the browser back button works.
   const [route, setRoute] = useState(parseHash)
   const navigate = (to) => { window.location.hash = to }
-  const tab = route.seg === 'event' ? 'events' : route.seg
+  // A bare group id in the hash (#intel, #voices) resolves to that group's first sub.
+  const groupById = NAV.find(g => g.id === route.seg)
+  const tab = route.seg === 'event' ? 'events' : (groupById ? groupById.subs[0] : route.seg)
   const eventId = route.seg === 'event' ? route.id : null
   const [authOpen, setAuthOpen] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -86,7 +101,10 @@ export default function App() {
   }, [session.user])
 
   const visibleNav = NAV.filter(n => !n.adminOnly || session.isAdmin)
-  const Active = (visibleNav.find(n => n.id === tab) || NAV[0]).screen
+  // `tab` is the actual sub-screen id (pulse / radar / watch / forum …). Resolve
+  // the screen directly, and the owning group for nav highlighting + sub-nav.
+  const Active = SCREENS[tab] || Pulse
+  const activeGroup = groupOf(tab)
 
   // Access gate: the hub does not open without a signed-in, approved member.
   if (session.loading) return <Splash/>
@@ -133,9 +151,9 @@ export default function App() {
           {isDesktop && (
             <nav style={{ display:'flex', gap:1, flex:1, justifyContent:'center' }}>
               {visibleNav.map(n => {
-                const on = tab === n.id
+                const on = activeGroup.id === n.id
                 return (
-                  <button key={n.id} onClick={()=>navigate(n.id)} title={n.label}
+                  <button key={n.id} onClick={()=>navigate(n.subs[0])} title={n.label}
                     className={'navlink' + (on ? ' on' : '')}
                     style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, padding:'8px 10px', whiteSpace:'nowrap',
                       border:'none', cursor:'pointer', background:'transparent', letterSpacing:'.01em' }}>
@@ -186,6 +204,22 @@ export default function App() {
       {/* ── Screen ── */}
       <main style={{ maxWidth: isDesktop ? 1100 : 480, margin:'0 auto',
         padding: isDesktop ? '24px 16px 60px' : '18px 16px 96px' }}>
+        {/* In-page sub-nav for grouped tabs (Intel = Radar/Disinfo/Tracker, Voices = Forum/UnaDO) */}
+        {activeGroup.subs.length > 1 && (
+          <div style={{ display:'flex', gap:7, flexWrap:'wrap', marginBottom:16 }}>
+            {activeGroup.subs.map(sid => {
+              const m = SUB_META[sid] || {}, on = tab === sid
+              return (
+                <button key={sid} onClick={()=>navigate(sid)}
+                  style={{ fontFamily:C.sans, fontSize:12.5, fontWeight:800, padding:'7px 14px', borderRadius:20, cursor:'pointer',
+                    border:`1px solid ${on ? C.gold : C.line}`, background: on ? C.gold : 'transparent',
+                    color: on ? '#241E12' : C.mut, whiteSpace:'nowrap' }}>
+                  {m.icon} {m.label || sid}
+                </button>
+              )
+            })}
+          </div>
+        )}
         <Active go={navigate} session={session} eventId={eventId}/>
         <div style={{ textAlign:'center', marginTop:28, paddingTop:14, borderTop:`1px solid ${C.line}` }}>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
@@ -200,9 +234,9 @@ export default function App() {
           boxShadow:'0 -2px 16px rgba(20,24,38,0.3)',
           display:'flex', justifyContent:'space-around', padding:'6px 0 calc(6px + env(safe-area-inset-bottom))', zIndex:20 }}>
           {visibleNav.map(n => {
-            const on = tab === n.id
+            const on = activeGroup.id === n.id
             return (
-              <button key={n.id} onClick={()=>navigate(n.id)}
+              <button key={n.id} onClick={()=>navigate(n.subs[0])}
                 style={{ background:'none', border:'none', cursor:'pointer',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:2,
                   padding:'4px 2px', flex:1, minWidth:0 }}>
