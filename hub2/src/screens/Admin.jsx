@@ -1052,47 +1052,24 @@ function UnadoDesk({ session, onChange }) {
 }
 
 // ── Resource submissions desk — approve members' resource uploads ────────────
-// Inline preview for admin submission-review links — expand a rendered screenshot
-// thumbnail of the page in place, so a resource / opportunity / event URL can be
-// vetted at a glance without leaving the queue. We use a screenshot image (not an
-// iframe) because most sites block embedding — an iframe just showed blank. The
-// image is only requested once the admin clicks "Preview" (no auto third-party
-// calls), and "Open ↗" is always there for the live page.
+// Fast link chip for admin submission review. The old version fetched a
+// third-party page SCREENSHOT (WordPress mShots) which was slow and often rendered
+// grey/raw — "naked code that takes forever". A submission's own fields (title,
+// type, org, deadline, description) already tell the admin what it is; this just
+// gives a clean, instant "open the source" affordance showing the domain.
 function LinkPreview({ url, color, label }) {
-  const [open, setOpen] = useState(false)
-  const [bust, setBust] = useState(1)
-  const [errored, setErrored] = useState(false)
   if (!url) return null
-  const shot = 'https://s.wordpress.com/mshots/v1/' + encodeURIComponent(url) + '?w=1280&h=1600&r=' + bust
+  let host = url
+  try { host = new URL(url.startsWith('http') ? url : 'https://' + url).hostname.replace(/^www\./, '') } catch {}
   return (
-    <span style={{ display:'inline-block', maxWidth:'100%' }}>
-      <button onClick={()=>{ setOpen(o=>!o); setErrored(false) }} style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:700, color, background:'none', border:'none', cursor:'pointer', padding:0 }}>
-        {open ? '▲ Hide preview' : '👁 ' + (label || 'Preview link')}
-      </button>
-      {open && (
-        <div style={{ marginTop:8, border:`1px solid ${C.line}`, borderRadius:8, overflow:'hidden', background:'#fff', maxWidth:'min(100%, 720px)' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, padding:'6px 8px', background:C.card2 }}>
-            <span style={{ fontFamily:C.sans, fontSize:10, color:C.mut, overflowWrap:'anywhere', minWidth:0 }}>{url}</span>
-            <span style={{ display:'flex', gap:10, whiteSpace:'nowrap' }}>
-              <button onClick={()=>{ setErrored(false); setBust(b=>b+1) }} title="Regenerate the thumbnail"
-                style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, background:'none', border:'none', cursor:'pointer', padding:0 }}>↻ Refresh</button>
-              <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color }}>Open ↗</a>
-            </span>
-          </div>
-          {errored ? (
-            <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:0, padding:'22px 12px', textAlign:'center' }}>
-              Couldn’t render a thumbnail — use “Open ↗” to check the page.
-            </p>
-          ) : (
-            <img key={bust} src={shot} alt="page preview" loading="lazy" onError={()=>setErrored(true)}
-              style={{ width:'100%', display:'block', background:C.card2, minHeight:280 }}/>
-          )}
-          <p style={{ fontFamily:C.sans, fontSize:9.5, color:C.mut, margin:0, padding:'5px 8px', background:C.card2 }}>
-            Live screenshot · takes a few seconds the first time — tap ↻ Refresh if it’s still grey.
-          </p>
-        </div>
-      )}
-    </span>
+    <a href={url} target="_blank" rel="noopener noreferrer" title={url}
+      style={{ display:'inline-flex', alignItems:'center', gap:7, marginTop:4, maxWidth:'100%',
+        fontFamily:C.sans, fontSize:11.5, fontWeight:800, color, textDecoration:'none',
+        border:`1px solid ${color}55`, background:`${color}0f`, borderRadius:9, padding:'6px 11px' }}>
+      <span aria-hidden>🔗</span>
+      <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{label || 'Open source'} · {host}</span>
+      <span aria-hidden>↗</span>
+    </a>
   )
 }
 
@@ -1105,6 +1082,9 @@ function ResourceDesk({ onChange }) {
   const [unhosted, setUnhosted] = useState([])
   const [busy, setBusy] = useState(null)
   const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
+  const [q, setQ] = useState('')                        // search across the queues
+  const [rejectedKeys, setRejectedKeys] = useState(new Set()) // titles/links already rejected → hide re-scanned dupes
+  const oppKey = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 70)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
@@ -1112,6 +1092,9 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setReqs(data || []))
     sb.from('opportunities').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => setOpps(data || []))
+    // Remember what has already been rejected so re-scanned duplicates never resurface.
+    sb.from('opportunities').select('title,link').eq('status','rejected').limit(1000)
+      .then(({data}) => setRejectedKeys(new Set((data||[]).flatMap(o => [oppKey(o.title), (o.link||'').trim().toLowerCase()].filter(Boolean)))))
     sb.from('events').select('*').eq('status','pending').order('event_date',{ascending:true})
       .then(({data}) => setEvs(data || []))
     // Approved document resources still stored as external links (not hosted as
@@ -1146,8 +1129,9 @@ function ResourceDesk({ onChange }) {
       if (error) toast(error.message,'red'); else { toast('✓ Published to the Opportunity Desk','green'); load() }
     } else {
       if (!confirm(`Reject "${o.title}"?`)) { setBusy(null); return }
-      const { error } = await sb.from('opportunities').delete().eq('id', o.id)
-      if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
+      // Mark rejected (don't delete) so the auto-scanner can't re-add it as "new".
+      const { error } = await sb.from('opportunities').update({ status:'rejected' }).eq('id', o.id)
+      if (error) toast(error.message,'red'); else { toast('Rejected — it won’t come back','gold'); load() }
     }
     setBusy(null)
   }
@@ -1204,14 +1188,25 @@ function ResourceDesk({ onChange }) {
   // De-dupe repeated submissions (the scanner stores the same call more than once) by
   // normalised title, then split into the relevant queue vs the hidden pile.
   const _seenOpp = new Set()
-  const oppsUniq = opps.filter(o => { const k=(o.title||'').toLowerCase().replace(/\s+/g,' ').trim().slice(0,70); if(!k||_seenOpp.has(k))return false; _seenOpp.add(k); return true })
+  const oppsUniq = opps.filter(o => {
+    const k = oppKey(o.title)
+    if (!k || _seenOpp.has(k)) return false            // in-batch duplicate
+    if (rejectedKeys.has(k) || rejectedKeys.has((o.link||'').trim().toLowerCase())) return false  // already rejected → never resurface
+    _seenOpp.add(k); return true
+  })
   const oppsRelevant = oppsUniq.filter(oppRelevant)
   const oppsHidden   = oppsUniq.filter(o => !oppRelevant(o))
+  // ── Search across the queues (title / org / submitter / description) ──
+  const ql = q.trim().toLowerCase()
+  const mQ = (...parts) => !ql || parts.filter(Boolean).join(' · ').toLowerCase().includes(ql)
+  const fRes  = pending.filter(r => mQ(r.title, r.type, r.source_org, r.submitter_name, r.description))
+  const fOpps = (showHiddenOpps ? oppsUniq : oppsRelevant).filter(o => mQ(o.title, o.kind, o.org, o.submitter_name, o.description))
+  const fEvs  = evs.filter(e => mQ(e.title, e.event_type, e.location, e.submitter_name, e.description))
   const bulkRejectHiddenOpps = async () => {
     if (!oppsHidden.length) return
-    if (!confirm(`Reject ${oppsHidden.length} off-region / expired / off-topic submission(s)? This clears them from the queue.`)) return
+    if (!confirm(`Reject ${oppsHidden.length} off-region / expired / off-topic submission(s)? They’re marked rejected and won’t be re-added.`)) return
     setBusy('bulk')
-    const { error } = await sb.from('opportunities').delete().in('id', oppsHidden.map(o=>o.id))
+    const { error } = await sb.from('opportunities').update({ status:'rejected' }).in('id', oppsHidden.map(o=>o.id))
     if (error) toast(error.message,'red'); else { toast(`Cleared ${oppsHidden.length} irrelevant`,'gold'); load() }
     setBusy(null)
   }
@@ -1226,8 +1221,22 @@ function ResourceDesk({ onChange }) {
         {total === 0 ? ' Every queue is clear right now. 🎉' : ` ${total} item${total===1?'':'s'} waiting — tap a section to review.`}
       </p>
 
+      <div style={{ position:'relative', marginBottom:14 }}>
+        <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', fontSize:13, color:C.mut }} aria-hidden>🔎</span>
+        <input value={q} onChange={e=>setQ(e.target.value)}
+          placeholder="Search submissions — title, org, member…"
+          style={{ ...inputStyle, marginBottom:0, paddingLeft:34, paddingRight:q ? 34 : 12 }}/>
+        {q && (
+          <button onClick={()=>setQ('')} aria-label="Clear search"
+            style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:C.mut, fontSize:15, lineHeight:1 }}>×</button>
+        )}
+        {ql && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'6px 2px 0' }}>
+          {fRes.length + fOpps.length + fEvs.length} match{(fRes.length + fOpps.length + fEvs.length)===1?'':'es'} across resources, opportunities & events.
+        </p>}
+      </div>
+
       <Section id="resources" color={C.sky} icon="📚" label="Resource submissions" count={pending.length} {...secProps}>
-        {pending.map(r => (
+        {fRes.map(r => (
           <div key={r.id} style={cardS(C.sky)}>
             <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
             <p style={metaS}>{r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
@@ -1266,7 +1275,7 @@ function ResourceDesk({ onChange }) {
             <Btn small ghost color={C.lilac} onClick={()=>setShowHiddenOpps(v=>!v)}>{showHiddenOpps ? 'Hide them' : 'Show them'}</Btn>
           </div>
         )}
-        {(showHiddenOpps ? opps : oppsRelevant).map(o => (
+        {fOpps.map(o => (
           <div key={o.id} style={cardS(C.lilac)}>
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>{o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}</p>
@@ -1281,7 +1290,7 @@ function ResourceDesk({ onChange }) {
       </Section>
 
       <Section id="evs" color={C.mint} icon="📅" label="Event submissions" count={evs.length} {...secProps}>
-        {evs.map(e => (
+        {fEvs.map(e => (
           <div key={e.id} style={cardS(C.mint)}>
             <p style={ttlS}>{e.title}</p>
             <p style={metaS}>
