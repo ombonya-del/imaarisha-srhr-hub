@@ -1239,12 +1239,14 @@ function ResourceDesk({ onChange }) {
         {fRes.map(r => (
           <div key={r.id} style={cardS(C.sky)}>
             <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
-            <p style={metaS}>{r.type || 'document'} · {r.source_org || '—'} · by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
+            <p style={metaS}>by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
             {r.description && <p style={descS}>{r.description}</p>}
-            {r.file_path
-              ? <button onClick={async()=>{ const {data,error}=await sb.storage.from('resources').createSignedUrl(r.file_path,60); if(error||!data?.signedUrl){toast('Could not open file','red');return} window.open(data.signedUrl,'_blank','noopener') }}
-                  style={{ ...linkS(C.sky), background:'none', border:'none', cursor:'pointer', padding:0 }}>Preview file ↗</button>
-              : r.file_url && <LinkPreview url={r.file_url} color={C.sky}/>}
+            <FactCard color={C.sky}
+              chips={[{k:'Type',v:r.type||'Document',c:C.sky},{k:'Source',v:r.source_org,c:C.lilac},{k:'Access',v:r.is_restricted?'Restricted':null,c:C.coral}]}
+              url={r.file_path ? null : r.file_url} urlLabel="Open source"/>
+            {r.file_path &&
+              <button onClick={async()=>{ const {data,error}=await sb.storage.from('resources').createSignedUrl(r.file_path,60); if(error||!data?.signedUrl){toast('Could not open file','red');return} window.open(data.signedUrl,'_blank','noopener') }}
+                style={{ ...linkS(C.sky), background:'none', border:'none', cursor:'pointer', padding:0, marginTop:8, display:'inline-block' }}>Preview file ↗</button>}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
@@ -1278,9 +1280,11 @@ function ResourceDesk({ onChange }) {
         {fOpps.map(o => (
           <div key={o.id} style={cardS(C.lilac)}>
             <p style={ttlS}>{o.title}</p>
-            <p style={metaS}>{o.kind || 'opportunity'}{o.org ? ` · ${o.org}` : ''}{o.deadline ? ` · deadline ${o.deadline}` : ''} · by {o.submitter_name || 'a member'}</p>
+            <p style={metaS}>by {o.submitter_name || 'a member'} · {timeAgo(o.created_at)}</p>
             {o.description && <p style={descS}>{o.description}</p>}
-            {o.link && <LinkPreview url={o.link} color={C.lilac}/>}
+            <FactCard color={C.lilac}
+              chips={[{k:'Type',v:o.kind||'Opportunity',c:C.lilac},{k:'Closes',v:o.deadline,c:C.coral},{k:'Org',v:o.org,c:C.sky}]}
+              url={o.link} urlLabel="Open the call"/>
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
@@ -1293,13 +1297,15 @@ function ResourceDesk({ onChange }) {
         {fEvs.map(e => (
           <div key={e.id} style={cardS(C.mint)}>
             <p style={ttlS}>{e.title}</p>
-            <p style={metaS}>
-              {e.event_type || 'Event'} · {e.event_date}{e.end_date && e.end_date !== e.event_date ? `–${e.end_date}` : ''}
-              {e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : ''}
-              {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''} · by {e.submitter_name || 'a member'}
-            </p>
+            <p style={metaS}>by {e.submitter_name || 'a member'} · {timeAgo(e.created_at)}</p>
             {e.description && <p style={descS}>{e.description}</p>}
-            {e.link && <LinkPreview url={e.link} color={C.mint} label="Registration link"/>}
+            <FactCard color={C.mint}
+              chips={[
+                {k:'Type',v:e.event_type||'Event',c:C.mint},
+                {k:'When',v:e.event_date ? `${e.event_date}${e.end_date && e.end_date !== e.event_date ? `–${e.end_date}` : ''}${e.start_time ? ` · ${String(e.start_time).slice(0,5)}` : ''}` : null,c:C.coral},
+                {k:'Where',v:e.is_virtual ? '🌐 Online' : e.location,c:C.sky},
+              ]}
+              url={e.link} urlLabel="Registration link"/>
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideEvent(e,true)} disabled={busy===e.id}>{busy===e.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideEvent(e,false)} disabled={busy===e.id}>✕ Reject</Btn>
@@ -1357,3 +1363,33 @@ const ttlS  = { fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, m
 const metaS = { fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 6px' }
 const descS = { fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.55, margin:'0 0 8px' }
 const linkS = (c) => ({ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:c, textDecoration:'none' })
+
+// Mazingira-style structured preview: the submission's own facts as chips + a fast
+// "open source" link — so an admin can vet a resource / opportunity / event at a
+// glance without a slow page screenshot and without leaving the queue.
+const factChip = (c) => ({ display:'inline-flex', alignItems:'center', gap:5, fontFamily:C.sans, fontSize:10.5,
+  fontWeight:800, color:c, background:`${c}14`, border:`1px solid ${c}40`, borderRadius:999, padding:'3px 9px', maxWidth:'100%' })
+function FactCard({ color, chips = [], who, url, urlLabel }) {
+  const shown = chips.filter(x => x && x.v)
+  if (!shown.length && !who && !url) return null
+  return (
+    <div style={{ border:`1px solid ${C.line}`, borderRadius:10, background:C.card2, padding:'10px 11px', margin:'6px 0 2px' }}>
+      {shown.length > 0 && (
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+          {shown.map((x, i) => (
+            <span key={i} style={factChip(x.c || color)}>
+              {x.k ? <b style={{ fontWeight:800, opacity:.65, textTransform:'uppercase', fontSize:9 }}>{x.k}</b> : null}
+              <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{x.v}</span>
+            </span>
+          ))}
+        </div>
+      )}
+      {who && (
+        <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'8px 0 0', lineHeight:1.5 }}>
+          <b style={{ color:C.txt, textTransform:'uppercase', fontSize:9, letterSpacing:'.06em' }}>Who can apply </b>{who}
+        </p>
+      )}
+      {url && <div style={{ marginTop: (shown.length || who) ? 8 : 0 }}><LinkPreview url={url} color={color} label={urlLabel}/></div>}
+    </div>
+  )
+}
