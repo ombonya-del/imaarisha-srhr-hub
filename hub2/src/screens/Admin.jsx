@@ -1167,6 +1167,8 @@ function ResourceDesk({ onChange }) {
   const OPP_TLD = /\.(gm|ng|za|gh|ug|tz|rw|et|zm|zw|mw|mz|ao|cm|sn|ml|ne|ma|tn|dz|lr|sl|gn|ci|tg|bj|bf|td|cg|cd|ga|mg|na|bw|ls|sz|mu|sc|dj|er|km|cv|mr|in|pk|bd|np|ph|id|vn|au|ca|us|uk|nz|jp|sg)\b/
   const OPP_SIGNAL = ['call for','grant','fund','fellowship','scholarship','apply','proposal','award','opportunit','vacancy','consultanc','deadline','inviting','nominations open','expression of interest','request for','submissions open','open for applications','cash prize']
   const OPP_JUNK = /\btop \d+|\b\d+ best|\bbest \d+|\b\d+ (grant|funding|fellowship|opportunit)|roundup|list of|^how to |how to (get|access|apply|find|win|secure)/
+  // Only opportunities closing on/after this date count as time-viable.
+  const OPP_MIN = new Date('2026-09-01T00:00:00Z').getTime()
   // Genuine SRHR / GBV topics only. Deliberately NOT 'youth'/'fellowship'/'scholarship'
   // (those are opportunity *types*, handled by OPP_SIGNAL) nor bare 'women'/'girls' —
   // they were waving through youth contests, journalism fellowships and climate funds.
@@ -1179,11 +1181,43 @@ function ResourceDesk({ onChange }) {
     const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : (!OPP_OTHER.some(k=>s.includes(k)) && !OPP_TLD.test(s))
     // Stale: a past year (2010-2024) in the text with no 2025-2029 present => old cohort.
     const stale = /\b20(1\d|2[0-4])\b/.test(s) && !/\b202[5-9]\b/.test(s)
-    const current = (!o.deadline || new Date(o.deadline).getTime() >= Date.now() - 2*86400000) && !stale
+    // Time-viable: a dated call must close on/after the OPP_MIN cutoff (1 Sep 2026);
+    // undated (rolling / ongoing) calls stay in. Past-deadline calls drop out.
+    const current = (!o.deadline || new Date(o.deadline).getTime() >= OPP_MIN) && !stale
     const onTopic = OPP_CORE.some(k=>s.includes(k))
     // Must read as a real opportunity (grant/fellowship/call…), not a news article or listicle.
     const isOpp = OPP_SIGNAL.some(k=>s.includes(k)) && !OPP_JUNK.test(s)
     return geoOK && current && onTopic && isOpp
+  }
+  // Derive the Mazingira-style preview facts (region · funding · type) from the
+  // opportunity's free text — the scanner doesn't store these as columns.
+  const REGION_OF = (s) => {
+    if (OPP_KENYA.some(k=>s.includes(k))) return 'Kenya / East Africa'
+    if (/pan-?african|across africa|sub-saharan|african union|africa-wide|continent-wide/.test(s)) return 'Pan-African'
+    if (/global|worldwide|international|any country|all countries|any nationality/.test(s)) return 'Global · Kenya-eligible'
+    return 'Open / unspecified'
+  }
+  const FUNDING_OF = (s) => {
+    const m = s.match(/(?:us\$|usd|kes|ksh|€|£|eur|gbp|\$)\s?\d[\d,.]*\s?(?:k|m|million|thousand)?(?:\s?[–-]\s?(?:us\$|usd|kes|ksh|€|£|\$)?\s?\d[\d,.]*\s?(?:k|m|million|thousand)?)?/i)
+    if (m) return m[0].replace(/\s+/g,' ').toUpperCase().replace('KSH','KES')
+    if (/fully[- ]funded|full funding/.test(s)) return 'Fully funded'
+    if (/travel (grant|support|stipend)|stipend|honorarium|cash prize|seed fund/.test(s)) return 'Stipend / prize'
+    return null
+  }
+  const FTYPE_OF = (o, s) => {
+    const t = `${o.kind||''} ${s}`.toLowerCase()
+    if (/fellowship/.test(t)) return 'Fellowship'
+    if (/scholarship/.test(t)) return 'Scholarship'
+    if (/consultanc|\brfp\b|request for proposal|tender/.test(t)) return 'Consultancy / RFP'
+    if (/accelerator|incubat/.test(t)) return 'Accelerator'
+    if (/grant|\bfund\b|funding/.test(t)) return 'Grant'
+    if (/award|prize/.test(t)) return 'Award'
+    if (/vacancy|\bjob\b|position|recruit/.test(t)) return 'Job'
+    return o.kind || 'Opportunity'
+  }
+  const oppFacts = (o) => {
+    const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
+    return { region: REGION_OF(s), funding: FUNDING_OF(s), ftype: FTYPE_OF(o, s) }
   }
   // De-dupe repeated submissions (the scanner stores the same call more than once) by
   // normalised title, then split into the relevant queue vs the hidden pile.
@@ -1282,9 +1316,17 @@ function ResourceDesk({ onChange }) {
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>by {o.submitter_name || 'a member'} · {timeAgo(o.created_at)}</p>
             {o.description && <p style={descS}>{o.description}</p>}
-            <FactCard color={C.lilac}
-              chips={[{k:'Type',v:o.kind||'Opportunity',c:C.lilac},{k:'Closes',v:o.deadline,c:C.coral},{k:'Org',v:o.org,c:C.sky}]}
-              url={o.link} urlLabel="Open the call"/>
+            {(() => { const f = oppFacts(o); return (
+              <FactCard color={C.lilac}
+                chips={[
+                  {k:'Type',v:f.ftype,c:C.lilac},
+                  {k:'Region',v:f.region,c:C.mint},
+                  {k:'Funding',v:f.funding,c:C.gold},
+                  {k:'Closes',v:o.deadline,c:C.coral},
+                  {k:'Org',v:o.org,c:C.sky},
+                ]}
+                url={o.link} urlLabel="Open the call"/>
+            )})()}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
