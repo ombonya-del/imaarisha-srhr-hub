@@ -61,6 +61,14 @@ export async function logActivity(activity_type, description, entity_title = nul
   try { await sb.from('activity_log').insert({ activity_type, description, entity_title, dot_color }) } catch {}
 }
 
+// ── Member push: fan a Pulse-activity alert out to every member who turned on
+// notifications (subscription_group 'hub_members'). Fire-and-forget — if push
+// isn't configured (no VAPID / no send-push edge fn), it silently no-ops, so it
+// is always safe to call at the moment new content lands on the Pulse.
+export async function notifyMembers({ title, body = '', url = '/', tag = 'pulse' }) {
+  try { await sb.functions.invoke('send-push', { body: { title, body, url, tag, group: 'hub_members' } }) } catch {}
+}
+
 // ── Session / profile / admin ───────────────────────────────────────────────
 export function useSession() {
   const [user, setUser] = useState(null)

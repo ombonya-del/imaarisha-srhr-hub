@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { sb, C, timeAgo, toast } from '../lib/supabase'
+import { sb, C, timeAgo, toast, notifyMembers } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
@@ -1140,7 +1140,12 @@ function ResourceDesk({ onChange }) {
     setBusy(o.id)
     if (approve) {
       const { error } = await sb.from('opportunities').update({ status:'approved' }).eq('id', o.id)
-      if (error) toast(error.message,'red'); else { toast('✓ Published to the Opportunity Desk','green'); load() }
+      if (error) toast(error.message,'red')
+      else {
+        toast('✓ Published to the Opportunity Desk','green'); load()
+        // Ping opted-in members — new opportunity on the Pulse.
+        notifyMembers({ title:'🎯 New opportunity', body:o.title, url:'/#exchange', tag:'opp-'+o.id })
+      }
     } else {
       if (!confirm(`Reject "${o.title}"?`)) { setBusy(null); return }
       // Mark rejected (don't delete) so the auto-scanner can't re-add it as "new".
@@ -1164,6 +1169,8 @@ function ResourceDesk({ onChange }) {
       // Auto-host document links as private, watermarked files (fire-and-forget;
       // skips videos/web pages that have no PDF). No manual conversion needed.
       if (r.file_url && !r.file_path) sb.functions.invoke('ingest-resource', { body:{ resource_id: r.id } }).catch(()=>{})
+      // Ping members who opted into notifications — new resource on the Pulse.
+      notifyMembers({ title:'📚 New resource', body:r.title, url:'/#exchange', tag:'res-'+r.id })
     }
     setBusy(null)
   }
