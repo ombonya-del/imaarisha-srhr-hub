@@ -1315,6 +1315,44 @@ function ResourceDesk({ onChange }) {
     const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
     return { region: REGION_OF(s), funding: FUNDING_OF(s), ftype: FTYPE_OF(o, s) }
   }
+  // Same structured-preview treatment for resource documents: subject · geography ·
+  // currency (how recent) · relevance — derived from the document's own text.
+  const RES_SUBJECT = (s) => {
+    if (/gbv|gender-based|gender based|femicide|sexual violence|\brape\b|defilement|domestic violence|harassment/.test(s)) return 'GBV / violence'
+    if (/\bhiv\b|\bsti\b|\bhpv\b/.test(s)) return 'HIV / STIs'
+    if (/family planning|contracept/.test(s)) return 'Family planning'
+    if (/maternal/.test(s)) return 'Maternal health'
+    if (/fgm|female genital|child marriage|early marriage/.test(s)) return 'Harmful practices'
+    if (/abortion|reproductive rights|bodily autonomy/.test(s)) return 'Reproductive rights'
+    if (/adolescent|teen|youth|sexuality education|\bcse\b/.test(s)) return 'Adolescent SRHR'
+    if (/disinformation|online violence|misinformation/.test(s)) return 'Disinformation'
+    if (/reproductive|sexual health|srhr/.test(s)) return 'SRHR (general)'
+    return null
+  }
+  const RES_CURRENCY = (s, created) => {
+    const years = (s.match(/\b20(1\d|2\d)\b/g) || []).map(Number)
+    const y = years.length ? Math.max(...years) : null
+    if (y) return y >= 2025 ? `Current · ${y}` : `Older · ${y}`
+    return created ? 'Undated' : null
+  }
+  const resFacts = (r) => {
+    const s = `${r.title||''} ${r.source_org||''} ${r.type||''} ${r.description||''}`.toLowerCase()
+    return { subject: RES_SUBJECT(s), geography: REGION_OF(s), currency: RES_CURRENCY(s, r.created_at),
+      relevant: OPP_CORE.some(k => s.includes(k)) }
+  }
+  // Manual host: admin picks the downloaded PDF, we store it in the resources bucket
+  // and set file_path — the doc drops out of the "needs upload" queue, now hosted.
+  const uploadDoc = async (r, file) => {
+    if (!file) return
+    setBusy(r.id)
+    const ext = (file.name.split('.').pop() || 'pdf').toLowerCase()
+    const path = `manual/${r.id}.${ext}`
+    const { error: upErr } = await sb.storage.from('resources').upload(path, file, { contentType: file.type || 'application/pdf', upsert: true })
+    if (upErr) { toast(upErr.message, 'red'); setBusy(null); return }
+    const { error } = await sb.from('resources').update({ file_path: path }).eq('id', r.id)
+    if (error) toast(error.message, 'red'); else { toast('✓ Uploaded & hosted', 'green'); load() }
+    setBusy(null)
+  }
   // Admin edits the structured fields on the review card, then Save persists them.
   const startOppEdit = (o) => setOppEdit({ id:o.id, kind:o.kind||'', org:o.org||'', deadline:o.deadline||'',
     amount:o.amount||'', eligibility:o.eligibility||'', link:o.link||'' })
@@ -1529,13 +1567,36 @@ function ResourceDesk({ onChange }) {
           These are document links the hub couldn’t auto-host as watermarked files — usually because the source site blocks automated downloads (e.g. IPPF, some govt/NGO portals).
           To fix: open the source, download the PDF, then re-add it via <strong>＋ Add resource → Upload file</strong> and delete the old link. (Try the ✏️ Edit → 📥 Host button first — cooperative sites will just work.)
         </p>
-        {unhosted.map(r => (
-          <div key={r.id} style={cardS(C.gold)}>
-            <p style={ttlS}>{r.title}</p>
-            <p style={metaS}>{r.type || 'document'}{r.source_org ? ` · ${r.source_org}` : ''}</p>
-            {r.file_url && <LinkPreview url={r.file_url} color={C.gold} label="Open source"/>}
-          </div>
-        ))}
+        {unhosted.map(r => {
+          const f = resFacts(r)
+          const rows = [
+            ['Subject', f.subject],
+            ['Geography', f.geography],
+            ['Currency', f.currency],
+            ['Relevance', f.relevant ? 'SRHR-relevant' : 'Verify relevance'],
+          ].filter(([, v]) => v)
+          return (
+            <div key={r.id} style={cardS(C.gold)}>
+              <p style={ttlS}>{r.title}</p>
+              <p style={metaS}>{r.type || 'document'}{r.source_org ? ` · ${r.source_org}` : ''} · {timeAgo(r.created_at)}</p>
+              <div style={{ marginTop:6, padding:'10px 12px', background:`${C.gold}12`, border:`1px solid ${C.line}`,
+                borderRadius:8, fontFamily:C.sans, fontSize:12, lineHeight:1.6, color:C.txt }}>
+                {rows.map(([k, v], i) => (
+                  <div key={k} style={{ marginTop: i === 0 ? 0 : 3 }}><b style={{ fontWeight:800 }}>{k}:</b> {v}</div>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginTop:10 }}>
+                {r.file_url && <LinkPreview url={r.file_url} color={C.gold} label="Open source ↗"/>}
+                <label style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:'#fff', background:C.mint,
+                  borderRadius:8, padding:'7px 13px', cursor: busy===r.id ? 'default' : 'pointer', opacity: busy===r.id ? .6 : 1 }}>
+                  {busy===r.id ? 'Uploading…' : '📤 Upload the PDF'}
+                  <input type="file" accept="application/pdf,.pdf,.doc,.docx" hidden disabled={busy===r.id}
+                    onChange={e => uploadDoc(r, e.target.files && e.target.files[0])}/>
+                </label>
+              </div>
+            </div>
+          )
+        })}
       </Section>
     </div>
   )
