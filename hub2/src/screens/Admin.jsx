@@ -1279,6 +1279,16 @@ function ResourceDesk({ onChange }) {
     setBusy(null)
   }
 
+  // One-tap: ask the scanner to AI-fill funder / amount / eligibility on existing
+  // thin opportunities (the old "Google News"-as-funder rows), then reload.
+  const reenrichOpps = async () => {
+    setBusy('reenrich')
+    const { data, error } = await sb.functions.invoke('opportunity-scanner', { body: { reenrich: true } })
+    if (error) toast(error.message || 'Re-enrich failed', 'red')
+    else { const n = data?.updated ?? 0; toast(n ? `✨ Enriched ${n} opportunit${n===1?'y':'ies'}` : 'Nothing needed enriching', n ? 'green' : 'gold'); load() }
+    setBusy(null)
+  }
+
   const total = pending.length + reqs.length + oppsRelevant.length + evs.length
   const secProps = { openSec, setOpenSec }
 
@@ -1338,6 +1348,12 @@ function ResourceDesk({ onChange }) {
       </Section>
 
       <Section id="opps" color={C.lilac} icon="🎯" label="Opportunity submissions" count={oppsRelevant.length} {...secProps}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:12 }}>
+          <Btn small ghost color={C.gold} onClick={reenrichOpps} disabled={busy==='reenrich'}>
+            {busy==='reenrich' ? 'Enriching…' : '✨ Re-enrich existing'}
+          </Btn>
+          <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>Fills funder / amount / eligibility on older thin rows via AI.</span>
+        </div>
         {oppsHidden.length > 0 && (
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:12, padding:'8px 12px', background:'#f6f0fa', borderRadius:8 }}>
             <span style={{ fontFamily:C.sans, fontSize:12, color:C.mut }}>{oppsHidden.length} hidden - off-region / expired / off-topic</span>

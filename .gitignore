@@ -36,6 +36,10 @@ yarn-error.log*
 !ukweli/.env
 !supabase/functions/activity-notify/.env.example
 
+# secrets (service-role key for the bookmark-supplement task — NEVER commit)
+scripts/.secrets
+**/.secrets
+
 # vercel
 .vercel
 
