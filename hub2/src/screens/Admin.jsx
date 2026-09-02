@@ -1337,17 +1337,35 @@ function ResourceDesk({ onChange }) {
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>by {o.submitter_name || 'a member'} · {timeAgo(o.created_at)}</p>
             {o.description && <p style={descS}>{o.description}</p>}
-            {(() => { const f = oppFacts(o); return (
-              <FactCard color={C.lilac}
-                chips={[
-                  {k:'Type',v:f.ftype,c:C.lilac},
-                  {k:'Region',v:f.region,c:C.mint},
-                  {k:'Funding',v:f.funding,c:C.gold},
-                  {k:'Closes',v:o.deadline,c:C.coral},
-                  {k:'Org',v:o.org,c:C.sky},
-                ]}
-                url={o.link} urlLabel="Open the call"/>
-            )})()}
+            {(() => {
+              const f = oppFacts(o)
+              // Mazingira-style structured preview: labelled rows the admin can vet at a
+              // glance (Type · Deadline · Amount · Funder/host · Eligibility) + the call link.
+              const rows = [
+                ['Type', f.ftype],
+                ['Deadline', o.deadline],
+                ['Amount', f.funding],
+                ['Funder / host', o.org],
+                ['Eligibility', f.region],
+              ].filter(([, v]) => v)
+              return (
+                <div style={{ marginTop:8, padding:'10px 12px', background:`${C.mint}12`, border:`1px solid ${C.line}`,
+                  borderRadius:8, fontFamily:C.sans, fontSize:12, lineHeight:1.6, color:C.txt }}>
+                  {rows.map(([k, v], i) => (
+                    <div key={k} style={{ marginTop: i === 0 ? 0 : 3 }}>
+                      <b style={{ fontWeight:800 }}>{k}:</b> {v}
+                    </div>
+                  ))}
+                  {o.link
+                    ? <div style={{ marginTop:9 }}>
+                        <a href={o.link} target="_blank" rel="noopener noreferrer"
+                          style={{ display:'inline-block', fontFamily:C.sans, fontSize:11.5, fontWeight:800, textDecoration:'none',
+                            color:'#fff', background:C.lilac, borderRadius:8, padding:'7px 13px' }}>Open the official call ↗</a>
+                      </div>
+                    : <div style={{ marginTop:7, fontSize:11, color:C.mut, fontStyle:'italic' }}>No official link — verify before accepting.</div>}
+                </div>
+              )
+            })()}
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
