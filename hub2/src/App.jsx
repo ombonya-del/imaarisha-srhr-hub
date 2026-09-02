@@ -106,10 +106,15 @@ export default function App() {
   const Active = SCREENS[tab] || Pulse
   const activeGroup = groupOf(tab)
 
-  // Standalone Admin PWA: admin.html sets this flag, so the installed app renders a
-  // dedicated control-room shell (own header, no member tabs) — a separate app, while
-  // the desktop hub keeps its integrated Admin tab.
-  const adminApp = (() => { try { return sessionStorage.getItem('imaarishaAdmin') === '1' } catch { return false } })()
+  // Standalone Admin PWA. Two ways in: (1) the admin.imaarishasrhr.org subdomain —
+  // its own origin, so it installs as a separate, stable app and boots straight into
+  // the control room; (2) hub.imaarishasrhr.org/admin.html, which sets a session flag.
+  const adminApp = (() => {
+    try {
+      if (typeof location !== 'undefined' && location.hostname.slice(0, 6) === 'admin.') return true
+      return sessionStorage.getItem('imaarishaAdmin') === '1'
+    } catch { return false }
+  })()
 
   // Access gate: the hub does not open without a signed-in, approved member.
   if (session.loading) return <Splash/>
