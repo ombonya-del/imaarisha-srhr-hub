@@ -1084,6 +1084,7 @@ function ResourceDesk({ onChange }) {
   const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
   const [q, setQ] = useState('')                        // search across the queues
   const [rejectedKeys, setRejectedKeys] = useState(new Set()) // titles/links already rejected → hide re-scanned dupes
+  const [oppEdit, setOppEdit] = useState(null)                // draft being edited: { id, kind, org, deadline, amount, eligibility, link }
   const oppKey = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 70)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
@@ -1240,6 +1241,18 @@ function ResourceDesk({ onChange }) {
     const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
     return { region: REGION_OF(s), funding: FUNDING_OF(s), ftype: FTYPE_OF(o, s) }
   }
+  // Admin edits the structured fields on the review card, then Save persists them.
+  const startOppEdit = (o) => setOppEdit({ id:o.id, kind:o.kind||'', org:o.org||'', deadline:o.deadline||'',
+    amount:o.amount||'', eligibility:o.eligibility||'', link:o.link||'' })
+  const saveOppEdit = async () => {
+    if (!oppEdit) return
+    setBusy(oppEdit.id)
+    const { id, ...fields } = oppEdit
+    const patch = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, (v || '').trim() || null]))
+    const { error } = await sb.from('opportunities').update(patch).eq('id', id)
+    if (error) toast(error.message, 'red'); else { toast('Opportunity updated', 'green'); setOppEdit(null); load() }
+    setBusy(null)
+  }
   // De-dupe repeated submissions (the scanner stores the same call more than once) by
   // normalised title, then split into the relevant queue vs the hidden pile.
   const _seenOpp = new Set()
@@ -1337,16 +1350,39 @@ function ResourceDesk({ onChange }) {
             <p style={ttlS}>{o.title}</p>
             <p style={metaS}>by {o.submitter_name || 'a member'} · {timeAgo(o.created_at)}</p>
             {o.description && <p style={descS}>{o.description}</p>}
-            {(() => {
+            {oppEdit && oppEdit.id === o.id ? (
+              // ── Edit the structured fields (like Mazingira's opportunity editor) ──
+              <div style={{ marginTop:8, padding:'12px', background:C.card2, border:`1px solid ${C.line}`, borderRadius:8 }}>
+                {[
+                  ['kind', 'Type', 'Grant · Fellowship · Scholarship · Job…'],
+                  ['org', 'Funder / host', 'e.g. Ford Foundation'],
+                  ['deadline', 'Deadline', 'YYYY-MM-DD or Rolling'],
+                  ['amount', 'Amount', 'e.g. USD 25,000 or Fully funded'],
+                  ['eligibility', 'Eligibility', 'Who can apply — Kenya / East Africa / Global'],
+                  ['link', 'Official link', 'https://…'],
+                ].map(([key, label, ph]) => (
+                  <label key={key} style={{ display:'block', marginBottom:8 }}>
+                    <span style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, textTransform:'uppercase', letterSpacing:'.04em' }}>{label}</span>
+                    <input value={oppEdit[key]} placeholder={ph}
+                      onChange={e => setOppEdit(d => ({ ...d, [key]: e.target.value }))}
+                      style={{ ...inputStyle, marginTop:3, marginBottom:0 }}/>
+                  </label>
+                ))}
+                <div style={{ display:'flex', gap:8, marginTop:4 }}>
+                  <Btn small color={C.mint} onClick={saveOppEdit} disabled={busy===o.id}>{busy===o.id ? '…' : '💾 Save'}</Btn>
+                  <Btn small ghost color={C.mut} onClick={()=>setOppEdit(null)}>Cancel</Btn>
+                </div>
+              </div>
+            ) : (() => {
               const f = oppFacts(o)
               // Mazingira-style structured preview: labelled rows the admin can vet at a
               // glance (Type · Deadline · Amount · Funder/host · Eligibility) + the call link.
               const rows = [
                 ['Type', f.ftype],
                 ['Deadline', o.deadline],
-                ['Amount', f.funding],
+                ['Amount', o.amount || f.funding],           // real column first, else derived
                 ['Funder / host', o.org],
-                ['Eligibility', f.region],
+                ['Eligibility', o.eligibility || f.region],  // real column first, else derived
               ].filter(([, v]) => v)
               return (
                 <div style={{ marginTop:8, padding:'10px 12px', background:`${C.mint}12`, border:`1px solid ${C.line}`,
@@ -1366,10 +1402,13 @@ function ResourceDesk({ onChange }) {
                 </div>
               )
             })()}
-            <div style={{ display:'flex', gap:8, marginTop:10 }}>
-              <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
-              <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
-            </div>
+            {(!oppEdit || oppEdit.id !== o.id) && (
+              <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                <Btn small color={C.mint} onClick={()=>decideOpp(o,true)} disabled={busy===o.id}>{busy===o.id ? '…' : '✓ Approve'}</Btn>
+                <Btn small ghost color={C.lilac} onClick={()=>startOppEdit(o)} disabled={busy===o.id}>✏️ Edit</Btn>
+                <Btn small ghost color={C.coral} onClick={()=>decideOpp(o,false)} disabled={busy===o.id}>✕ Reject</Btn>
+              </div>
+            )}
           </div>
         ))}
       </Section>
