@@ -443,8 +443,8 @@ function AdminShell({ session, onSignOut }) {
           </button>
         </div>
       </header>
-      <main style={{ maxWidth:1100, margin:'0 auto', padding:'22px 16px 60px' }}>
-        <Admin session={session}/>
+      <main style={{ maxWidth:1100, margin:'0 auto', padding:'22px 16px 96px' }}>
+        <Admin session={session} bottomTabs/>
       </main>
     </div>
   )

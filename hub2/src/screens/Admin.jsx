@@ -3,7 +3,7 @@ import { sb, C, timeAgo, toast, notifyMembers } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
-export default function Admin({ session }) {
+export default function Admin({ session, bottomTabs }) {
   // Open a specific desk when routed from a Pulse activity row (#admin/<desk>).
   const deskFromHash = () => { const m = (typeof window !== 'undefined' ? window.location.hash : '').match(/#admin\/([a-z]+)/); return m ? m[1] : null }
   const [view, setView] = useState(() => deskFromHash() || 'activity')
@@ -30,48 +30,49 @@ export default function Admin({ session }) {
   }
   useEffect(() => { loadCounts() }, [view])
 
+  // Desks grouped into four control-room sections. In the standalone Admin PWA
+  // (bottomTabs) the four sections live in a fixed bottom tab bar, like the
+  // FemSaidia / Mazingira admin apps; the integrated desktop hub shows them as a
+  // top chip row instead. Either way, a multi-desk section shows a sub-desk row.
+  const GROUPS = [
+    { id:'directory', icon:'📇', short:'Directory', label:'📇 Directory', desks:[
+      ['activity','● Activity'], ['metrics','📊 Metrics'], ['members','👥 Members'] ] },
+    { id:'submissions', icon:'📚', short:'Submissions', label:'📚 Submissions', desks:[
+      ['resources','📚 Submissions', counts.resources] ] },
+    { id:'voices', icon:'🗣', short:'Voices', label:'🗣 Voices', desks:[
+      ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
+    { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
+      ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
+      ['radar','🚩 Trending'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
+  ]
+  const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
+  const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
+
   return (
-    <div>
+    <div style={ bottomTabs ? { paddingBottom: 78 } : undefined }>
       <ScreenTitle accent={C.lilac} kicker="👑 Admin · members never see this" title="The control room"
         sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
-      {(() => {
-        // Desks grouped into four control-room sections. The top row switches section;
-        // a section with more than one desk shows a second row to pick the desk.
-        const GROUPS = [
-          { id:'directory', label:'📇 Directory', desks:[
-            ['activity','● Activity'], ['metrics','📊 Metrics'], ['members','👥 Members'] ] },
-          { id:'submissions', label:'📚 Submissions', desks:[
-            ['resources','📚 Submissions', counts.resources] ] },
-          { id:'voices', label:'🗣 Voices', desks:[
-            ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
-          { id:'ukweli', label:'✦ Ukweli', desks:[
-            ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-            ['radar','🚩 Trending'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
-        ]
-        const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
-        const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
-        return (
-          <>
-            <div style={{ display:'flex', gap:6, marginBottom: activeGroup.desks.length > 1 ? 8 : 16, flexWrap:'wrap' }}>
-              {GROUPS.map(g => { const b = groupBadge(g); return (
-                <Chip key={g.id} active={activeGroup.id === g.id} color={C.gold}
-                  onClick={() => { if (activeGroup.id !== g.id) setView(g.desks[0][0]) }}>
-                  {g.label}{b > 0 && <Badge n={b}/>}
-                </Chip>
-              )})}
-            </div>
-            {activeGroup.desks.length > 1 && (
-              <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
-                {activeGroup.desks.map(([k, l, n]) => (
-                  <Chip key={k} active={view === k} color={C.lilac} onClick={()=>setView(k)}>
-                    {l}{n > 0 && <Badge n={n}/>}
-                  </Chip>
-                ))}
-              </div>
-            )}
-          </>
-        )
-      })()}
+      {/* Top group chips — only in the integrated (non-PWA) view. */}
+      {!bottomTabs && (
+        <div style={{ display:'flex', gap:6, marginBottom: activeGroup.desks.length > 1 ? 8 : 16, flexWrap:'wrap' }}>
+          {GROUPS.map(g => { const b = groupBadge(g); return (
+            <Chip key={g.id} active={activeGroup.id === g.id} color={C.gold}
+              onClick={() => { if (activeGroup.id !== g.id) setView(g.desks[0][0]) }}>
+              {g.label}{b > 0 && <Badge n={b}/>}
+            </Chip>
+          )})}
+        </div>
+      )}
+      {/* Sub-desk chips for the active multi-desk section. */}
+      {activeGroup.desks.length > 1 && (
+        <div style={{ display:'flex', gap:6, marginBottom:16, marginTop: bottomTabs ? 4 : 0, flexWrap:'wrap' }}>
+          {activeGroup.desks.map(([k, l, n]) => (
+            <Chip key={k} active={view === k} color={C.lilac} onClick={()=>setView(k)}>
+              {l}{n > 0 && <Badge n={n}/>}
+            </Chip>
+          ))}
+        </div>
+      )}
       {view === 'activity'  && <Activity/>}
       {view === 'metrics'   && <Metrics/>}
       {view === 'members'   && <Members/>}
@@ -84,6 +85,28 @@ export default function Admin({ session }) {
       {view === 'myths'     && <MythsDesk/>}
       {view === 'learn'     && <LearnDesk/>}
       {view === 'community' && <CommunityDesk/>}
+
+      {/* Fixed bottom tab bar for the standalone Admin PWA (four sections). */}
+      {bottomTabs && (
+        <nav style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:520,
+          background:'rgba(34,39,54,0.97)', backdropFilter:'blur(10px)', borderTop:'1px solid rgba(255,255,255,0.08)',
+          boxShadow:'0 -2px 16px rgba(20,24,38,0.3)', display:'flex', justifyContent:'space-around',
+          padding:'6px 0 calc(6px + env(safe-area-inset-bottom))', zIndex:40 }}>
+          {GROUPS.map(g => {
+            const on = activeGroup.id === g.id, b = groupBadge(g)
+            return (
+              <button key={g.id} onClick={() => { if (activeGroup.id !== g.id) setView(g.desks[0][0]) }}
+                style={{ position:'relative', background:'none', border:'none', cursor:'pointer',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding:'4px 2px', flex:1, minWidth:0 }}>
+                <span style={{ fontSize:17, lineHeight:1, color: on?'#FFFFFF':'#C4C8D4', filter: on?'none':'grayscale(1) opacity(.9)' }}>{g.icon}</span>
+                <span style={{ fontFamily:C.sans, fontSize:9, fontWeight: on?800:700, color: on?'#FFFFFF':'#C4C8D4', whiteSpace:'nowrap' }}>{g.short}</span>
+                {b > 0 && <span style={{ position:'absolute', top:0, right:'22%', minWidth:15, height:15, lineHeight:'15px',
+                  fontSize:9, fontWeight:800, color:'#241E12', background:C.gold, borderRadius:8, textAlign:'center', padding:'0 3px' }}>{b}</span>}
+              </button>
+            )
+          })}
+        </nav>
+      )}
     </div>
   )
 }
