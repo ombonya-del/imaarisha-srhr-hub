@@ -40,6 +40,12 @@
     <p class="hint" id="install-hint">Tip: use your browser’s <strong>Install app</strong> option to add this console to your home screen.</p>
   </div>
   <script>
+    // Mark this browsing context as the standalone Admin app, so the SPA renders
+    // its dedicated control-room shell (own header, no member tabs) instead of the hub.
+    try { sessionStorage.setItem('imaarishaAdmin', '1'); } catch (e) {}
+    document.getElementById('open').addEventListener('click', function () {
+      try { sessionStorage.setItem('imaarishaAdmin', '1'); } catch (e) {}
+    });
     // Register the shared service worker so this launcher is installable and
     // receives push (scope '/', so it also controls the main app).
     if ('serviceWorker' in navigator) {

@@ -106,8 +106,17 @@ export default function App() {
   const Active = SCREENS[tab] || Pulse
   const activeGroup = groupOf(tab)
 
+  // Standalone Admin PWA: admin.html sets this flag, so the installed app renders a
+  // dedicated control-room shell (own header, no member tabs) — a separate app, while
+  // the desktop hub keeps its integrated Admin tab.
+  const adminApp = (() => { try { return sessionStorage.getItem('imaarishaAdmin') === '1' } catch { return false } })()
+
   // Access gate: the hub does not open without a signed-in, approved member.
   if (session.loading) return <Splash/>
+  // Standalone Admin PWA: a signed-in admin gets the dedicated control-room shell.
+  // (A non-admin who lands on the launcher just falls through to the normal hub —
+  // no dead-end — and an admin signs in via the usual Landing gate below first.)
+  if (adminApp && session.user && session.isAdmin) return <AdminShell session={session} onSignOut={()=>sb.auth.signOut()}/>
   if (!session.user) return <Landing/>
   if (!session.approved) return <PendingScreen name={session.name} onSignOut={()=>sb.auth.signOut()}/>
 
@@ -390,19 +399,53 @@ function Landing() {
 }
 
 // ── Pending gate: signed in, awaiting admin approval ─────────────────────────
-function PendingScreen({ name, onSignOut }) {
+function PendingScreen({ name, onSignOut, adminMsg }) {
   return (
     <div style={{ minHeight:'100vh', background:C.bg, fontFamily:C.sans, color:C.txt,
       display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24, textAlign:'center' }}>
       <div style={STRIPE}/>
-      <div style={{ fontSize:44, marginBottom:12 }}>⏳</div>
-      <h1 style={{ fontFamily:C.serif, fontSize:26, fontWeight:700, margin:'0 0 8px' }}>Membership under review</h1>
+      <div style={{ fontSize:44, marginBottom:12 }}>{adminMsg ? '🔒' : '⏳'}</div>
+      <h1 style={{ fontFamily:C.serif, fontSize:26, fontWeight:700, margin:'0 0 8px' }}>
+        {adminMsg ? 'Admins only' : 'Membership under review'}
+      </h1>
       <p style={{ fontSize:13, color:C.mut, maxWidth:360, lineHeight:1.7, marginBottom:22 }}>
-        Thanks{name ? `, ${name.split(' ')[0]}` : ''} — your request to join the ImaarishaSRHR hub is with an admin.
-        You'll get access the moment it's approved. This vetting keeps the collective safe.
+        {adminMsg
+          ? <>This is the ImaarishaSRHR admin console. The account you’re signed in with{name ? ` (${name.split(' ')[0]})` : ''} isn’t an admin. Sign in with an admin account to continue.</>
+          : <>Thanks{name ? `, ${name.split(' ')[0]}` : ''} — your request to join the ImaarishaSRHR hub is with an admin.
+             You'll get access the moment it's approved. This vetting keeps the collective safe.</>}
       </p>
       <button onClick={onSignOut} style={{ fontFamily:C.sans, fontSize:12, fontWeight:800, padding:'9px 18px',
         borderRadius:16, border:`1px solid ${C.line}`, background:'transparent', color:C.mut, cursor:'pointer' }}>Sign out</button>
+    </div>
+  )
+}
+
+// ── Standalone Admin PWA shell: dark control-room chrome, no member nav ───────
+function AdminShell({ session, onSignOut }) {
+  const initials = ((session.name || 'Admin').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 3)) || 'A'
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:C.sans, color:C.txt }}>
+      <div style={STRIPE}/>
+      <header style={{ position:'sticky', top:4, zIndex:10, background:'#222736',
+        borderBottom:'1px solid rgba(255,255,255,0.08)', boxShadow:'0 2px 16px rgba(20,24,38,0.25)' }}>
+        <div style={{ maxWidth:1100, margin:'0 auto', padding:'11px 16px', display:'flex', alignItems:'center', gap:12 }}>
+          <img src="/logo-mark.png" alt="" style={{ height:34 }}/>
+          <div style={{ display:'flex', flexDirection:'column', lineHeight:1 }}>
+            <span style={{ fontFamily:C.serif, fontSize:22, fontWeight:700, color:'#F6F2E8' }}>
+              Imaarisha<span style={{ color:'#E8B14B' }}>SRHR</span>
+            </span>
+            <span style={{ fontFamily:C.sans, fontSize:8.5, fontWeight:800, letterSpacing:'.3em', color:'#E8B14B', marginTop:3 }}>ADMIN CONSOLE</span>
+          </div>
+          <button onClick={onSignOut} title={`${session.name || 'Admin'} — sign out`}
+            style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:10.5, fontWeight:800, padding:'6px 12px', borderRadius:16,
+              border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8', cursor:'pointer', whiteSpace:'nowrap' }}>
+            👑 {initials} · out
+          </button>
+        </div>
+      </header>
+      <main style={{ maxWidth:1100, margin:'0 auto', padding:'22px 16px 60px' }}>
+        <Admin session={session}/>
+      </main>
     </div>
   )
 }
