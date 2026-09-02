@@ -840,9 +840,24 @@ function UlizaDesk({ session, onChange }) {
   const [pending, setPending] = useState([])
   const [answers, setAnswers] = useState({})
   const [busy, setBusy] = useState(null)
+  const [drafting, setDrafting] = useState(null)
+  const [aiDrafted, setAiDrafted] = useState({})   // ids whose text came from an AI draft
   const load = () => sb.from('uliza_questions').select('*').eq('status','pending')
     .order('created_at',{ascending:true}).limit(50).then(({data}) => { setPending(data || []); onChange?.() })
   useEffect(() => { load() }, [])
+
+  // AI proposes a draft; a human reviews/edits it in the box before publishing.
+  const draft = async (q) => {
+    setDrafting(q.id)
+    const { data, error } = await sb.functions.invoke('uliza-draft', { body: { question: q.question, language: q.language || 'en' } })
+    if (error || data?.error) toast(error?.message || data?.error || 'Draft failed', 'red')
+    else if (data?.draft) {
+      setAnswers(a => ({ ...a, [q.id]: data.draft }))
+      setAiDrafted(m => ({ ...m, [q.id]: true }))
+      toast('✨ AI draft ready — review & edit before publishing', 'gold')
+    }
+    setDrafting(null)
+  }
 
   const publish = async (q) => {
     const text = (answers[q.id] || '').trim()
@@ -874,9 +889,17 @@ function UlizaDesk({ session, onChange }) {
           borderRadius:12, padding:16, marginBottom:10 }}>
           <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 4px' }}>{q.question}</p>
           <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 10px' }}>asked {timeAgo(q.created_at)} · {q.language || 'en'}</p>
-          <textarea style={{ ...inputStyle, minHeight:90 }} placeholder="Write the answer a trusted health worker would give…"
+          {aiDrafted[q.id] && (
+            <p style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.gold, margin:'0 0 6px' }}>
+              ✨ AI draft — review & edit before publishing. You are the professional the answer is credited to.
+            </p>
+          )}
+          <textarea style={{ ...inputStyle, minHeight:110 }} placeholder="Write the answer a trusted health worker would give — or generate an AI draft to edit…"
             value={answers[q.id] || ''} onChange={e=>setAnswers(a=>({ ...a, [q.id]: e.target.value }))}/>
-          <div style={{ display:'flex', gap:8 }}>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <Btn small ghost color={C.lilac} onClick={()=>draft(q)} disabled={drafting===q.id}>
+              {drafting===q.id ? 'Drafting…' : (answers[q.id] ? '✨ Redraft' : '✨ AI draft')}
+            </Btn>
             <Btn small onClick={()=>publish(q)} disabled={busy===q.id} color={C.mint}>
               {busy===q.id ? 'Publishing…' : '✓ Publish answer'}
             </Btn>

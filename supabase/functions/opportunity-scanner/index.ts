@@ -20,7 +20,7 @@ const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? ""
 const sb = createClient(SUPABASE_URL, SERVICE)
 const APP = "imaarisha-srhr-hub"
-const MAX_ENRICH = 30   // bound the batch AI call per run
+const MAX_ENRICH = 15   // bound the batch AI call + page fetches per run
 
 // CORS — the admin "Re-enrich" button calls this from the browser, so the function
 // must answer the preflight and echo CORS headers on every response.
@@ -112,12 +112,43 @@ async function reliefweb(resource: string, kind: string) {
 
 const isoDate = (s: any) => (typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s.trim())) ? s.trim() : null
 
+// Fetch an opportunity's actual page and reduce it to readable text, so the AI
+// enriches from the real call (funder, amount, eligibility, deadline) instead of
+// just the headline. Best-effort: on any failure it returns "" and the caller
+// falls back to title + blurb. Bounded body + timeout keep the run fast.
+async function fetchArticle(url: string): Promise<string> {
+  if (!url) return ""
+  try {
+    const r = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; imaarisha-opportunity-scanner)", "Accept": "text/html" },
+      redirect: "follow", signal: AbortSignal.timeout(9000),
+    })
+    if (!r.ok) return ""
+    const ct = r.headers.get("content-type") || ""
+    if (!ct.includes("html") && !ct.includes("text")) return ""
+    let html = await r.text()
+    html = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ")
+             .replace(/<!--[\s\S]*?-->/g, " ")
+    // Prefer the main/article region when present, else the whole body.
+    const main = html.match(/<(?:article|main)[^>]*>([\s\S]*?)<\/(?:article|main)>/i)
+    const text = (main ? main[1] : html)
+      .replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
+      .replace(/&#\d+;/g, " ").replace(/\s+/g, " ").trim()
+    return text.slice(0, 4000)
+  } catch { return "" }
+}
+// Attach fetched page text to each candidate (parallel, bounded by the caller's slice).
+async function withArticles(cands: any[]): Promise<any[]> {
+  const texts = await Promise.all(cands.map(c => fetchArticle(c.link || "")))
+  return cands.map((c, i) => ({ ...c, article: texts[i] }))
+}
+
 // Batch-enrich new candidates: one Claude call returns structured fields per item.
 async function enrich(cands: any[]) {
   if (!ANTHROPIC_KEY || !cands.length) return cands.map(c => ({ ...c, _enriched: false }))
   const list = cands.map((c, i) =>
-    `${i + 1}. TITLE: ${c.title}\n   SOURCE-FEED: ${c.org}${c.summary ? `\n   BLURB: ${c.summary}` : ""}`).join("\n")
-  const prompt = `You are curating SRHR (sexual & reproductive health and rights) and gender/GBV funding opportunities for a Kenyan coalition. For each item below, extract structured facts from the title and blurb ONLY (do not invent). Judge relevance to SRHR/gender in Africa (Kenya-eligible: Kenya, East/pan-African, or global calls open to Kenyans).
+    `${i + 1}. TITLE: ${c.title}\n   SOURCE-FEED: ${c.org}${c.summary ? `\n   BLURB: ${c.summary}` : ""}${c.article ? `\n   PAGE TEXT: ${String(c.article).slice(0, 3500)}` : ""}`).join("\n\n")
+  const prompt = `You are curating SRHR (sexual & reproductive health and rights) and gender/GBV funding opportunities for a Kenyan coalition. For each item below, extract structured facts from the PAGE TEXT (the actual call), falling back to the title and blurb. Do not invent — leave a field null if the sources don't state it. Judge relevance to SRHR/gender in Africa (Kenya-eligible: Kenya, East/pan-African, or global calls open to Kenyans).
 
 Return ONLY a JSON array, one object per item:
 [{"index":1,"relevant":true,"opp_type":"grant|fellowship|scholarship|consultancy|conference|award|accelerator|job|other","funder":"the funding/hosting organisation or null if not stated — NEVER the news feed or aggregator","amount":"e.g. USD 25,000 or 'Fully funded' or null","eligibility":"who can apply, e.g. 'Kenya / East Africa' or 'Global' or null","deadline":"YYYY-MM-DD or null","summary":"one plain sentence, max 22 words"}]
@@ -188,7 +219,7 @@ async function reenrich(req: Request) {
   if (!thin.length) return json({ candidates: 0, updated: 0 })
 
   const cands = thin.map((o: any) => ({ ...o, isAggregator: !o.org || AGG.has(o.org), summary: o.description || "" }))
-  const enriched = await enrich(cands)
+  const enriched = await enrich(await withArticles(cands))
   let updated = 0
   for (let i = 0; i < enriched.length; i++) {
     const e = enriched[i], orig = thin[i]
@@ -235,7 +266,7 @@ serve(async (req) => {
       // Only enrich NEW, unseen candidates (bounded), so the AI call stays cheap.
       const fresh: any[] = []
       for (const it of items) { if (!have.has(it.link)) { fresh.push(it); have.add(it.link) } }
-      const toEnrich = fresh.slice(0, MAX_ENRICH)
+      const toEnrich = await withArticles(fresh.slice(0, MAX_ENRICH))
       const enriched = await enrich(toEnrich)
       enrichedOK = enriched.some((e: any) => e._enriched)
       for (const it of enriched) {
