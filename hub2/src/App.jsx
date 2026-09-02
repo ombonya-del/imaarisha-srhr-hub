@@ -201,7 +201,7 @@ export default function App() {
                   cursor:'pointer', whiteSpace:'nowrap' }}>
                 {isDesktop
                   ? `${session.isAdmin ? '👑 ' : '✓ '}${((session.name || 'Member').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)) || 'M'} · out`
-                  : (session.isAdmin ? '👑' : '↩')}
+                  : '↩'}
               </button>
             ) : (
               <button onClick={()=>setAuthOpen(true)}
