@@ -22,6 +22,16 @@ const sb = createClient(SUPABASE_URL, SERVICE)
 const APP = "imaarisha-srhr-hub"
 const MAX_ENRICH = 30   // bound the batch AI call per run
 
+// CORS — the admin "Re-enrich" button calls this from the browser, so the function
+// must answer the preflight and echo CORS headers on every response.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...CORS } })
+
 // isAggregator: the feed name is NOT the funder — never store it as the host.
 const RSS_FEEDS = [
   { url: "https://www.opportunitiesforafricans.com/feed/", org: "OpportunitiesForAfricans", isAggregator: true },
@@ -168,15 +178,14 @@ async function callerIsAdmin(req: Request): Promise<boolean> {
 // (aggregator or blank funder, or missing amount/eligibility). Additive — only fills
 // gaps and replaces an aggregator funder; never wipes good data an admin has entered.
 async function reenrich(req: Request) {
-  if (!(await callerIsAdmin(req)))
-    return new Response(JSON.stringify({ error: "admin only" }), { status: 403, headers: { "Content-Type": "application/json" } })
+  if (!(await callerIsAdmin(req))) return json({ error: "admin only" }, 403)
 
   const { data: rows } = await sb.from("opportunities")
     .select("id,title,kind,org,deadline,link,amount,eligibility,description")
     .eq("status", "pending").order("created_at", { ascending: false }).limit(200)
   const thin = (rows || []).filter((o: any) =>
     !o.org || AGG.has(o.org) || !o.amount || !o.eligibility).slice(0, MAX_ENRICH)
-  if (!thin.length) return new Response(JSON.stringify({ candidates: 0, updated: 0 }), { headers: { "Content-Type": "application/json" } })
+  if (!thin.length) return json({ candidates: 0, updated: 0 })
 
   const cands = thin.map((o: any) => ({ ...o, isAggregator: !o.org || AGG.has(o.org), summary: o.description || "" }))
   const enriched = await enrich(cands)
@@ -197,10 +206,11 @@ async function reenrich(req: Request) {
       if (!error) updated++
     }
   }
-  return new Response(JSON.stringify({ candidates: thin.length, updated }), { headers: { "Content-Type": "application/json" } })
+  return json({ candidates: thin.length, updated })
 }
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
   try {
     let body: any = {}
     try { body = await req.json() } catch { /* GET / scheduled run — no body */ }
@@ -239,9 +249,8 @@ serve(async (req) => {
         if (!error) inserted++
       }
     }
-    return new Response(JSON.stringify({ scanned: items.length, inserted, enrichedOK, before_relevance: all.length, debug }),
-      { headers: { "Content-Type": "application/json" } })
+    return json({ scanned: items.length, inserted, enrichedOK, before_relevance: all.length, debug })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 })
+    return json({ error: String(e) }, 500)
   }
 })

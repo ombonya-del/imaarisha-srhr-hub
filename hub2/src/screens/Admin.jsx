@@ -34,16 +34,44 @@ export default function Admin({ session }) {
     <div>
       <ScreenTitle accent={C.lilac} kicker="👑 Admin · members never see this" title="The control room"
         sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
-      <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
-        {[['activity','● Activity'],['metrics','📊 Metrics'],['members','👥 Members'],
-          ['resources','📚 Submissions',counts.resources],['notify','📣 Broadcast'],
-          ['uliza','💬 Uliza desk',counts.uliza],['fika','📍 Hebu Fika',counts.fika],
-          ['unado','📸 UnaDO?',counts.unado],['radar','🚩 Trending'],['myths','⚡ Myths'],['learn','📖 Learn'],['community','🙋 Community']].map(([k,l,n]) => (
-          <Chip key={k} active={view===k} onClick={()=>setView(k)} color={C.gold}>
-            {l}{n > 0 && <Badge n={n}/>}
-          </Chip>
-        ))}
-      </div>
+      {(() => {
+        // Desks grouped into four control-room sections. The top row switches section;
+        // a section with more than one desk shows a second row to pick the desk.
+        const GROUPS = [
+          { id:'directory', label:'📇 Directory', desks:[
+            ['activity','● Activity'], ['metrics','📊 Metrics'], ['members','👥 Members'] ] },
+          { id:'submissions', label:'📚 Submissions', desks:[
+            ['resources','📚 Submissions', counts.resources] ] },
+          { id:'voices', label:'🗣 Voices', desks:[
+            ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
+          { id:'ukweli', label:'✦ Ukweli', desks:[
+            ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
+            ['radar','🚩 Trending'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
+        ]
+        const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
+        const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
+        return (
+          <>
+            <div style={{ display:'flex', gap:6, marginBottom: activeGroup.desks.length > 1 ? 8 : 16, flexWrap:'wrap' }}>
+              {GROUPS.map(g => { const b = groupBadge(g); return (
+                <Chip key={g.id} active={activeGroup.id === g.id} color={C.gold}
+                  onClick={() => { if (activeGroup.id !== g.id) setView(g.desks[0][0]) }}>
+                  {g.label}{b > 0 && <Badge n={b}/>}
+                </Chip>
+              )})}
+            </div>
+            {activeGroup.desks.length > 1 && (
+              <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap' }}>
+                {activeGroup.desks.map(([k, l, n]) => (
+                  <Chip key={k} active={view === k} color={C.lilac} onClick={()=>setView(k)}>
+                    {l}{n > 0 && <Badge n={n}/>}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </>
+        )
+      })()}
       {view === 'activity'  && <Activity/>}
       {view === 'metrics'   && <Metrics/>}
       {view === 'members'   && <Members/>}

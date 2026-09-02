@@ -33,7 +33,7 @@ const NAV = [
   { id:'voices',   icon:'💬', label:'Voices',   subs:['forum','unado'] },
   { id:'exchange', icon:'⇄',  label:'Exchange', subs:['exchange'] },
   { id:'events',   icon:'📅', label:'Events',   subs:['events'] },
-  { id:'admin',    icon:'👑', label:'Admin',    subs:['admin'], adminOnly: true },
+  { id:'admin',    icon:'👑', label:'Admin',    subs:['admin'], adminOnly: true, desktopOnly: true },
 ]
 const groupOf = (seg) => NAV.find(g => g.subs.includes(seg)) || NAV[0]
 
@@ -233,7 +233,7 @@ export default function App() {
           background:'rgba(34,39,54,0.97)', backdropFilter:'blur(10px)', borderTop:'1px solid rgba(255,255,255,0.08)',
           boxShadow:'0 -2px 16px rgba(20,24,38,0.3)',
           display:'flex', justifyContent:'space-around', padding:'6px 0 calc(6px + env(safe-area-inset-bottom))', zIndex:20 }}>
-          {visibleNav.map(n => {
+          {visibleNav.filter(n => !n.desktopOnly).map(n => {
             const on = activeGroup.id === n.id
             return (
               <button key={n.id} onClick={()=>navigate(n.subs[0])}
