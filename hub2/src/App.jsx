@@ -33,7 +33,8 @@ const NAV = [
   { id:'voices',   icon:'💬', label:'Voices',   subs:['forum','unado'] },
   { id:'exchange', icon:'⇄',  label:'Exchange', subs:['exchange'] },
   { id:'events',   icon:'📅', label:'Events',   subs:['events'] },
-  { id:'admin',    icon:'👑', label:'Admin',    subs:['admin'], adminOnly: true, desktopOnly: true },
+  // Admin is NOT a member-hub tab — admins use the standalone app at
+  // admin.imaarishasrhr.org (hub.imaarishasrhr.org/admin.html and #admin still work).
 ]
 const groupOf = (seg) => NAV.find(g => g.subs.includes(seg)) || NAV[0]
 
@@ -200,7 +201,7 @@ export default function App() {
                   border:'1px solid rgba(255,255,255,0.22)', background:'transparent', color:'#F6F2E8',
                   cursor:'pointer', whiteSpace:'nowrap' }}>
                 {isDesktop
-                  ? `${session.isAdmin ? '👑 ' : '✓ '}${((session.name || 'Member').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)) || 'M'} · out`
+                  ? `✓ ${((session.name || 'Member').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)) || 'M'} · out`
                   : '↩'}
               </button>
             ) : (
