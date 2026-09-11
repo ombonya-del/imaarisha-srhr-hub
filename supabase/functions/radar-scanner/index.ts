@@ -289,7 +289,7 @@ Deno.serve(async (req: Request) => {
 
     return new Response(JSON.stringify({
       success: true, total: all.length, relevant: relevant.length, new: fresh.length,
-      inserted: toInsert.length, classifier_failed: classifierFailed, sample: classified.slice(0,3).map((a:any)=>({rel:a.srhr_relevance,dis:a.is_disinfo,typ:a.typology})), disinfo: toInsert.filter(a=>a.is_disinfo).length,
+      inserted: toInsert.length, classifier_failed: classifierFailed, disinfo: toInsert.filter(a=>a.is_disinfo).length,
       typologies: {
         contraceptive_myth: toInsert.filter(a=>a.typology==='contraceptive_myth').length,
         fertility_abortion: toInsert.filter(a=>a.typology==='fertility_abortion').length,
