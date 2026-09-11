@@ -47,3 +47,4 @@ scripts/.secrets
 *.tsbuildinfo
 next-env.d.ts
 supabase/.temp/
+scripts/.secrets.bak

@@ -58,13 +58,13 @@ serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
-        model: "claude-opus-4-8", max_tokens: 700, system: SYSTEM,
+        model: "claude-opus-5", max_tokens: 700, system: SYSTEM,
         messages: [{ role: "user", content: `Question: ${question}${langLine}` }],
       }),
     })
     const data = await res.json()
     if (!res.ok || !data.content) return json({ error: data?.error?.message || `Anthropic HTTP ${res.status}` }, 502)
-    const draft = (data.content?.[0]?.text || "").trim()
+    const draft = (data.content?.find((b:any)=>b.type==='text')?.text || "").trim()
     return json({ draft })
   } catch (e) {
     return json({ error: String(e) }, 500)

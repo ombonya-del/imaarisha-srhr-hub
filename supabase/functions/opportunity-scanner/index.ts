@@ -163,11 +163,11 @@ Return ONLY the JSON array.`
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: "claude-opus-4-8", max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model: "claude-opus-5", max_tokens: 4000, messages: [{ role: "user", content: prompt }] }),
     })
     const data = await res.json()
     if (!res.ok || !data.content) throw new Error(data?.error?.message || `Anthropic HTTP ${res.status}`)
-    const rows = JSON.parse((data.content?.[0]?.text || "[]").replace(/```json|```/g, "").trim())
+    const rows = JSON.parse((data.content?.find((b:any)=>b.type==='text')?.text || "[]").replace(/```json|```/g, "").trim())
     return cands.map((c, i) => {
       const e = rows.find((x: any) => x.index === i + 1) || {}
       return {

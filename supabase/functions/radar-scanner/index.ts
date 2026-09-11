@@ -199,14 +199,14 @@ Return ONLY the JSON array.`
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01' },
-      body: JSON.stringify({ model:'claude-opus-4-8', max_tokens:2500, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'claude-opus-5', max_tokens:2500, messages:[{role:'user',content:prompt}] })
     })
     const data = await res.json()
     // Surface API failures (bad model, depleted credits) instead of silently scoring 0.
     if (!res.ok || !data.content) throw new Error(data?.error?.message || `Anthropic HTTP ${res.status}`)
-    const scores = JSON.parse((data.content?.[0]?.text || '[]').replace(/```json|```/g,'').trim())
+    const scores = JSON.parse((data.content?.find((b:any)=>b.type==='text')?.text || '[]').replace(/```json|```/g,'').trim())
     return articles.map((a,i) => {
-      const s = scores.find((x:any)=>x.index===i+1) || {}
+      const s = scores.find((x:any)=>Number(x.index)===i+1) || scores[i] || {}
       return { ...a,
         srhr_relevance: s.srhr_relevance ?? 0, harm_score: s.harm_score ?? 0,
         sentiment: s.sentiment ?? 'neutral', is_disinfo: s.is_disinfo ?? false,
@@ -289,7 +289,7 @@ Deno.serve(async (req: Request) => {
 
     return new Response(JSON.stringify({
       success: true, total: all.length, relevant: relevant.length, new: fresh.length,
-      inserted: toInsert.length, classifier_failed: classifierFailed, disinfo: toInsert.filter(a=>a.is_disinfo).length,
+      inserted: toInsert.length, classifier_failed: classifierFailed, sample: classified.slice(0,3).map((a:any)=>({rel:a.srhr_relevance,dis:a.is_disinfo,typ:a.typology})), disinfo: toInsert.filter(a=>a.is_disinfo).length,
       typologies: {
         contraceptive_myth: toInsert.filter(a=>a.typology==='contraceptive_myth').length,
         fertility_abortion: toInsert.filter(a=>a.typology==='fertility_abortion').length,
