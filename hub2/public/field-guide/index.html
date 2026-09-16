@@ -236,6 +236,10 @@ main{min-width:0}
 .sesslist{margin-top:14px;display:grid;gap:7px;counter-reset:s}
 .sess{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--paper2)}
 .sess .sn{font-family:var(--disp);font-weight:700;color:var(--green);font-size:15px;width:26px;flex:none}
+.sessbtn{cursor:pointer;text-align:left;width:100%;color:inherit;font-family:var(--body)}
+.sessbtn[aria-expanded="true"]{border-color:var(--green)}
+.sesschev{color:var(--green);font-size:11px}
+.sessrev{font-size:12.5px;color:var(--ink2);margin-top:8px;border-top:1px solid var(--line2);padding-top:8px;line-height:1.5}
 .sess .sx b{font-size:13.5px}.sess .sx p{font-size:12.5px;color:var(--ink2);margin-top:2px}
 
 .note{margin-top:18px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;background:var(--paper2);padding:13px 15px;font-size:13.5px;color:var(--ink2)}
@@ -262,6 +266,21 @@ main{min-width:0}
 
 footer{padding:26px 0 8px;text-align:center;color:var(--muted);font-size:12px}
 footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:4px 11px;margin-bottom:10px}
+
+.fac{display:grid;gap:12px;margin-top:14px}
+.faccard{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:15px;box-shadow:0 12px 30px -26px rgb(var(--shadow)/.5)}
+.fh2{font-family:var(--disp);font-weight:600;font-size:16.5px;margin-bottom:9px}
+.facul,.facol{margin:0;padding-left:18px;display:grid;gap:7px}
+.facul li,.facol li{font-size:13.5px;color:var(--ink2);line-height:1.5}.facul li b,.facol li b{color:var(--ink)}
+.facul{list-style:none;padding-left:0}
+.facul li{padding-left:20px;position:relative}.facul li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:2px;background:var(--gold)}
+.mm{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+.facp{font-size:13.5px;color:var(--ink2);line-height:1.6}
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.dodont{grid-template-columns:1fr}}
+.dodont .dt{font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--green);display:block;margin-bottom:5px}
+.dodont .dt.dn{color:var(--coral)}
+.dodont ul{margin:0;padding-left:16px;display:grid;gap:5px}.dodont li{font-size:12.5px;color:var(--ink2);line-height:1.45}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -281,6 +300,7 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
     <div class="railsec">The eight modules</div>
     <div id="railmods"></div>
     <div class="railsec">Explore</div>
+    <button class="navitem" data-jump="facilitator"><span class="nnum">🎓</span>Facilitator<span class="ndot"></span></button>
     <button class="navitem" data-jump="cast"><span class="nnum">👪</span>The cast<span class="ndot"></span></button>
     <button class="navitem" data-jump="progress"><span class="nnum">📈</span>My progress<span class="ndot"></span></button>
     <button class="railbtn" id="themebtn2">◑ Switch theme</button>
@@ -330,6 +350,36 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
         <div id="modlist"></div>
       </section>
 
+      <section id="facilitator"><div class="sectlabel"><span class="eyebrow">For facilitators</span><span class="ln"></span></div>
+        <p class="idea" style="margin-top:10px">Running this with a group? You are the first trusted messenger the room meets — the way you hold the family <i>is</i> the method. Here's the short version; the full <b>Facilitator &amp; Training-of-Trainers manual</b> goes deeper.</p>
+        <div class="fac">
+          <div class="faccard"><div class="fh2">🧭 Five principles that hold the room</div>
+            <ul class="facul">
+              <li><b>Never shame the messenger.</b> Beth, Silas and Tom act from love — the arc is conversion, not blame.</li>
+              <li><b>Teach through people, not bullet points.</b> Open on the scene before the framework.</li>
+              <li><b>Lead with a held value.</b> Health, family, provision — arrive at rights from there.</li>
+              <li><b>Replace, don't just remove.</b> Every retired line needs a new one to carry.</li>
+              <li><b>Make it safe to be uncertain.</b> The tools are to think with, not to test people.</li>
+            </ul></div>
+          <div class="faccard"><div class="fh2">🌀 The session rhythm — every module runs the same five beats</div>
+            <ol class="facol">
+              <li><b>Arrive on the scene</b> — read it aloud; \u201cwho recognises this?\u201d <span class="mm">~5 min</span></li>
+              <li><b>Surface the idea</b> — draw it out, then show 2–3 figures. <span class="mm">~10 min</span></li>
+              <li><b>Run the tool</b> — do it together, live. <span class="mm">~15 min</span></li>
+              <li><b>Practise</b> — apply it to their own case. <span class="mm">~15 min</span></li>
+              <li><b>Commit</b> — each names one change; capture it. <span class="mm">~5 min</span></li>
+            </ol></div>
+          <div class="faccard"><div class="fh2">📶 With devices &amp; without</div>
+            <p class="facp">Every tool has a no-device version: draw the machine on a flip chart, hand out the four disinformation cards, fill the five reframing boxes on paper. Install the app once over wifi and it runs fully offline in the field; the printed job-aids carry QR codes back to the tools and audio.</p></div>
+          <div class="faccard"><div class="fh2">🪜 Cascade it — training of trainers</div>
+            <p class="facp">Master trainers train facilitators, who run sessions and recruit champion aunties. The heart of a ToT is the <b>micro-teach</b>: each new facilitator runs one module for the group, and is certified when they can open on a scene, run the tool, and close on a commitment — without shaming anyone.</p></div>
+          <div class="faccard fac-do"><div class="fh2">✅ Do &amp; ✕ don't</div>
+            <div class="dodont"><div><span class="dt">Do</span><ul><li>Open on a person and a scene.</li><li>Hand over a new line for the old one.</li><li>Close on a concrete commitment.</li></ul></div>
+            <div><span class="dt dn">Don't</span><ul><li>Open on a definition or statistic.</li><li>Leave a belief demolished, empty.</li><li>End on \u201cany questions?\u201d</li></ul></div></div></div>
+          <div class="note" style="margin-top:6px"><b>The full manual.</b> The complete Facilitator &amp; Training-of-Trainers manual — five principles, a two-day ToT agenda, module-by-module notes, the Mother &amp; Aunty champion cascade, and workshop agendas. <a href="Facilitator_Manual.pdf" target="_blank" rel="noopener" style="font-weight:800">Open the PDF \u2197</a></div>
+        </div>
+      </section>
+
       <section><div class="prog" id="progress"><h3>Your progress</h3>
         <p class="pl" id="progtext">Open a module's tool to mark it explored. Progress saves on this device.</p>
         <div class="track"><div class="b" id="progbar"></div></div>
@@ -351,6 +401,7 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
 <nav class="botnav"><div class="row">
   <button data-jump="home" aria-current="true"><span class="ic">🏠</span>Home</button>
   <button data-jump="modules"><span class="ic">📘</span>Modules</button>
+  <button data-jump="facilitator"><span class="ic">🎓</span>Facilitate</button>
   <button data-jump="cast"><span class="ic">👪</span>Cast</button>
   <button data-jump="progress"><span class="ic">📈</span>Progress</button>
 </div></nav>
@@ -570,23 +621,25 @@ function renderMA(root,idx){
     ["Depo / the injection damages the womb.","These methods are safe and well studied. If one doesn't suit her, the nurse can change it."],
     ["A girl must marry and start children early.","A girl who finishes school and trains is a strong woman; children come when she is ready."],
     ["Going to the clinic brings shame.","A girl who cares for her health is to be respected. Go with her if she is afraid."]];
-  var SESS=[["Session 1","The room we're in — why older women hold the keys, and what we transmit."],
-    ["Session 2","Truth sandwiches — lead with the fact, name the myth once, close with the fact."],
-    ["Session 3","The four myths &amp; the elder cards — practising the new lines out loud."],
-    ["Session 4","My channels — the kitchen, the WhatsApp group, the gathering, the doorstep."],
-    ["Session 5","Becoming a champion — the Aunty's card, and how we'll know it's working."]];
+  var SESS=[
+    ["Our role, and our love","Establish trust and honour the participants' role; surface — without judging — the advice they currently give.","<b>In the room:</b> \u201cWhich of these are we still passing on?\u201d — not \u201care they wrong,\u201d just \u201cwhat do we say?\u201d<br><b>Take-home:</b> notice one piece of advice you hear an aunty give a young woman this week."],
+    ["What we were told, and what is true","With a trusted clinician: separate the love (right) from the facts (wrong); replace myths with accurate information — without shame.","<b>In the room:</b> \u201cWhat surprised you? What do you still doubt?\u201d — the clinician answers without defensiveness.<br><b>Take-home:</b> the Myth &amp; Fact card; each woman picks one myth she will stop repeating."],
+    ["Keep the love, change the facts","Turn the corrected facts into language that still sounds like a caring aunty — the \u201crewrite the warning\u201d skill.","<b>In the room:</b> model one rewrite together, then in pairs each woman rewrites two of her own warnings.<br><b>Take-home:</b> two new scripts in your own words, on cards, for your own kitchen."],
+    ["Carrying it — the kitchen and the phone","Practise the new scripts in the two channels that matter most: the face-to-face talk and the family WhatsApp group.","<b>In the room:</b> group admins practise forwarding a ready-made correction voice note; problem-solve pushback from men or the pastor.<br><b>Take-home:</b> use one new script in a real conversation, and forward one accurate voice note."],
+    ["Becoming a champion","Move willing women from private change to public championing; capture change-of-heart stories; set up ongoing support.","<b>In the room:</b> with consent, record two or three short stories for radio/WhatsApp/podcast; introduce the champion role; the pledge and celebration.<br><b>Take-home:</b> a champions' WhatsApp group, a monthly check-in, mentoring one or two younger aunties."]];
   root.innerHTML='<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">The gatekeeper → champion pathway</div>'+
     '<div class="step" id="mst'+idx+'">'+ST.map(function(s,k){return '<button data-k="'+k+'"'+(k===0?' aria-current="true"':'')+'>'+s[0].split(' · ')[0]+'</button>';}).join('')+'</div>'+
     '<div class="stepbody" id="msb'+idx+'"></div>'+
     '<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 0">The Myth &amp; Fact cards she carries — tap to flip</div>'+
     '<div class="flip" id="mf'+idx+'">'+CARDS.map(function(c,k){return '<button class="card2" data-k="'+k+'"><div class="m"><span class="ic">✗</span>“'+c[0]+'”</div><div class="f" hidden><b>The fact, kindly put:</b> '+c[1]+'</div></button>';}).join('')+'</div>'+
     '<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 0">The five-session curriculum</div>'+
-    '<div class="sesslist">'+SESS.map(function(s,k){return '<div class="sess"><div class="sn">'+(k+1)+'</div><div class="sx"><b>'+s[0]+'</b><p>'+s[1]+'</p></div></div>';}).join('')+'</div>'+
+    '<div class="sesslist" id="sl'+idx+'">'+SESS.map(function(s,k){return '<button class="sess sessbtn" aria-expanded="false"><div class="sn">'+(k+1)+'</div><div class="sx"><b>'+s[0]+'</b> <span class="sesschev">\u25b8</span><p>'+s[1]+'</p><div class="sessrev" hidden>'+s[2]+'</div></div></button>';}).join('')+'</div>'+
     '<div class="note"><div class="qr">'+QR.ma+'</div><b>The champion\'s field cards.</b> In print, this module folds to a wallet-size Champion Aunty card and a Myth &amp; Fact card. The QR opens the WhatsApp voice-note scripts and the live tools — so a champion has the guide in the kitchen, online or off.</div>';
   var sb=document.getElementById('msb'+idx);function showStep(k){sb.innerHTML='<div class="st">Stage '+ST[k][0]+'</div><div class="sv">Where Beth is</div><div class="sd">'+ST[k][1]+'</div>';}
   showStep(0);var flipped={};
   root.querySelectorAll('#mst'+idx+' button').forEach(function(b){b.addEventListener('click',function(){root.querySelectorAll('#mst'+idx+' button').forEach(function(x){x.setAttribute('aria-current','false')});b.setAttribute('aria-current','true');var k=+b.getAttribute('data-k');showStep(k);if(k>=3)markDone(idx);});});
   root.querySelectorAll('#mf'+idx+' .card2').forEach(function(c){c.addEventListener('click',function(){var f=c.querySelector('.f');f.hidden=!f.hidden;c.querySelector('.ic').textContent=f.hidden?'✗':'✓';c.querySelector('.ic').style.color=f.hidden?'var(--coral)':'var(--green)';flipped[c.getAttribute('data-k')]=1;if(Object.keys(flipped).length>=2)markDone(idx);});});
+  root.querySelectorAll('#sl'+idx+' .sessbtn').forEach(function(b){b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',o?'false':'true');var r=b.querySelector('.sessrev');r.hidden=o;var ch=b.querySelector('.sesschev');if(ch)ch.textContent=o?'\u25b8':'\u25be';});});
 }
 
 /* ===== nav, theme, install, offline ===== */

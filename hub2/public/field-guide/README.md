@@ -18,6 +18,10 @@ and use `#m<n>` to open a specific module — e.g. `#m7` opens the Mother & Aunt
 curriculum. Change the base URL: edit the `BASE`-derived `QR` constant near the top
 of the `<script>` in `index.html` (regenerate the QR SVGs if you change the URL).
 
+## What's inside
+- A **Facilitator tab** (in-app quick reference) and a clickable five-session M&A curriculum.
+- `Facilitator_Manual.pdf` — the full print-ready Facilitator & Training-of-Trainers manual, linked from the Facilitator tab.
+
 ## Run locally
 Serve the folder over http (a service worker won't run from file://):
     npx serve field-guide      # or: python3 -m http.server -d field-guide 8080

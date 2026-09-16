@@ -1,9 +1,10 @@
 /* ImaarishaSRHR Field Guide — service worker (offline-first) */
-const CACHE = 'imaarisha-fieldguide-v1';
+const CACHE = 'imaarisha-fieldguide-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './Facilitator_Manual.pdf',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
