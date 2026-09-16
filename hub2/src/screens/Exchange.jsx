@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, logActivity, toast, insertRow, isFresh } from '../lib/supabase'
 import { ScreenTitle, Chip, Btn, inputStyle } from '../lib/components'
-import { NotifyButton } from '../lib/matchNotify'
 
 const TYPE_ICONS = { report:'📊', toolkit:'🧰', research:'🔬', policy:'📜', guide:'📘', data:'📈', video:'🎬', link:'🔗' }
 const RES_TYPES = ['report','toolkit','research','policy','guide','data','video','link']
@@ -185,9 +184,8 @@ export default function Exchange({ session }) {
                   : <Btn small onClick={()=>openRequest(r)}>⬇ Download</Btn>
                 )}
                 <Btn small ghost onClick={()=>share(r)}>↗ Share</Btn>
-                {isAdmin && <span onClick={ev=>ev.stopPropagation()} style={{ marginLeft:'auto' }}><NotifyButton item={r} itemType="resource"/></span>}
                 {isAdmin && <button onClick={()=>setEditRes(r)} title="Edit this resource"
-                  style={{ marginLeft:6, fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.mut }}>✏️</button>}
+                  style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.mut }}>✏️</button>}
                 {isAdmin && <button onClick={async()=>{
                   if (!confirm('Delete resource?')) return
                   const { error } = await sb.from('resources').delete().eq('id', r.id)
@@ -243,7 +241,6 @@ export default function Exchange({ session }) {
                 <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                   {o.link && <a href={withHttp(o.link)} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()}
                     style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'6px 13px', borderRadius:10, background:C.lilac, color:'#fff', textDecoration:'none' }}>Apply / details ↗</a>}
-                  {isAdmin && <span onClick={ev=>ev.stopPropagation()}><NotifyButton item={o} itemType="opportunity"/></span>}
                   {isAdmin && <Btn small ghost color={C.coral} onClick={async(ev)=>{ ev.stopPropagation(); if(!confirm('Delete opportunity?'))return; const {error}=await sb.from('opportunities').delete().eq('id',o.id); if(error)toast(error.message,'red'); else{toast('Deleted','gold'); setOpps(l=>l.filter(x=>x.id!==o.id))} }}>🗑</Btn>}
                 </div>
               </div>

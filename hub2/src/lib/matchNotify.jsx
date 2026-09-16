@@ -56,7 +56,7 @@ export function NotifyButton({ item, itemType }) {
   )
 }
 
-function MatchNotifyModal({ item, itemType, onClose }) {
+export function MatchNotifyModal({ item, itemType, onClose }) {
   const [orgs, setOrgs] = useState([])
   const [loading, setLoading] = useState(true)
   const [picked, setPicked] = useState({})       // org_id -> bool

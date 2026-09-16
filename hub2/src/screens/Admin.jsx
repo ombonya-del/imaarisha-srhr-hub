@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, toast, notifyMembers } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
+import { MatchNotifyModal } from '../lib/matchNotify'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session, bottomTabs }) {
@@ -1156,6 +1157,7 @@ function ResourceDesk({ onChange }) {
   const [unhosted, setUnhosted] = useState([])
   const [busy, setBusy] = useState(null)
   const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
+  const [notify, setNotify] = useState(null)            // { item, itemType } → match & notify modal after approval
   const [q, setQ] = useState('')                        // search across the queues
   const [rejectedKeys, setRejectedKeys] = useState(new Set()) // titles/links already rejected → hide re-scanned dupes
   const [oppEdit, setOppEdit] = useState(null)                // draft being edited: { id, kind, org, deadline, amount, eligibility, link }
@@ -1201,6 +1203,7 @@ function ResourceDesk({ onChange }) {
       if (error) toast(error.message,'red')
       else {
         toast('✓ Published to the Events calendar','green'); load(); onChange?.()
+        setNotify({ item:{ ...e, status:'approved' }, itemType:'event' })
         // notify members who opted in (fire-and-forget; ignore if push not set up)
         sb.functions.invoke('send-push', { body: { title:'📅 New event', body: e.title, url:'/#event/'+e.id, tag:'event-'+e.id, group:'hub_members' } }).catch(()=>{})
       }
@@ -1218,6 +1221,7 @@ function ResourceDesk({ onChange }) {
       if (error) toast(error.message,'red')
       else {
         toast('✓ Published to the Opportunity Desk','green'); load()
+        setNotify({ item:{ ...o, status:'approved' }, itemType:'opportunity' })
         // Ping opted-in members — new opportunity on the Pulse.
         notifyMembers({ title:'🎯 New opportunity', body:o.title, url:'/#exchange', tag:'opp-'+o.id })
       }
@@ -1241,6 +1245,7 @@ function ResourceDesk({ onChange }) {
     if (error) toast(error.message,'red')
     else {
       toast('✓ Published to the Exchange','green'); load()
+      setNotify({ item:{ ...r, status:'approved' }, itemType:'resource' })
       // Auto-host document links as private, watermarked files (fire-and-forget;
       // skips videos/web pages that have no PDF). No manual conversion needed.
       if (r.file_url && !r.file_path) sb.functions.invoke('ingest-resource', { body:{ resource_id: r.id } }).catch(()=>{})
@@ -1598,6 +1603,8 @@ function ResourceDesk({ onChange }) {
           )
         })}
       </Section>
+
+      {notify && <MatchNotifyModal item={notify.item} itemType={notify.itemType} onClose={() => setNotify(null)} />}
     </div>
   )
 }

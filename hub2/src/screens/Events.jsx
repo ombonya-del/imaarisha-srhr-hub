@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { sb, C, logActivity, toast, isFresh } from '../lib/supabase'
-import { NotifyButton } from '../lib/matchNotify'
 import { ScreenTitle, SectionLabel, Btn, inputStyle } from '../lib/components'
 
 const fmtDay   = (d) => new Date(d + 'T00:00:00').getDate()
@@ -120,7 +119,6 @@ export default function Events({ session, go, eventId }) {
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', justifyContent:'space-between' }}>
           <div onClick={ev => ev.stopPropagation()}><RsvpRow e={e}/></div>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-            {session.isAdmin && <NotifyButton item={e} itemType="event"/>}
             {e.link && <button onClick={ev => { ev.stopPropagation(); openEvent(e) }}
               style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, background:'none',
                 border:'none', cursor:'pointer', padding:0 }}>Details</button>}
