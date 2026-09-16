@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Field Guide — ImaarishaSRHR</title>
+<meta name="description" content="Strategic Comms & Reframing field guide for SRHR in Kenya — an interactive, offline-ready toolkit built around the Achieng family.">
+<meta name="theme-color" content="#2E6B4F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
+<style>
+:root{
+  --paper:#F6F1E7; --paper2:#FBF7EF; --card:#FFFFFF; --ink:#181C24; --ink2:#2C3340;
+  --muted:#6C7180; --line:#E4DCCC; --line2:#EEE7D8;
+  --gold:#B9873B; --gold-soft:#E9D3A2; --green:#2E6B4F; --green-soft:#CBE0D2;
+  --indigo:#1E2A4A; --coral:#B4472F; --shadow:26 30 45;
+  --good:#2E6B4F; --warn:#B9873B; --crit:#B4472F;
+  --disp:'Fraunces',Georgia,'Times New Roman',serif;
+  --body:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --rail:288px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#12141B; --paper2:#171A22; --card:#1C2029; --ink:#F1ECE0; --ink2:#D9D3C6;
+  --muted:#9AA0AD; --line:#2A2F3A; --line2:#242833;
+  --gold:#D8B160; --gold-soft:#4A3E24; --green:#63B089; --green-soft:#1F3A2D;
+  --indigo:#9FB0D8; --coral:#E1795F; --shadow:0 0 0; --good:#63B089; --warn:#D8B160; --crit:#E1795F;
+}}
+:root[data-theme="dark"]{
+  --paper:#12141B; --paper2:#171A22; --card:#1C2029; --ink:#F1ECE0; --ink2:#D9D3C6;
+  --muted:#9AA0AD; --line:#2A2F3A; --line2:#242833;
+  --gold:#D8B160; --gold-soft:#4A3E24; --green:#63B089; --green-soft:#1F3A2D;
+  --indigo:#9FB0D8; --coral:#E1795F; --shadow:0 0 0; --good:#63B089; --warn:#D8B160; --crit:#E1795F;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px)}
+img{max-width:100%}[hidden]{display:none!important}
+h1,h2,h3,h4{font-family:var(--disp);font-weight:600;line-height:1.13;text-wrap:balance;margin:0}
+p{margin:0}a{color:var(--green)}
+.eyebrow{font-weight:800;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)}
+
+/* shell */
+.shell{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+.rail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-right:1px solid var(--line);
+  background:var(--paper2);padding:20px 16px;display:flex;flex-direction:column;gap:4px}
+.rail .brand{display:flex;gap:11px;align-items:center;padding:4px 6px 14px}
+.brandmark{width:34px;height:34px;flex:none}
+.brandtxt{font-family:var(--disp);font-weight:700;font-size:18px;line-height:1}
+.brandtxt b{color:var(--gold)}
+.brandsub{font-size:10.5px;color:var(--muted);letter-spacing:.04em;margin-top:3px}
+.railsec{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 8px 5px}
+.navitem{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;cursor:pointer;
+  color:var(--ink2);font-family:var(--body);font-weight:700;font-size:13.5px;padding:8px 9px;border-radius:9px;line-height:1.25}
+.navitem:hover{background:color-mix(in srgb,var(--green) 9%,transparent)}
+.navitem[aria-current="true"]{background:var(--green);color:#fff}
+.navitem[aria-current="true"] .nnum{background:rgba(255,255,255,.22);color:#fff}
+.navitem .nnum{font-family:var(--disp);font-weight:600;font-size:12px;width:24px;height:24px;flex:none;border-radius:7px;
+  display:grid;place-items:center;background:var(--green-soft);color:var(--green)}
+.navitem .ndot{width:7px;height:7px;border-radius:50%;background:transparent;flex:none;margin-left:auto}
+.navitem.done .ndot{background:var(--good)}
+.navitem[aria-current="true"].done .ndot{background:#fff}
+.railbtn{margin-top:auto;display:flex;gap:8px;align-items:center;justify-content:center;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);border-radius:10px;padding:9px;cursor:pointer;font-weight:800;font-size:12.5px}
+
+/* main */
+main{min-width:0}
+.mwrap{max-width:760px;margin:0 auto;padding-inline:22px;padding-block:8px 120px}
+@media(min-width:900px){.mwrap{padding-block:34px 80px}}
+
+/* mobile top bar + bottom nav (hidden on desktop) */
+.topbar,.botnav{display:none}
+@media(max-width:899px){
+  .shell{grid-template-columns:1fr}
+  .rail{display:none}
+  body{padding-bottom:78px}
+  .topbar{display:block;position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+    background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar .row{display:flex;align-items:center;gap:10px;padding:10px 18px;max-width:760px;margin:0 auto}
+  .botnav{display:block;position:fixed;left:0;right:0;bottom:0;z-index:45;
+    background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom,0px)}
+  .botnav .row{max-width:760px;margin:0 auto;display:flex}
+  .botnav button{flex:1;background:none;border:0;cursor:pointer;color:var(--muted);font-family:var(--body);
+    font-weight:700;font-size:10.5px;padding:9px 4px 8px;display:grid;gap:3px;justify-items:center}
+  .botnav button .ic{font-size:19px;line-height:1}
+  .botnav button[aria-current="true"]{color:var(--green)}
+}
+.themebtn{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px;display:grid;place-items:center}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+/* hero */
+.hero{padding-block:10px 6px}
+.hero h1{font-size:clamp(30px,6vw,48px);font-weight:600;letter-spacing:-.015em}
+.hero h1 .u{color:var(--green)}
+.lede{font-size:clamp(17px,2.3vw,19px);color:var(--ink2);margin-top:14px;max-width:60ch}
+.scene{margin-top:22px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);
+  box-shadow:0 18px 40px -30px rgb(var(--shadow)/.5)}
+.scene svg{display:block;width:100%;height:auto}
+.scene .cap{padding:11px 15px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line2)}
+.scene .cap b{color:var(--ink2);font-weight:800}
+.ph-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold);background:color-mix(in srgb,var(--gold) 15%,transparent);border-radius:5px;padding:2px 7px;margin-left:6px}
+
+.aud{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.aud .a{border:1px solid var(--line);border-radius:14px;padding:15px;background:var(--paper2)}
+.aud .a .t{font-family:var(--disp);font-weight:600;font-size:17px;display:flex;gap:8px;align-items:center}
+.aud .a p{font-size:13.5px;color:var(--ink2);margin-top:6px}
+@media(max-width:520px){.aud{grid-template-columns:1fr}}
+
+.sectlabel{display:flex;align-items:center;gap:12px;margin:34px 0 4px}
+.sectlabel .ln{height:1px;background:var(--line);flex:1}
+
+/* module */
+.mod{border:1px solid var(--line);border-radius:16px;background:var(--card);margin-top:14px;overflow:hidden;scroll-margin-top:80px;
+  box-shadow:0 12px 30px -26px rgb(var(--shadow)/.5)}
+.mod>button.head{width:100%;text-align:left;background:none;border:0;cursor:pointer;color:inherit;display:flex;gap:14px;align-items:center;padding:16px}
+.mod .num{font-family:var(--disp);font-weight:600;font-size:15px;width:34px;height:34px;flex:none;border-radius:9px;display:grid;place-items:center;
+  background:var(--green-soft);color:var(--green);border:1px solid color-mix(in srgb,var(--green) 30%,transparent)}
+.mod.open .num,.mod.done .num{background:var(--green);color:#fff}
+.mod .htxt{flex:1;min-width:0}
+.mod .kick{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--gold)}
+.mod .ttl{font-family:var(--disp);font-weight:600;font-size:18px;line-height:1.15;margin-top:2px}
+.mod .chev{flex:none;color:var(--muted);transition:transform .25s;font-size:14px}
+.mod.open .chev{transform:rotate(90deg)}
+.mod .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.mod.done .dot{background:var(--good)}
+.body{border-top:1px solid var(--line2);padding:4px 16px 20px}
+.scene-line{font-family:var(--disp);font-style:italic;font-size:16.5px;color:var(--ink2);line-height:1.5;padding:14px 0 4px;display:flex;gap:11px}
+.scene-line .who{font-style:normal;font-family:var(--body);font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);white-space:nowrap;padding-top:5px}
+.idea{font-size:14.5px;color:var(--ink2);margin-top:12px}.idea b{color:var(--ink)}
+
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{border:1px solid var(--line);border-radius:12px;background:var(--paper2);padding:12px}
+.stat .n{font-family:var(--disp);font-weight:700;font-size:24px;color:var(--green);font-variant-numeric:tabular-nums;line-height:1}
+.stat .l{font-size:11.5px;color:var(--ink2);margin-top:6px;line-height:1.35}
+.fw{margin-top:14px}.fw .fl{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:7px}
+.fw ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.fw li{font-size:13.5px;color:var(--ink2);padding-left:20px;position:relative}
+.fw li::before{content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;border-radius:2px;background:var(--gold)}
+.fw li b{color:var(--ink)}
+
+/* tool */
+.tool{margin-top:16px;border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line));border-radius:14px;background:var(--paper2);padding:15px}
+.tool .tl{display:flex;gap:8px;align-items:center;font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.tool h4{font-size:18px;margin:6px 0 2px}.tool .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+
+.btn{font-weight:800;font-size:13.5px;border-radius:10px;border:1px solid var(--green);background:var(--green);color:#fff;padding:10px 15px;cursor:pointer;font-family:var(--body)}
+.btn.ghost{background:transparent;color:var(--green)}.btn.sm{padding:7px 12px;font-size:12.5px}
+.chip{font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 13px;cursor:pointer;transition:.15s;font-family:var(--body)}
+.chip[aria-pressed="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.scoreline{margin-top:11px;font-size:13.5px;font-weight:700;color:var(--ink2)}.scoreline b{color:var(--green)}
+
+.machine{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.force{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px;cursor:pointer;text-align:left}
+.force .fh{display:flex;gap:8px;align-items:center;font-weight:800;font-size:13.5px}.force .fi{font-size:18px}
+.force .reveal{font-size:12.5px;color:var(--ink2);margin-top:8px;line-height:1.5}
+.force[aria-expanded="false"] .reveal{display:none}
+.force[aria-expanded="true"]{border-color:var(--gold);background:var(--paper2)}
+.centergirl{grid-column:1/-1;text-align:center;font-size:13px;color:var(--muted);padding:2px 0 4px}.centergirl b{color:var(--green);font-family:var(--disp);font-size:15px}
+
+.wa{background:#E7F0E4;border-radius:14px;padding:12px;margin-top:2px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .wa{background:#16241C}}
+:root[data-theme="dark"] .wa{background:#16241C}
+.bubble{background:var(--card);border-radius:4px 12px 12px 12px;padding:11px 12px;font-size:14px;color:var(--ink);box-shadow:0 2px 6px -3px rgb(var(--shadow)/.6);line-height:1.5}
+.bubble .frm{font-weight:800;font-size:12px;color:var(--coral);margin-bottom:3px}
+.signal{border-bottom:2px dotted var(--gold);cursor:pointer;padding:0 1px}
+.signal.tag{background:color-mix(in srgb,var(--gold) 22%,transparent);border-radius:3px}
+.wa .meta{font-size:11px;color:var(--muted);text-align:right;margin-top:4px}
+
+.cost .lever{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2)}.cost .lever:last-child{border-bottom:0}
+.cost .lever label{font-size:13.5px;flex:1;cursor:pointer}
+.switch{width:44px;height:26px;border-radius:999px;background:var(--line);border:0;cursor:pointer;position:relative;flex:none;transition:.2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.switch[aria-checked="true"]{background:var(--green)}.switch[aria-checked="true"]::after{left:21px}
+.meter .barwrap{height:14px;border-radius:8px;background:var(--line);overflow:hidden}
+.meter .bar{height:100%;width:100%;background:linear-gradient(90deg,var(--crit),var(--warn),var(--good));transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.meter .lab{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:6px}.meter .lab .v{color:var(--green)}
+
+.rw{display:grid;gap:10px;margin-top:4px}
+.rw .before{border-left:3px solid var(--coral);background:color-mix(in srgb,var(--coral) 8%,transparent);padding:10px 12px;border-radius:0 10px 10px 0;font-size:13.5px}
+.rw .before .l,.rw .after .l{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.rw .before .l{color:var(--coral)}.rw .after .l{color:var(--green)}
+.rw .opts .l{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.rw .after{border-left:3px solid var(--green);background:color-mix(in srgb,var(--green) 9%,transparent);padding:11px 12px;border-radius:0 10px 10px 0;font-size:14px;min-height:44px}
+.rw .after .txt{font-family:var(--disp);font-style:italic;font-size:15.5px;line-height:1.5;color:var(--ink)}
+
+.rf label.fl{font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);display:block;margin:12px 0 6px}
+.rf select,.rf input{width:100%;font-family:var(--body);font-size:14px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+.rf .out{margin-top:16px;border:1px solid var(--gold);border-radius:14px;overflow:hidden}
+.rf .out .oh{background:color-mix(in srgb,var(--gold) 16%,transparent);padding:8px 13px;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.rf .out .ob{padding:15px;font-family:var(--disp);font-size:17px;line-height:1.55;color:var(--ink)}.rf .out .ob .g{color:var(--green);font-style:italic}
+.rf .parts{display:flex;flex-wrap:wrap;gap:5px;padding:0 13px 13px}
+.rf .parts .pp{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.lib{margin-top:14px;display:grid;gap:8px}
+.lib .p{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.lib .p .s{background:color-mix(in srgb,var(--coral) 8%,transparent);padding:9px 12px;font-size:13px;color:var(--ink2)}
+.lib .p .s b{color:var(--coral)}
+.lib .p .r{padding:9px 12px;font-size:13.5px;font-family:var(--disp);font-style:italic;color:var(--ink)}
+.lib .p .r b{color:var(--green);font-style:normal;font-family:var(--body);font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase;display:block;margin-bottom:2px}
+
+.mx .res{display:grid;gap:10px;margin-top:12px}
+.mx .rc{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--card)}
+.mx .rc .rt{font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.mx .rc .rv{font-family:var(--disp);font-size:16px;color:var(--ink)}
+.mx .rc .ev{font-size:11.5px;color:var(--muted);margin-top:7px;border-top:1px solid var(--line2);padding-top:7px}
+
+.hab{display:grid;gap:8px;margin-top:4px}
+.hab .h{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--card);cursor:pointer;text-align:left;width:100%;color:inherit}
+.hab .h .cbx{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;display:grid;place-items:center;margin-top:1px;font-size:13px;color:#fff}
+.hab .h[aria-pressed="true"] .cbx{background:var(--green);border-color:var(--green)}
+.hab .h .ht{font-weight:800;font-size:14px}.hab .h .hd{font-size:12.5px;color:var(--ink2);margin-top:2px}
+
+/* M&A stepper + flip */
+.step{display:flex;gap:6px;margin-top:4px}
+.step button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink2);border-radius:10px;padding:9px 4px;cursor:pointer;font-weight:800;font-size:11px;text-align:center}
+.step button[aria-current="true"]{background:var(--green);color:#fff;border-color:var(--green)}
+.stepbody{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:13px}
+.stepbody .st{font-weight:800;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.stepbody .sv{font-family:var(--disp);font-size:16px;margin:3px 0 6px}
+.stepbody .sd{font-size:13.5px;color:var(--ink2)}
+.flip{margin-top:14px;display:grid;gap:9px}
+.card2{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:0;cursor:pointer;overflow:hidden;text-align:left;width:100%;color:inherit}
+.card2 .m{padding:12px 13px;font-size:13.5px;font-weight:700;display:flex;gap:9px;align-items:center}
+.card2 .m .ic{color:var(--coral);font-size:16px}
+.card2 .f{border-top:1px solid var(--line2);background:color-mix(in srgb,var(--green) 8%,transparent);padding:12px 13px;font-size:13.5px;color:var(--ink2)}
+.card2 .f b{color:var(--green)}
+.sesslist{margin-top:14px;display:grid;gap:7px;counter-reset:s}
+.sess{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--paper2)}
+.sess .sn{font-family:var(--disp);font-weight:700;color:var(--green);font-size:15px;width:26px;flex:none}
+.sess .sx b{font-size:13.5px}.sess .sx p{font-size:12.5px;color:var(--ink2);margin-top:2px}
+
+.note{margin-top:18px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;background:var(--paper2);padding:13px 15px;font-size:13.5px;color:var(--ink2)}
+.note b{color:var(--ink)}
+.qr{width:82px;height:82px;border:1px solid var(--line);border-radius:10px;background:#fff;float:right;margin:0 0 10px 12px;padding:5px;overflow:hidden}
+.qr svg{display:block;width:100%;height:100%}
+
+.castgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:520px){.castgrid{grid-template-columns:1fr}}
+.pc{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:13px;display:flex;gap:12px}
+.pc .av{width:52px;height:52px;border-radius:13px;flex:none}
+.pc .n{font-family:var(--disp);font-weight:600;font-size:16px;line-height:1.1}
+.pc .r{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin:3px 0 5px}
+.pc .d{font-size:12.5px;color:var(--ink2);line-height:1.45}
+
+.prog{margin-top:26px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--paper2),var(--card));padding:18px}
+.prog h3{font-size:19px}.prog .track{height:12px;border-radius:8px;background:var(--line);overflow:hidden;margin:12px 0 8px}
+.prog .track .b{height:100%;width:0;background:var(--green);transition:width .4s}.prog .pl{font-size:13px;color:var(--muted)}
+
+.instbar{margin-top:20px;border:1px solid var(--green);border-radius:14px;background:color-mix(in srgb,var(--green) 8%,transparent);padding:14px 15px;display:flex;gap:12px;align-items:center}
+.instbar .t{flex:1;font-size:13.5px}.instbar .t b{font-size:14.5px}
+.offline{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;box-shadow:0 8px 20px -8px rgb(var(--shadow)/.6)}
+@media(min-width:900px){.offline{bottom:20px}}
+
+footer{padding:26px 0 8px;text-align:center;color:var(--muted);font-size:12px}
+footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:4px 11px;margin-bottom:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- DESKTOP RAIL -->
+  <aside class="rail">
+    <div class="brand">
+      <svg class="brandmark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 33c-6-3-9-8-9-13 0 0 5 1 9 6 4-5 9-6 9-6 0 5-3 10-9 13z" fill="#2E6B4F"/>
+        <path d="M20 30c-4-4-4-9-4-9s5 2 4 9c-1-7 4-9 4-9s0 5-4 9z" fill="#B9873B"/>
+        <path d="M20 31c0-6 0-11 0-11s3 4 0 11z" fill="#C6A15B" opacity=".9"/>
+      </svg>
+      <div><div class="brandtxt">Imaarisha<b>SRHR</b></div><div class="brandsub">The Field Guide</div></div>
+    </div>
+    <button class="navitem" data-jump="home"><span class="nnum">◆</span>Overview<span class="ndot"></span></button>
+    <div class="railsec">The eight modules</div>
+    <div id="railmods"></div>
+    <div class="railsec">Explore</div>
+    <button class="navitem" data-jump="cast"><span class="nnum">👪</span>The cast<span class="ndot"></span></button>
+    <button class="navitem" data-jump="progress"><span class="nnum">📈</span>My progress<span class="ndot"></span></button>
+    <button class="railbtn" id="themebtn2">◑ Switch theme</button>
+  </aside>
+
+  <main>
+    <div class="topbar"><div class="row">
+      <svg class="brandmark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 33c-6-3-9-8-9-13 0 0 5 1 9 6 4-5 9-6 9-6 0 5-3 10-9 13z" fill="#2E6B4F"/>
+        <path d="M20 30c-4-4-4-9-4-9s5 2 4 9c-1-7 4-9 4-9s0 5-4 9z" fill="#B9873B"/></svg>
+      <div><div class="brandtxt" style="font-size:16px">Imaarisha<b>SRHR</b></div><div class="brandsub">The Field Guide</div></div>
+      <button class="themebtn" id="themebtn" aria-label="Switch theme">◑</button>
+    </div></div>
+
+    <div class="mwrap">
+      <section class="hero" id="home">
+        <div class="eyebrow">Strategic Comms &amp; Reframing · Phase 2</div>
+        <h1>One family. <span class="u">Eight ways</span> to change the conversation on SRHR.</h1>
+        <p class="lede">A working field guide built around the <b>Achieng family</b> — so every framework arrives inside a scene you can picture, from a person you come to know. Seven strategy modules and a full Mother &amp; Aunty curriculum, each ending in a tool you can use today. Works offline; install it to your home screen.</p>
+        <div class="scene">
+          <svg viewBox="0 0 680 300" role="img" aria-label="The Achieng family compound at dusk">
+            <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9C877"/><stop offset=".55" stop-color="#D99A63"/><stop offset="1" stop-color="#B4472F"/></linearGradient></defs>
+            <rect width="680" height="300" fill="url(#sky)"/><circle cx="530" cy="96" r="34" fill="#F6E7B8" opacity=".85"/>
+            <path d="M0 210 Q170 178 340 200 T680 196 V300 H0 Z" fill="#3B2E2A"/><path d="M0 232 Q220 214 430 232 T680 226 V300 H0 Z" fill="#2A2320"/>
+            <rect x="70" y="150" width="150" height="82" fill="#5A4038"/><path d="M60 150 L145 116 L230 150 Z" fill="#6E4E42"/>
+            <rect x="108" y="176" width="30" height="56" fill="#B9873B"/><rect x="160" y="182" width="30" height="26" fill="#E9C877" opacity=".8"/>
+            <ellipse cx="330" cy="250" rx="34" ry="10" fill="#241d1b"/><path d="M312 244 h36 l-5 16 h-26 z" fill="#3a3330"/><path d="M322 244 c4-10 12-10 16 0" fill="none" stroke="#E9C877" stroke-width="3" opacity=".8"/>
+            <circle cx="300" cy="206" r="12" fill="#3B2A22"/><rect x="289" y="216" width="22" height="40" rx="8" fill="#2E6B4F"/>
+            <circle cx="338" cy="210" r="10" fill="#3B2A22"/><rect x="329" y="219" width="18" height="34" rx="7" fill="#B9873B"/>
+            <circle cx="470" cy="212" r="11" fill="#3B2A22"/><rect x="460" y="221" width="20" height="34" rx="7" fill="#1E2A4A"/>
+            <circle cx="512" cy="214" r="11" fill="#3B2A22"/><rect x="502" y="223" width="20" height="32" rx="7" fill="#4A3A55"/><rect x="486" y="232" width="12" height="8" rx="2" fill="#BFE3FF"/>
+            <rect x="150" y="158" width="20" height="24" rx="2" fill="#EFE6D2" stroke="#3B2A22" stroke-width="2"/>
+          </svg>
+          <div class="cap"><b>The recurring world.</b> Dusk at the compound — Aunty Beth at the sufuria, Agneta beside her, Baba Tom and Uncle Silas with a phone between them, Cucu's photo on the wall.<span class="ph-badge">Placeholder art</span></div>
+        </div>
+        <div class="aud">
+          <div class="a"><div class="t">🏢 For SRHR orgs</div><p>Train your team: each module carries the evidence, the framework, and a tool your staff run in real campaigns.</p></div>
+          <div class="a"><div class="t">👪 For the community</div><p>Facilitators and champions use the scenes and tools in sessions, WhatsApp groups and clinic corners.</p></div>
+        </div>
+        <div class="instbar" id="instbar" hidden>
+          <div class="t"><b>Install the guide.</b><br>Add it to your home screen — it opens full-screen and works offline.</div>
+          <button class="btn" id="installbtn">Install</button>
+        </div>
+      </section>
+
+      <section id="modules"><div class="sectlabel"><span class="eyebrow">The eight modules</span><span class="ln"></span></div>
+        <div id="modlist"></div>
+      </section>
+
+      <section><div class="prog" id="progress"><h3>Your progress</h3>
+        <p class="pl" id="progtext">Open a module's tool to mark it explored. Progress saves on this device.</p>
+        <div class="track"><div class="b" id="progbar"></div></div>
+        <p class="pl" style="margin-top:2px"><span id="progcount">0</span> of 8 tools explored · <button class="btn ghost sm" id="resetprog" style="padding:2px 8px;margin-left:4px">Reset</button></p>
+      </div></section>
+
+      <section id="cast"><div class="sectlabel"><span class="eyebrow">The cast</span><span class="ln"></span></div>
+        <p class="idea" style="margin-top:10px">No one here is a villain. Beth, Silas, Tom and Cucu all act out of love and duty — that's exactly why the harm they pass on is hard to counter, and why the arc is conversion, not blame. By the end, Beth becomes Agneta's strongest champion.</p>
+        <div class="castgrid" id="castgrid"></div>
+      </section>
+
+      <footer><span class="demo">Prototype · sample content</span>
+        <p>Built for ImaarishaSRHR / Community Media Trust — the Strategic Comms &amp; Reframing toolkit as a living, offline-ready web guide, with a print PDF as its companion. Illustrations are placeholders to be swapped for the final character art. Characters are composites from Phase 1 research, not real individuals.</p>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<nav class="botnav"><div class="row">
+  <button data-jump="home" aria-current="true"><span class="ic">🏠</span>Home</button>
+  <button data-jump="modules"><span class="ic">📘</span>Modules</button>
+  <button data-jump="cast"><span class="ic">👪</span>Cast</button>
+  <button data-jump="progress"><span class="ic">📈</span>Progress</button>
+</div></nav>
+
+<script>
+"use strict";
+var QR={"home": "<svg viewBox=\"0 0 33 33\" width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"QR code\"><rect width=\"33\" height=\"33\" fill=\"#ffffff\"/><path d=\"M2 2h7v1h-7zM11 2h1v1h-1zM13 2h1v1h-1zM15 2h2v1h-2zM20 2h1v1h-1zM24 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM10 3h2v1h-2zM13 3h2v1h-2zM16 3h1v1h-1zM19 3h1v1h-1zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM10 4h1v1h-1zM12 4h1v1h-1zM14 4h1v1h-1zM16 4h3v1h-3zM21 4h2v1h-2zM24 4h1v1h-1zM26 4h3v1h-3zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM15 5h2v1h-2zM18 5h2v1h-2zM21 5h2v1h-2zM24 5h1v1h-1zM26 5h3v1h-3zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM12 6h4v1h-4zM18 6h1v1h-1zM21 6h1v1h-1zM24 6h1v1h-1zM26 6h3v1h-3zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM14 7h3v1h-3zM18 7h3v1h-3zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h7v1h-7zM10 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM16 9h1v1h-1zM20 9h2v1h-2zM2 10h1v1h-1zM8 10h1v1h-1zM10 10h2v1h-2zM13 10h1v1h-1zM19 10h1v1h-1zM22 10h3v1h-3zM27 10h3v1h-3zM4 11h2v1h-2zM7 11h1v1h-1zM9 11h2v1h-2zM12 11h1v1h-1zM16 11h2v1h-2zM20 11h2v1h-2zM23 11h1v1h-1zM25 11h2v1h-2zM28 11h2v1h-2zM3 12h1v1h-1zM5 12h2v1h-2zM8 12h1v1h-1zM13 12h1v1h-1zM17 12h3v1h-3zM23 12h1v1h-1zM25 12h2v1h-2zM2 13h4v1h-4zM9 13h2v1h-2zM12 13h1v1h-1zM14 13h1v1h-1zM18 13h1v1h-1zM24 13h1v1h-1zM26 13h2v1h-2zM3 14h2v1h-2zM8 14h4v1h-4zM14 14h4v1h-4zM20 14h1v1h-1zM22 14h1v1h-1zM24 14h2v1h-2zM30 14h1v1h-1zM2 15h3v1h-3zM7 15h1v1h-1zM11 15h3v1h-3zM15 15h1v1h-1zM17 15h6v1h-6zM24 15h3v1h-3zM29 15h2v1h-2zM3 16h1v1h-1zM5 16h1v1h-1zM7 16h5v1h-5zM15 16h5v1h-5zM23 16h6v1h-6zM2 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM15 17h3v1h-3zM21 17h4v1h-4zM26 17h1v1h-1zM28 17h1v1h-1zM30 17h1v1h-1zM4 18h2v1h-2zM7 18h2v1h-2zM13 18h2v1h-2zM16 18h2v1h-2zM19 18h1v1h-1zM22 18h1v1h-1zM27 18h2v1h-2zM2 19h1v1h-1zM5 19h1v1h-1zM10 19h2v1h-2zM17 19h2v1h-2zM20 19h7v1h-7zM28 19h3v1h-3zM2 20h2v1h-2zM5 20h1v1h-1zM7 20h4v1h-4zM12 20h2v1h-2zM15 20h3v1h-3zM21 20h1v1h-1zM23 20h2v1h-2zM26 20h2v1h-2zM30 20h1v1h-1zM2 21h1v1h-1zM4 21h2v1h-2zM10 21h1v1h-1zM14 21h1v1h-1zM16 21h1v1h-1zM18 21h1v1h-1zM20 21h2v1h-2zM23 21h3v1h-3zM2 22h1v1h-1zM4 22h1v1h-1zM7 22h3v1h-3zM11 22h1v1h-1zM13 22h1v1h-1zM19 22h1v1h-1zM22 22h5v1h-5zM28 22h3v1h-3zM10 23h4v1h-4zM15 23h1v1h-1zM17 23h6v1h-6zM26 23h2v1h-2zM2 24h7v1h-7zM11 24h2v1h-2zM15 24h3v1h-3zM20 24h3v1h-3zM24 24h1v1h-1zM26 24h3v1h-3zM2 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM13 25h1v1h-1zM15 25h1v1h-1zM18 25h1v1h-1zM21 25h2v1h-2zM26 25h1v1h-1zM30 25h1v1h-1zM2 26h1v1h-1zM4 26h3v1h-3zM8 26h1v1h-1zM11 26h1v1h-1zM13 26h1v1h-1zM15 26h1v1h-1zM17 26h2v1h-2zM21 26h7v1h-7zM30 26h1v1h-1zM2 27h1v1h-1zM4 27h3v1h-3zM8 27h1v1h-1zM11 27h1v1h-1zM13 27h2v1h-2zM17 27h2v1h-2zM20 27h2v1h-2zM23 27h1v1h-1zM27 27h2v1h-2zM30 27h1v1h-1zM2 28h1v1h-1zM4 28h3v1h-3zM8 28h1v1h-1zM11 28h3v1h-3zM17 28h1v1h-1zM23 28h7v1h-7zM2 29h1v1h-1zM8 29h1v1h-1zM12 29h1v1h-1zM15 29h2v1h-2zM25 29h4v1h-4zM30 29h1v1h-1zM2 30h7v1h-7zM10 30h4v1h-4zM15 30h2v1h-2zM19 30h1v1h-1zM21 30h1v1h-1zM23 30h1v1h-1zM28 30h1v1h-1z\" fill=\"#181C24\"/></svg>", "ma": "<svg viewBox=\"0 0 33 33\" width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"QR code\"><rect width=\"33\" height=\"33\" fill=\"#ffffff\"/><path d=\"M2 2h7v1h-7zM10 2h1v1h-1zM12 2h2v1h-2zM15 2h2v1h-2zM20 2h1v1h-1zM24 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM10 3h2v1h-2zM13 3h1v1h-1zM15 3h1v1h-1zM19 3h1v1h-1zM21 3h2v1h-2zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM10 4h2v1h-2zM15 4h3v1h-3zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h3v1h-3zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM11 5h2v1h-2zM15 5h2v1h-2zM18 5h2v1h-2zM21 5h2v1h-2zM24 5h1v1h-1zM26 5h3v1h-3zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM10 6h7v1h-7zM18 6h2v1h-2zM21 6h2v1h-2zM24 6h1v1h-1zM26 6h3v1h-3zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM11 7h1v1h-1zM14 7h3v1h-3zM20 7h1v1h-1zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h7v1h-7zM11 9h2v1h-2zM14 9h2v1h-2zM20 9h1v1h-1zM22 9h1v1h-1zM2 10h1v1h-1zM5 10h8v1h-8zM18 10h2v1h-2zM21 10h3v1h-3zM26 10h1v1h-1zM28 10h3v1h-3zM2 11h1v1h-1zM5 11h2v1h-2zM9 11h1v1h-1zM12 11h3v1h-3zM16 11h2v1h-2zM20 11h2v1h-2zM23 11h1v1h-1zM25 11h2v1h-2zM28 11h2v1h-2zM2 12h2v1h-2zM6 12h3v1h-3zM10 12h1v1h-1zM13 12h1v1h-1zM15 12h4v1h-4zM22 12h2v1h-2zM26 12h1v1h-1zM28 12h1v1h-1zM6 13h2v1h-2zM12 13h1v1h-1zM14 13h1v1h-1zM16 13h1v1h-1zM19 13h1v1h-1zM25 13h3v1h-3zM30 13h1v1h-1zM2 14h2v1h-2zM5 14h4v1h-4zM13 14h1v1h-1zM17 14h1v1h-1zM20 14h1v1h-1zM22 14h1v1h-1zM24 14h2v1h-2zM30 14h1v1h-1zM2 15h1v1h-1zM4 15h1v1h-1zM7 15h1v1h-1zM9 15h5v1h-5zM16 15h5v1h-5zM24 15h7v1h-7zM3 16h3v1h-3zM8 16h4v1h-4zM13 16h1v1h-1zM15 16h3v1h-3zM19 16h1v1h-1zM21 16h1v1h-1zM23 16h1v1h-1zM25 16h2v1h-2zM28 16h1v1h-1zM30 16h1v1h-1zM2 17h2v1h-2zM5 17h1v1h-1zM7 17h1v1h-1zM12 17h1v1h-1zM14 17h1v1h-1zM17 17h1v1h-1zM21 17h4v1h-4zM26 17h1v1h-1zM28 17h1v1h-1zM30 17h1v1h-1zM2 18h2v1h-2zM5 18h7v1h-7zM15 18h3v1h-3zM25 18h1v1h-1zM27 18h1v1h-1zM2 19h1v1h-1zM4 19h1v1h-1zM9 19h3v1h-3zM13 19h2v1h-2zM16 19h2v1h-2zM19 19h5v1h-5zM26 19h1v1h-1zM28 19h2v1h-2zM2 20h2v1h-2zM5 20h2v1h-2zM8 20h1v1h-1zM14 20h1v1h-1zM17 20h1v1h-1zM21 20h1v1h-1zM23 20h2v1h-2zM26 20h2v1h-2zM30 20h1v1h-1zM2 21h2v1h-2zM6 21h2v1h-2zM10 21h2v1h-2zM13 21h3v1h-3zM18 21h1v1h-1zM20 21h1v1h-1zM22 21h4v1h-4zM27 21h2v1h-2zM2 22h4v1h-4zM8 22h5v1h-5zM14 22h2v1h-2zM18 22h2v1h-2zM21 22h9v1h-9zM10 23h2v1h-2zM16 23h7v1h-7zM26 23h2v1h-2zM2 24h7v1h-7zM10 24h2v1h-2zM16 24h2v1h-2zM19 24h4v1h-4zM24 24h1v1h-1zM26 24h2v1h-2zM2 25h1v1h-1zM8 25h1v1h-1zM10 25h1v1h-1zM12 25h2v1h-2zM19 25h1v1h-1zM21 25h2v1h-2zM26 25h1v1h-1zM29 25h2v1h-2zM2 26h1v1h-1zM4 26h3v1h-3zM8 26h1v1h-1zM10 26h1v1h-1zM15 26h4v1h-4zM21 26h7v1h-7zM29 26h1v1h-1zM2 27h1v1h-1zM4 27h3v1h-3zM8 27h1v1h-1zM10 27h1v1h-1zM12 27h3v1h-3zM16 27h3v1h-3zM20 27h1v1h-1zM22 27h2v1h-2zM30 27h1v1h-1zM2 28h1v1h-1zM4 28h3v1h-3zM8 28h1v1h-1zM11 28h2v1h-2zM15 28h1v1h-1zM17 28h2v1h-2zM21 28h1v1h-1zM23 28h1v1h-1zM25 28h2v1h-2zM28 28h3v1h-3zM2 29h1v1h-1zM8 29h1v1h-1zM12 29h2v1h-2zM25 29h4v1h-4zM30 29h1v1h-1zM2 30h7v1h-7zM10 30h2v1h-2zM13 30h2v1h-2zM21 30h3v1h-3zM25 30h1v1h-1z\" fill=\"#181C24\"/></svg>"};
+var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+var CAST=[
+ ["Agneta","17 · Form 3","AG","#2E6B4F","Wants to train as a nurse. Bright, anxious, petrified a pregnancy will end her education. The young woman at the centre."],
+ ["Aunty Beth","52 · the aunt","AB","#B9873B","Runs the kitchen; admin of the family WhatsApp group. The gatekeeper who can become a champion."],
+ ["Mama Grace","44 · the mother","MG","#8A5A3B","Loves her daughter, defers to her husband and to Beth; uses contraception secretly to space her births."],
+ ["Baba Tom","50 · the father","BT","#1E2A4A","Holds household decision authority; believes a big family proves a man; follows #MasculinitySaturday."],
+ ["Uncle Silas","39 · the uncle","US","#4A3A55","Kind, devout; forwards every dramatic health 'warning' to the family group."],
+ ["Rev. Otieno","55 · the pastor","RO","#3B2A22","His Sunday word shapes what the family believes is right — a risk, and, engaged well, its strongest ally."],
+ ["Nurse Wanjiru","34 · clinical officer","NW","#2E6B4F","Runs a youth-friendly corner; the most trusted voice in the story, but overworked and under-heard."],
+ ["Kevo","22 · the cousin","KV","#B4472F","A Sheng-speaking TikTok creator with a real following; the bridge to the digital street."],
+ ["Brenda","19 · peer advocate","BR","#B9873B","Left school after a pregnancy; now tells her own story as a peer advocate."],
+ ["Cucu","the grandmother","CU","#6E4E42","The matriarch in Homa Bay; carries the deepest traditional norms; the apex of intergenerational authority."]
+];
+function avatar(init,color){return '<svg class="av" viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" rx="13" fill="'+color+'"/><circle cx="26" cy="20" r="9" fill="#fff" opacity=".92"/><path d="M11 47c1-9 8-13 15-13s14 4 15 13z" fill="#fff" opacity=".92"/><text x="26" y="30" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="9" font-weight="800" fill="'+color+'">'+init+'</text></svg>';}
+document.getElementById('castgrid').innerHTML=CAST.map(function(c){return '<div class="pc">'+avatar(c[2],c[3])+'<div><div class="n">'+c[0]+'</div><div class="r">'+c[1]+'</div><div class="d">'+c[4]+'</div></div></div>';}).join('');
+
+/* stat + framework helpers */
+function stats(arr){return '<div class="stats">'+arr.map(function(s){return '<div class="stat"><div class="n">'+s[0]+'</div><div class="l">'+s[1]+'</div></div>';}).join('')+'</div>';}
+function fw(title,items){return '<div class="fw"><div class="fl">'+title+'</div><ul>'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul></div>';}
+
+var MODS=[
+ {k:"The System",t:"One girl, four forces",who:"Agneta",
+  scene:"My father wants grandchildren, the pulpit calls it sin, a WhatsApp forward says the pills make you barren — and I just want to finish school.",
+  stats:[["3.6%","of digital SRHR content is positive or affirming"],["29%","is actively negative — fear, stigma, moral conflict"],["2:1","men outnumber women in the public SRHR conversation"]],
+  idea:"The barrier to SRHR is not one thing you can fix in isolation. Patriarchy, culture, religion and disinformation act as <b>one machine</b> — pull one gear and the others still turn. That's why single-dimension campaigns underperform.",
+  fw:["fw","The four gears",["<b>Patriarchy</b> — who holds the decision","<b>Culture &amp; shame</b> — what is 'respectable'","<b>Religion</b> — what is 'right'","<b>Disinformation</b> — what is 'true'"]],
+  tool:"Map the Machine",toolsub:"Tap each force pressing on Agneta to see how it works — and how they reinforce each other.",render:renderMachine},
+
+ {k:"Disinformation",t:"An environment tilted against health",who:"Uncle Silas &amp; Beth",
+  scene:"Forwarded as received 🙏: 'Doctors confirm family planning causes cancer — share before it's deleted.'",
+  stats:[["15:1","negative-to-positive ratio on abortion — the highest in the dataset"],["140,950","posts in the 8-week HIV faith-healing wave"],["7:1","reach advantage of HIV-cure disinfo over condom-day messaging"]],
+  idea:"You cannot fact-check your way out. Disinformation spreads on emotion and trust, not evidence. The skill is <b>prebunking</b> — teaching people to spot the manipulation signals before the next forward lands.",
+  fw:["fw","The four disinformation typologies",["<b>Contraceptive safety myths</b> — 'Depo makes you barren.'","<b>Fertility &amp; abortion fears</b> — 'Termination causes lifelong infertility.'","<b>Anti-CSE rhetoric</b> — 'Foreign values imposed on our children.'","<b>HIV faith-healing &amp; ARV distrust</b> — 'HIV can be cured by divine intervention.'"]],
+  tool:"Spot the tell-tale signs",toolsub:"Tap the parts of this real-shape WhatsApp forward that signal manipulation. Find all four.",render:renderSignals},
+
+ {k:"Culture &amp; Patriarchy",t:"A structure, not a bag of bad attitudes",who:"Mama Grace &amp; Tom",
+  scene:"Tom decides the family size. When he finds Grace's hidden pills, the cost of her choice becomes visible — and it is high.",
+  stats:[["~50%","of women who use contraception do so in secret"],["76%","name fear of community judgment as the top barrier"],["#1","male authority over the household decision, above cost or distance"]],
+  idea:"Women's SRHR choices carry a <b>cost</b> — of conflict, of judgment, of safety. Shaming men rarely lowers it. What shifts things is reducing the cost of her decision: making the choice quieter, safer, and socially backed.",
+  fw:["fw","What actually shifts men",["Frame as <b>provision &amp; protection</b>, not compliance","<b>Shared decisions</b>, not surrendered control","A <b>respected male voice</b> carries it further than an institution"]],
+  tool:"Cost her decision, then lower the cost",toolsub:"Grace's choice starts costly. Switch on the supports and watch the cost fall.",render:renderCost},
+
+ {k:"Reframing",t:"The audience is not where the sector is",who:"Nurse Wanjiru",
+  scene:"Same facts, rebuilt: to reach Tom, lead with provision; to reach Beth, lead with protecting Agneta — voiced by the nurse they already trust.",
+  stats:[["8%","of Kenyans associate SRHR with rights; only 2% with wellbeing"],["71%","trust healthcare workers — the sector's real megaphone"],["5-part","the reframing formula every message runs through"]],
+  idea:"The frame beats the fact. Lead with a value people already hold — health, family, provision — and arrive at rights from there. <b>Health is the entry point; rights is the destination.</b>",
+  fw:["fw","The five-part formula",["<b>Value</b> — the belief they already hold","<b>Bridge</b> — from that value to the health choice","<b>Fact</b> — said once, without jargon","<b>Messenger</b> — the trusted voice who carries it","<b>Ask</b> — one small, safe next step"]],
+  tool:"The Reframing Worksheet",toolsub:"Build a reframed message live with the five-part formula — then compare against the sector's usual version.",render:renderReframer},
+
+ {k:"What Works",t:"Proof points your strategy can stand on",who:"The whole community",
+  scene:"The corner that changes things: Wanjiru's youth desk, Kevo's Sheng clip, Rev. Otieno turned ally, Brenda's story.",
+  stats:[["48%","internet penetration (27.4M users) — real, but uneven"],["60/40","male-to-female skew in social-media use"],["radio","the cheapest channel that reaches the unreached"]],
+  idea:"Match the <b>channel and messenger to the audience</b>, honestly. Digital reaches youth but not older women; community radio reaches the unreached cheaply; peer and survivor voices carry what no institution can.",
+  fw:["fw","An honest look",["Digital has real reach — and real blind spots (older, rural, offline)","Community radio is the highest-value channel per shilling","Peer &amp; survivor testimony carries trust institutions can't buy","Well-funded programmes (e.g. DREAMS) still fell short — design for realistic outcomes"]],
+  tool:"Channel &amp; messenger matrix",toolsub:"Pick who you need to reach — get the channel and messenger the evidence backs.",render:renderMatrix},
+
+ {k:"The Operating System",t:"From a guide to five habits",who:"Your team",
+  scene:"The guide only works if it becomes routine — five habits a team runs every week, not a document that sits in a drawer.",
+  stats:[["5","habits that turn the guide into standing practice"],["1","named person on the listening rota each week"],["20 min","the monthly review that keeps it alive"]],
+  idea:"Turn the toolkit into standing practice: a listening rota, a living message library, a trusted-messenger map, a 30-second framing check on every message, and a monthly review.",
+  fw:["fw","The five habits (who owns what)",["<b>The listening rota</b> — one person scans X, TikTok &amp; WhatsApp weekly","<b>The living message library</b> — every good counter saved &amp; tagged","<b>The trusted-messenger map</b> — who will speak on what, reachable fast","<b>The 30-second framing check</b> — no message goes out unchecked","<b>The monthly 20-minute review</b> — what surfaced, what to reframe next"]],
+  tool:"The Five Habits",toolsub:"Check the habits your team already runs. This is your baseline self-assessment.",render:renderHabits},
+
+ {k:"Mother &amp; Aunty · Part 1",t:"The strategic frontier",who:"Beth &amp; Agneta",
+  scene:"In the kitchen, Agneta confides her fear to Beth — who answers with love and the advice she was given: 'marry by 20, before it's too late.'",
+  stats:[["67%","say older women shape younger women's confidence to decide"],["64%","say older women encourage adherence to traditional norms"],["60%","say they influence seeking services openly vs secretly"],],
+  idea:"Older women are the highest-leverage, least-used intervention point. The most trusted channel — the aunty in the kitchen — also carries the most misinformation. The battleground isn't facts, it's <b>norms</b>.",
+  fw:["fw","What Beth transmits (four strands)",["<b>Patriarchy</b> — 'A woman's worth is her children.'","<b>Culture &amp; shame</b> — 'Only loose girls go to the clinic.'","<b>SRHR disinformation</b> — 'Family planning makes you barren.'","<b>Fertility pressure</b> — 'Start early while your body is strong.'"]],
+  tool:"Rewrite the warning",toolsub:"Beth's warning comes from love. Pick the reframed lines that keep the love and change the message.",render:renderRewrite},
+
+ {k:"Mother &amp; Aunty · Part 2",t:"The facilitator curriculum",who:"Champion aunties",
+  scene:"Beth doesn't need a lecture. She needs a path — from certain gatekeeper to the family's strongest champion for Agneta's health.",
+  stats:[["4","stages from gatekeeper to champion"],["5","facilitator-led sessions","5"],["3","field cards: Champion Aunty, Myth &amp; Fact, WhatsApp voice-notes"]],
+  idea:"This is the hands-on curriculum: how to recruit champion aunties, move them along the <b>gatekeeper → champion</b> pathway, and interrupt the transfer respectfully — in the kitchen, the WhatsApp group, at ceremonies, and at the clinic.",
+  fw:["fw","Five principles for interrupting the transfer",["Never shame the messenger — she acts from love","Lead with the fact; name the myth once (truth sandwich)","Replace, don't just remove — give her a new line to pass on","Work her real channels — kitchen, WhatsApp, gatherings","Make the girl's health a matter of respect, not rebellion"]],
+  tool:"Gatekeeper → champion",toolsub:"Walk Beth along the pathway, then flip the Myth & Fact cards she'll carry.",render:renderMA},
+];
+
+var done={};try{done=JSON.parse(store.get('imaarisha_tk_done')||'{}')||{}}catch(e){done={}}
+function markDone(i){if(!done[i]){done[i]=1;store.set('imaarisha_tk_done',JSON.stringify(done));paint();}}
+function paint(){var n=Object.keys(done).length;
+  var pc=document.getElementById('progcount');if(pc)pc.textContent=n;
+  var pb=document.getElementById('progbar');if(pb)pb.style.width=(n/8*100)+'%';
+  var t=document.getElementById('progtext');if(t)t.textContent=n===0?"Open a module's tool to mark it explored. Progress saves on this device.":n<8?("You've explored "+n+" of the 8 tools — keep going."):"All eight explored. You've walked the whole guide — from the system to Beth's arc as champion. 🌿";
+  MODS.forEach(function(m,i){var mo=document.getElementById('mod'+i);if(mo)mo.classList.toggle('done',!!done[i]);
+    var rn=document.getElementById('railm'+i);if(rn)rn.classList.toggle('done',!!done[i]);});}
+
+/* build module list + rail */
+var list=document.getElementById('modlist'),railmods=document.getElementById('railmods');
+MODS.forEach(function(m,i){
+  var el=document.createElement('div');el.className='mod'+(done[i]?' done':'');el.id='mod'+i;
+  el.innerHTML='<button class="head" aria-expanded="false" aria-controls="b'+i+'"><span class="num">'+(i+1)+'</span>'+
+    '<span class="htxt"><span class="kick">'+m.k+'</span><span class="ttl">'+m.t+'</span></span>'+
+    '<span class="dot"></span><span class="chev">▶</span></button><div class="body" id="b'+i+'" hidden></div>';
+  list.appendChild(el);
+  var head=el.querySelector('.head'),body=el.querySelector('.body');
+  head.addEventListener('click',function(){var open=el.classList.toggle('open');head.setAttribute('aria-expanded',open?'true':'false');body.hidden=!open;
+    if(open&&!body.dataset.built){buildBody(body,m,i);body.dataset.built="1";}});
+  var rb=document.createElement('button');rb.className='navitem'+(done[i]?' done':'');rb.id='railm'+i;rb.setAttribute('data-openmod',i);
+  rb.innerHTML='<span class="nnum">'+(i+1)+'</span><span style="flex:1">'+m.t+'</span><span class="ndot"></span>';
+  railmods.appendChild(rb);
+  rb.addEventListener('click',function(){openMod(i);});
+});
+function openMod(i){var el=document.getElementById('mod'+i);if(!el)return;var head=el.querySelector('.head'),body=el.querySelector('.body');
+  if(!el.classList.contains('open')){el.classList.add('open');head.setAttribute('aria-expanded','true');body.hidden=false;
+    if(!body.dataset.built){buildBody(body,MODS[i],i);body.dataset.built="1";}}
+  el.scrollIntoView({behavior:'smooth',block:'start'});setRail('railm'+i);}
+
+function buildBody(body,m,i){
+  body.innerHTML='<div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
+    stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
+    '<div class="tool"><div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
+  m.render(document.getElementById('tb'+i),i);
+}
+
+/* ===== interactions ===== */
+function renderMachine(root,idx){
+  var f=[["👨🏾","Father / patriarchy","Tom holds the decision. Agneta's future is his to approve — so her health choice is never only hers."],
+    ["⛪","Pulpit / religion","Rev. Otieno's Sunday word sets what's 'right.' Unengaged, it sanctions silence; engaged, it can bless health."],
+    ["📱","WhatsApp / disinfo","Silas's forwards arrive faster than any clinic. Fear travels; correction lags a day behind."],
+    ["🔥","Backlash / norms","#MasculinitySaturday reframes her choice as disloyalty — so speaking up carries a social cost."]];
+  root.innerHTML='<div class="machine"><div class="centergirl">At the centre: <b>Agneta, 17</b> — one fear, pressed from four sides at once.</div>'+
+    f.map(function(x){return '<button class="force" aria-expanded="false"><span class="fh"><span class="fi">'+x[0]+'</span>'+x[1]+'</span><span class="reveal">'+x[2]+'</span></button>';}).join('')+'</div>'+
+    '<p class="scoreline" id="ms'+idx+'">Tapped 0 of 4 — see how each gear turns.</p>';
+  var seen={};root.querySelectorAll('.force').forEach(function(b,k){b.addEventListener('click',function(){
+    var o=b.getAttribute('aria-expanded')==='true';b.setAttribute('aria-expanded',o?'false':'true');
+    if(!o){seen[k]=1;var n=Object.keys(seen).length;document.getElementById('ms'+idx).innerHTML=n<4?('Tapped '+n+' of 4 — see how each gear turns.'):'<b>All four turn together.</b> Pull one gear and the rest still hold — that\'s why one-dimension campaigns slip.';if(n>=4)markDone(idx);}});});
+}
+function renderSignals(root,idx){
+  var p=[["Forwarded as received 🙏","Anonymous origin — no source you can check."],["Doctors confirm","Fake authority — 'doctors' with no name, study or link."],["causes cancer","Fear hook — a dramatic health threat to trigger sharing."],["share before it's deleted","Urgency + conspiracy — pushes you to forward without thinking."]];
+  root.innerHTML='<div class="wa"><div class="bubble"><div class="frm">Uncle Silas · Achieng Family</div><span class="signal" data-i="0">Forwarded as received 🙏</span>: ‘<span class="signal" data-i="1">Doctors confirm</span> family planning <span class="signal" data-i="2">causes cancer</span> — <span class="signal" data-i="3">share before it\'s deleted</span>.’<div class="meta">08:14 ✓✓</div></div></div>'+
+    '<p class="scoreline" id="ss'+idx+'">Found <b>0</b> of 4 manipulation signals.</p><div id="sw'+idx+'" style="margin-top:8px;display:grid;gap:6px"></div>';
+  var found={},sc=document.getElementById('ss'+idx),wl=document.getElementById('sw'+idx);
+  root.querySelectorAll('.signal').forEach(function(s){s.addEventListener('click',function(){var i=s.getAttribute('data-i');if(found[i])return;found[i]=1;s.classList.add('tag');
+    var n=Object.keys(found).length;sc.innerHTML='Found <b>'+n+'</b> of 4 manipulation signals.';
+    var d=document.createElement('div');d.style.cssText='font-size:12.5px;color:var(--ink2)';d.innerHTML='✓ <b>“'+p[i][0]+'”</b> — '+p[i][1];wl.appendChild(d);
+    if(n>=4){var e=document.createElement('div');e.style.cssText='font-size:13px;font-weight:700;color:var(--green);margin-top:4px';e.textContent='That\'s prebunking. Once people can name the trick, the next forward loses its grip.';wl.appendChild(e);markDone(idx);}});});
+}
+function renderCost(root,idx){
+  var lv=[["A private supply she controls",22],["Beth quietly on her side",26],["Nurse Wanjiru's youth-friendly corner",20],["Tom hearing it as provision, not defiance",32]];
+  root.innerHTML='<div class="cost">'+lv.map(function(l,k){return '<div class="lever"><label id="lv'+idx+k+'">'+l[0]+'</label><button class="switch" role="switch" aria-checked="false" aria-labelledby="lv'+idx+k+'" data-w="'+l[1]+'"></button></div>';}).join('')+
+    '<div class="meter" style="margin-top:14px"><div class="barwrap"><div class="bar" id="cb'+idx+'"></div></div><div class="lab"><span>Cost of her choice</span><span class="v" id="cv'+idx+'">High</span></div></div>'+
+    '<p class="scoreline">Grace didn\'t need a lecture. She needed the cost of choosing to come down.</p></div>';
+  var bar=document.getElementById('cb'+idx),val=document.getElementById('cv'+idx),on={};
+  root.querySelectorAll('.switch').forEach(function(sw,k){sw.addEventListener('click',function(){var c=sw.getAttribute('aria-checked')==='true';sw.setAttribute('aria-checked',c?'false':'true');on[k]=!c;
+    var drop=0;root.querySelectorAll('.switch').forEach(function(s2,j){if(on[j])drop+=parseInt(s2.getAttribute('data-w'),10);});
+    var cost=Math.max(4,100-drop);bar.style.width=cost+'%';val.textContent=cost>70?'High':cost>40?'Manageable':cost>15?'Low':'Barely there';
+    if(Object.values(on).filter(Boolean).length>=3)markDone(idx);});});
+}
+function renderRewrite(root,idx){
+  var o=["I want you to finish school first — a nurse can look after all of us.","There's no rush, my child. The clinic can help you plan when the time is right.","Marrying young is what protected me — do the same and don't ask questions."];
+  root.innerHTML='<div class="rw"><div class="before"><div class="l">Beth\'s warning — from love</div>“Marry by 20, before it\'s too late. That\'s how we protected ourselves.”</div>'+
+    '<div class="opts"><div class="l">Keep the love — choose the two lines that re-script it</div><div class="chips" id="rc'+idx+'">'+o.map(function(x,k){return '<button class="chip" data-good="'+(k<2?1:0)+'" style="text-align:left;white-space:normal">'+x+'</button>';}).join('')+'</div></div>'+
+    '<div class="after"><div class="l">Beth, re-scripted as champion</div><div class="txt" id="ro'+idx+'">Pick the lines that keep Beth warm but change what she passes on…</div></div></div>';
+  var picked=[],out=document.getElementById('ro'+idx);
+  root.querySelectorAll('#rc'+idx+' .chip').forEach(function(c){c.addEventListener('click',function(){var on=c.getAttribute('aria-pressed')==='true';
+    if(c.getAttribute('data-good')==='0'){c.style.borderColor='var(--coral)';out.innerHTML='<span style="color:var(--coral)">That one still shuts the door — it protects the norm, not Agneta.</span>';setTimeout(function(){c.style.borderColor='';},400);return;}
+    c.setAttribute('aria-pressed',on?'false':'true');var txt=c.textContent;if(!on)picked.push(txt);else picked=picked.filter(function(x){return x!==txt});
+    out.textContent=picked.length?'“'+picked.join(' ')+'”':'Pick the lines that keep Beth warm but change what she passes on…';if(picked.length>=2)markDone(idx);});});
+}
+function renderReframer(root,idx){
+  var V={provision:["Tom — provision & pride","a father who provides for his family","every child you can truly educate is a child who lifts this family","Nurse Wanjiru","let's plan the family you can give a real future"],
+    protect:["Beth — protecting Agneta","an aunt who protects the girls she loves","the surest way to protect Agneta is to let her finish school","Nurse Wanjiru","walk with her to the clinic once"],
+    faith:["Rev. Otieno's flock — dignity","a community that guards life and dignity","caring for a mother's health honours the life you value","Rev. Otieno","bring it into one Sunday word"],
+    youth:["Kevo's followers — freedom & future","young people who want to author their own lives","knowing your options is how you stay in charge of your story","Kevo (Sheng)","drop the clinic link in the group"]};
+  var LIB=[["Contraception is your reproductive right.","Spacing your children is how a family stays healthy and strong — and it's your choice to make."],
+    ["CSE protects children's bodily autonomy.","When young people get accurate answers early, they make safer, more responsible decisions."],
+    ["Abortion access is a human right.","Every woman deserves safe, accurate, non-judgmental care — whatever her situation."],
+    ["Men must stop controlling women's bodies.","When partners decide together, the whole family is stronger — shared decisions, shared future."]];
+  root.innerHTML='<div class="rf"><label class="fl" for="ra'+idx+'">1 · Whose value am I leading with?</label>'+
+    '<select id="ra'+idx+'">'+Object.keys(V).map(function(k){return '<option value="'+k+'">'+V[k][0]+'</option>';}).join('')+'</select>'+
+    '<label class="fl" for="rfa'+idx+'">3 · The plain fact (say it once, no jargon)</label><input id="rfa'+idx+'" value="Spacing births safely is normal, legal health care."/>'+
+    '<label class="fl" for="rk'+idx+'">5 · The low-cost ask</label><input id="rk'+idx+'" placeholder="one small, safe next step"/>'+
+    '<div class="out"><div class="oh">📣 Your reframed message</div><div class="ob" id="rout'+idx+'"></div><div class="parts"><span class="pp">1 · Value</span><span class="pp">2 · Bridge</span><span class="pp">3 · Fact</span><span class="pp">4 · Messenger</span><span class="pp">5 · Ask</span></div></div>'+
+    '<div class="fl" style="margin-top:16px;color:var(--muted)">The sector\'s version → the reframe</div><div class="lib">'+LIB.map(function(l){return '<div class="p"><div class="s"><b>✗</b> "'+l[0]+'"</div><div class="r"><b>The reframe</b>"'+l[1]+'"</div></div>';}).join('')+'</div></div>';
+  var a=document.getElementById('ra'+idx),f=document.getElementById('rfa'+idx),k=document.getElementById('rk'+idx),out=document.getElementById('rout'+idx);
+  function build(){var v=V[a.value];var ask=k.value.trim()||v[4];out.innerHTML='Because you are <b>'+v[1]+'</b>, <span class="g">'+v[2]+'. </span>'+(f.value.trim()||'…')+' Coming from <b>'+v[3]+'</b>, the ask is simple: <span class="g">'+ask+'.</span>';markDone(idx);}
+  a.addEventListener('change',build);f.addEventListener('input',build);k.addEventListener('input',build);build();
+}
+function renderMatrix(root,idx){
+  var A={youth:["Youth, 18–24","Short vertical video on TikTok — captioned for the muted feed","Kevo — a Sheng creator they already follow","Youth trust peers and creators far above institutions; Sheng signals belonging."],
+    women:["Women, 25–40","WhatsApp groups + local-language radio","Nurse Wanjiru, in clips they can replay privately","Women act on trusted, private, repeatable information; radio reaches beyond data bundles."],
+    older:["Older women","Family WhatsApp + community radio + face-to-face dialogue","A champion aunty — a peer, not an expert","Norms shift peer-to-peer; older women are offline more and trust their own generation."],
+    men:["Men / fathers","Radio talk, barber-shop & church spaces","A respected male voice + faith ally","Men engage through provision and shared decisions, not lectures about rights."],
+    faith:["Faith communities","One Sunday word + small-group study","Rev. Otieno, framing health as dignity","The pulpit sets 'what's right' — engaged well, it blesses health-seeking."]};
+  root.innerHTML='<div class="mx"><div class="opts"><div class="l" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Who do you need to reach?</div>'+
+    '<div class="chips" id="mc'+idx+'">'+Object.keys(A).map(function(k,j){return '<button class="chip" data-k="'+k+'"'+(j===0?' aria-pressed="true"':'')+'>'+A[k][0]+'</button>';}).join('')+'</div></div><div class="res" id="mr'+idx+'"></div></div>';
+  var res=document.getElementById('mr'+idx);
+  function show(k){var a=A[k];res.innerHTML='<div class="rc"><div class="rt">Best channel</div><div class="rv">'+a[1]+'</div></div><div class="rc"><div class="rt">Best messenger</div><div class="rv">'+a[2]+'</div><div class="ev">Why: '+a[3]+'</div></div>';markDone(idx);}
+  root.querySelectorAll('#mc'+idx+' .chip').forEach(function(c){c.addEventListener('click',function(){root.querySelectorAll('#mc'+idx+' .chip').forEach(function(x){x.setAttribute('aria-pressed','false')});c.setAttribute('aria-pressed','true');show(c.getAttribute('data-k'));});});
+  show('youth');
+}
+function renderHabits(root,idx){
+  var H=[["Reframe by default","Start from a held value — health, family, provision — not from 'rights.'"],
+    ["Lead with trusted messengers","Route the message through the nurse, the aunty, the pastor — not institutional volume."],
+    ["Prebunk before you're hit","Teach the manipulation signals ahead of the next forward, don't just correct after."],
+    ["Treat older women as partners","Design for the Mother & Aunty channel — the highest-leverage point, not an afterthought."],
+    ["Measure realistic outcomes","Track content shifts, script adoption and service-seeking — not only headline endpoints."]];
+  root.innerHTML='<div class="hab">'+H.map(function(h){return '<button class="h" aria-pressed="false"><span class="cbx">✓</span><span><span class="ht">'+h[0]+'</span><span class="hd">'+h[1]+'</span></span></button>';}).join('')+'</div>'+
+    '<div class="note">'+'<div class=\'qr\'>'+QR.home+'</div>'+'<b>Two-track by design.</b> This same module prints as a one-page job-aid; the QR bridges paper back to the character audio and the live web tools — so it works in a clinic with no data just as well as on a phone.</div>';
+  var on={};root.querySelectorAll('.hab .h').forEach(function(b,k){b.addEventListener('click',function(){var p=b.getAttribute('aria-pressed')==='true';b.setAttribute('aria-pressed',p?'false':'true');on[k]=!p;if(Object.values(on).filter(Boolean).length>=1)markDone(idx);});});
+}
+function renderMA(root,idx){
+  var ST=[["0 · Gatekeeper","Certain and protective; passes on the warnings as settled truth. Not open to a stranger's facts."],
+    ["1 · Unsettle","A trusted peer plants one doubt — 'my niece's nurse said different' — without any confrontation."],
+    ["2 · Try","She tests one new line quietly; sees a girl respected, not shamed, for going to the clinic."],
+    ["3 · Adopt","She quietly changes her own advice in the kitchen and the group; she goes with a girl to the clinic."]];
+  var CARDS=[["Family planning makes a woman barren.","Fertility returns after you stop. Spacing births does not stop you having children later."],
+    ["Depo / the injection damages the womb.","These methods are safe and well studied. If one doesn't suit her, the nurse can change it."],
+    ["A girl must marry and start children early.","A girl who finishes school and trains is a strong woman; children come when she is ready."],
+    ["Going to the clinic brings shame.","A girl who cares for her health is to be respected. Go with her if she is afraid."]];
+  var SESS=[["Session 1","The room we're in — why older women hold the keys, and what we transmit."],
+    ["Session 2","Truth sandwiches — lead with the fact, name the myth once, close with the fact."],
+    ["Session 3","The four myths &amp; the elder cards — practising the new lines out loud."],
+    ["Session 4","My channels — the kitchen, the WhatsApp group, the gathering, the doorstep."],
+    ["Session 5","Becoming a champion — the Aunty's card, and how we'll know it's working."]];
+  root.innerHTML='<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">The gatekeeper → champion pathway</div>'+
+    '<div class="step" id="mst'+idx+'">'+ST.map(function(s,k){return '<button data-k="'+k+'"'+(k===0?' aria-current="true"':'')+'>'+s[0].split(' · ')[0]+'</button>';}).join('')+'</div>'+
+    '<div class="stepbody" id="msb'+idx+'"></div>'+
+    '<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 0">The Myth &amp; Fact cards she carries — tap to flip</div>'+
+    '<div class="flip" id="mf'+idx+'">'+CARDS.map(function(c,k){return '<button class="card2" data-k="'+k+'"><div class="m"><span class="ic">✗</span>“'+c[0]+'”</div><div class="f" hidden><b>The fact, kindly put:</b> '+c[1]+'</div></button>';}).join('')+'</div>'+
+    '<div class="fl" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 0">The five-session curriculum</div>'+
+    '<div class="sesslist">'+SESS.map(function(s,k){return '<div class="sess"><div class="sn">'+(k+1)+'</div><div class="sx"><b>'+s[0]+'</b><p>'+s[1]+'</p></div></div>';}).join('')+'</div>'+
+    '<div class="note"><div class="qr">'+QR.ma+'</div><b>The champion\'s field cards.</b> In print, this module folds to a wallet-size Champion Aunty card and a Myth &amp; Fact card. The QR opens the WhatsApp voice-note scripts and the live tools — so a champion has the guide in the kitchen, online or off.</div>';
+  var sb=document.getElementById('msb'+idx);function showStep(k){sb.innerHTML='<div class="st">Stage '+ST[k][0]+'</div><div class="sv">Where Beth is</div><div class="sd">'+ST[k][1]+'</div>';}
+  showStep(0);var flipped={};
+  root.querySelectorAll('#mst'+idx+' button').forEach(function(b){b.addEventListener('click',function(){root.querySelectorAll('#mst'+idx+' button').forEach(function(x){x.setAttribute('aria-current','false')});b.setAttribute('aria-current','true');var k=+b.getAttribute('data-k');showStep(k);if(k>=3)markDone(idx);});});
+  root.querySelectorAll('#mf'+idx+' .card2').forEach(function(c){c.addEventListener('click',function(){var f=c.querySelector('.f');f.hidden=!f.hidden;c.querySelector('.ic').textContent=f.hidden?'✗':'✓';c.querySelector('.ic').style.color=f.hidden?'var(--coral)':'var(--green)';flipped[c.getAttribute('data-k')]=1;if(Object.keys(flipped).length>=2)markDone(idx);});});
+}
+
+/* ===== nav, theme, install, offline ===== */
+function setRail(id){document.querySelectorAll('.rail .navitem, .botnav button').forEach(function(x){x.setAttribute('aria-current','false')});
+  var r=document.getElementById(id);if(r)r.setAttribute('aria-current','true');}
+document.querySelectorAll('[data-jump]').forEach(function(b){b.addEventListener('click',function(){var el=document.getElementById(b.getAttribute('data-jump'));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.botnav button').forEach(function(x){x.setAttribute('aria-current',x.getAttribute('data-jump')===b.getAttribute('data-jump')?'true':'false')});});});
+
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);store.set('imaarisha_theme',t);}
+var saved=store.get('imaarisha_theme');if(saved)applyTheme(saved);
+function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme');var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme:dark)').matches;applyTheme(dark?'light':'dark');}
+['themebtn','themebtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',toggleTheme);});
+document.getElementById('resetprog').addEventListener('click',function(){done={};store.set('imaarisha_tk_done','{}');paint();});
+
+/* install prompt */
+var deferred=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;var b=document.getElementById('instbar');if(b)b.hidden=false;});
+document.getElementById('installbtn').addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;document.getElementById('instbar').hidden=true;});});
+window.addEventListener('appinstalled',function(){var b=document.getElementById('instbar');if(b)b.hidden=true;});
+
+/* offline toast */
+function offlineToast(){if(!navigator.onLine){var t=document.createElement('div');t.className='offline';t.textContent='● Offline — the guide still works';document.body.appendChild(t);setTimeout(function(){t.remove();},3200);}}
+window.addEventListener('offline',offlineToast);
+
+/* service worker */
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+
+/* deep links: #m<n> opens module n (for print QR codes) */
+function openFromHash(){var mm=(location.hash||'').match(/^#m(\d+)$/);if(mm){var n=+mm[1];if(n>=0&&n<MODS.length)setTimeout(function(){openMod(n);},60);}}
+window.addEventListener('hashchange',openFromHash);openFromHash();
+
+paint();
+</script>
+</body>
+</html>
