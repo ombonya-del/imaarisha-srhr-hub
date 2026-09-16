@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { sb, C, timeAgo, logActivity, toast } from '../lib/supabase'
+import { sb, C, timeAgo, logActivity, toast, insertRow, isFresh } from '../lib/supabase'
 import { ScreenTitle, Chip, Btn, inputStyle } from '../lib/components'
+import { NotifyButton } from '../lib/matchNotify'
 
 const TYPE_ICONS = { report:'📊', toolkit:'🧰', research:'🔬', policy:'📜', guide:'📘', data:'📈', video:'🎬', link:'🔗' }
 const RES_TYPES = ['report','toolkit','research','policy','guide','data','video','link']
@@ -161,7 +162,7 @@ export default function Exchange({ session }) {
                 <div style={{ flex:1, minWidth:0 }}>
                   <p style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:800, letterSpacing:'.1em',
                     textTransform:'uppercase', color:C.sky, margin:'2px 0 3px' }}>
-                    {r.type || 'document'}{r.is_restricted ? ' · 🔐 restricted' : ''}
+                    {r.type || 'document'}{r.is_restricted ? ' · 🔐 restricted' : ''}{isFresh(r.created_at) ? ' · ● NEW' : ''}
                   </p>
                   <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:0, lineHeight:1.35,
                     overflowWrap:'anywhere' }}>{tidyTitle(r.title)}</p>
@@ -172,6 +173,7 @@ export default function Exchange({ session }) {
               <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'10px 15px 0' }}>
                 {[r.source_org, r.file_type, r.file_size].filter(Boolean).join(' · ')}{(r.source_org||r.file_type||r.file_size) ? ' · ' : ''}{timeAgo(r.created_at)}
               </p>
+              {Array.isArray(r.focus_tags) && r.focus_tags.length>0 && <div style={{ display:'flex', gap:5, flexWrap:'wrap', margin:'8px 15px 0' }}>{r.focus_tags.slice(0,5).map(tg=><span key={tg} style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:700, color:C.sky, background:C.sky+'14', borderRadius:6, padding:'2px 7px' }}>#{tg}</span>)}</div>}
               <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', padding:'12px 15px 14px', marginTop:8 }}>
                 {(r.file_url || r.file_path) && (
                   myReq[r.id] === 'approved' ? DL(r)
@@ -183,8 +185,9 @@ export default function Exchange({ session }) {
                   : <Btn small onClick={()=>openRequest(r)}>⬇ Download</Btn>
                 )}
                 <Btn small ghost onClick={()=>share(r)}>↗ Share</Btn>
+                {isAdmin && <span onClick={ev=>ev.stopPropagation()} style={{ marginLeft:'auto' }}><NotifyButton item={r} itemType="resource"/></span>}
                 {isAdmin && <button onClick={()=>setEditRes(r)} title="Edit this resource"
-                  style={{ marginLeft:'auto', fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.mut }}>✏️</button>}
+                  style={{ marginLeft:6, fontFamily:C.sans, fontSize:12, background:'none', border:'none', cursor:'pointer', color:C.mut }}>✏️</button>}
                 {isAdmin && <button onClick={async()=>{
                   if (!confirm('Delete resource?')) return
                   const { error } = await sb.from('resources').delete().eq('id', r.id)
@@ -202,27 +205,45 @@ export default function Exchange({ session }) {
           {opps.map(o => {
             const days = o.deadline ? Math.ceil((new Date(o.deadline) - Date.now()) / 86400000) : null
             const closed = days !== null && days < 0
+            const closeColor = closed ? C.coral : (days !== null && days <= 7 ? C.coral : C.mint)
+            const closeText = o.deadline
+              ? (closed ? '⛔ Closed' : (days === 0 ? '⏳ Closes today' : `⏳ ${days} day${days===1?'':'s'} left`)) + ' · ' + new Date(o.deadline).toLocaleDateString()
+              : '🔄 Rolling / open'
+            const chip = (bg, col, txt) => (
+              <span style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:col, background:bg, borderRadius:20, padding:'3px 10px', whiteSpace:'nowrap' }}>{txt}</span>
+            )
             return (
               <div key={o.id}
                 onClick={() => o.link && window.open(withHttp(o.link), '_blank', 'noopener,noreferrer')}
                 role={o.link ? 'button' : undefined} tabIndex={o.link ? 0 : undefined}
                 onKeyDown={ev => { if (o.link && ev.key === 'Enter') window.open(withHttp(o.link), '_blank', 'noopener,noreferrer') }}
-                style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.lilac}`, borderRadius:12, padding:16,
-                  cursor: o.link ? 'pointer' : 'default', transition:'border-color .15s' }}
+                style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${closed ? C.coral : C.lilac}`, borderRadius:12, padding:16,
+                  cursor: o.link ? 'pointer' : 'default', transition:'border-color .15s', opacity: closed ? .7 : 1 }}
                 onMouseEnter={ev => { if (o.link) ev.currentTarget.style.borderColor = C.lilac }}
                 onMouseLeave={ev => { ev.currentTarget.style.borderColor = C.line }}>
-                <p style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:C.lilac, margin:'0 0 5px' }}>
-                  {OPP_KINDS[o.kind] || '✨ Opportunity'}
-                </p>
-                <p style={{ fontFamily:C.sans, fontSize:15, fontWeight:800, color:C.txt, margin:'0 0 5px', lineHeight:1.35 }}>{o.title}</p>
-                {o.org && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 6px' }}>{o.org}</p>}
-                {o.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, lineHeight:1.6, margin:'0 0 8px' }}>{o.description}</p>}
-                <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-                  {o.deadline && <span style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color: (closed || days<=7) ? C.coral : C.mint }}>
-                    {closed ? '⛔ Closed' : (days === 0 ? '⏳ Closes today' : `⏳ ${days} days left`)} · {new Date(o.deadline).toLocaleDateString()}
-                  </span>}
+                <div style={{ display:'flex', gap:8, alignItems:'center', margin:'0 0 6px', flexWrap:'wrap' }}>
+                  <span style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:C.lilac }}>
+                    {OPP_KINDS[o.kind] || '✨ Opportunity'}
+                  </span>
+                  {isFresh(o.created_at) && <span style={{ fontFamily:C.sans, fontSize:9, fontWeight:800, letterSpacing:'.05em', textTransform:'uppercase', color:C.mint, background:C.mint+'1a', borderRadius:20, padding:'2px 8px' }}>● New</span>}
+                </div>
+                <p style={{ fontFamily:C.sans, fontSize:15, fontWeight:800, color:C.txt, margin:'0 0 7px', lineHeight:1.35 }}>{o.title}</p>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center', margin:'0 0 9px' }}>
+                  {o.org && chip(C.gold+'18', C.gold, `🏛 ${o.org}`)}
+                  {o.amount && chip(C.mint+'18', C.mint, `💰 ${o.amount}`)}
+                  {chip(closeColor+'18', closeColor, closeText)}
+                </div>
+                {o.eligibility && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.txt, margin:'0 0 7px', lineHeight:1.5 }}><b style={{ color:C.mut }}>Who can apply: </b>{o.eligibility}</p>}
+                {o.description && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 9px', display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{o.description}</p>}
+                {Array.isArray(o.focus_tags) && o.focus_tags.length > 0 && (
+                  <div style={{ display:'flex', gap:5, flexWrap:'wrap', margin:'0 0 9px' }}>
+                    {o.focus_tags.slice(0,5).map(tg => <span key={tg} style={{ fontFamily:C.sans, fontSize:9.5, fontWeight:700, color:C.sky, background:C.sky+'14', borderRadius:6, padding:'2px 7px' }}>#{tg}</span>)}
+                  </div>
+                )}
+                <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                   {o.link && <a href={withHttp(o.link)} target="_blank" rel="noopener noreferrer" onClick={ev => ev.stopPropagation()}
                     style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'6px 13px', borderRadius:10, background:C.lilac, color:'#fff', textDecoration:'none' }}>Apply / details ↗</a>}
+                  {isAdmin && <span onClick={ev=>ev.stopPropagation()}><NotifyButton item={o} itemType="opportunity"/></span>}
                   {isAdmin && <Btn small ghost color={C.coral} onClick={async(ev)=>{ ev.stopPropagation(); if(!confirm('Delete opportunity?'))return; const {error}=await sb.from('opportunities').delete().eq('id',o.id); if(error)toast(error.message,'red'); else{toast('Deleted','gold'); setOpps(l=>l.filter(x=>x.id!==o.id))} }}>🗑</Btn>}
                 </div>
               </div>
@@ -343,6 +364,7 @@ function AddResourceModal({ session, onClose }) {
   const [url, setUrl] = useState('')
   const [file, setFile] = useState(null)
   const [restricted, setRestricted] = useState(false)
+  const [tags, setTags] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -368,10 +390,11 @@ function AddResourceModal({ session, onClose }) {
     } else if (!file_url) {
       setMsg('Add a link, or switch to Upload file.'); setBusy(false); return
     }
-    const { error } = await sb.from('resources').insert({
+    const { error } = await insertRow('resources', {
       title: title.trim(), type, description: desc.trim() || null,
       source_org: org.trim() || null, file_url, file_path, file_type, file_size,
-      is_restricted: restricted, status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
+      is_restricted: restricted, focus_tags: tags.trim() ? tags.split(',').map(x=>x.trim()).filter(Boolean) : null,
+      status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
     })
     setBusy(false)
     if (error) { setMsg(error.message); return }
@@ -418,6 +441,7 @@ function AddResourceModal({ session, onClose }) {
         )}
 
         <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <input style={inputStyle} placeholder="Focus tags, comma-separated (optional)" value={tags} onChange={e=>setTags(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Short description" value={desc} onChange={e=>setDesc(e.target.value)}/>
         <label style={{ display:'flex', alignItems:'center', gap:8, fontFamily:C.sans, fontSize:12, color:C.txt, margin:'2px 0 12px', cursor:'pointer' }}>
           <input type="checkbox" checked={restricted} onChange={e=>setRestricted(e.target.checked)}/>
@@ -523,15 +547,20 @@ function PostOpportunityModal({ session, onClose }) {
   const [desc, setDesc] = useState('')
   const [deadline, setDeadline] = useState('')
   const [link, setLink] = useState('')
+  const [amount, setAmount] = useState('')
+  const [elig, setElig] = useState('')
+  const [tags, setTags] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
   const submit = async () => {
     if (!title.trim()) { setMsg('Title is required.'); return }
     setBusy(true); setMsg('')
-    const { error } = await sb.from('opportunities').insert({
+    const { error } = await insertRow('opportunities', {
       title: title.trim(), kind, org: org.trim() || null, description: desc.trim() || null,
       deadline: deadline || null, link: link.trim() || null,
+      amount: amount.trim() || null, eligibility: elig.trim() || null,
+      focus_tags: tags.trim() ? tags.split(',').map(x=>x.trim()).filter(Boolean) : null,
       status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
     })
     setBusy(false)
@@ -555,9 +584,12 @@ function PostOpportunityModal({ session, onClose }) {
           {Object.entries(OPP_KINDS).map(([k,l]) => <option key={k} value={k}>{l}</option>)}
         </select>
         <input style={inputStyle} placeholder="Organization / funder" value={org} onChange={e=>setOrg(e.target.value)}/>
+        <input style={inputStyle} placeholder="Amount / value (e.g. KES 3M · $50k · Full)" value={amount} onChange={e=>setAmount(e.target.value)}/>
         <input style={inputStyle} placeholder="Link to apply / details" value={link} onChange={e=>setLink(e.target.value)}/>
         <label style={{ display:'block', fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 4px' }}>Deadline (optional)</label>
         <input style={inputStyle} type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/>
+        <input style={inputStyle} placeholder="Who can apply (eligibility)" value={elig} onChange={e=>setElig(e.target.value)}/>
+        <input style={inputStyle} placeholder="Focus tags, comma-separated (e.g. contraception, youth, gbv)" value={tags} onChange={e=>setTags(e.target.value)}/>
         <textarea style={{ ...inputStyle, minHeight:70 }} placeholder="Description" value={desc} onChange={e=>setDesc(e.target.value)}/>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
         <Btn full onClick={submit} disabled={busy || !title.trim()}>{busy ? 'Submitting…' : 'Submit for review'}</Btn>

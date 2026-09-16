@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { sb, C, logActivity, toast } from '../lib/supabase'
+import { sb, C, logActivity, toast, isFresh } from '../lib/supabase'
+import { NotifyButton } from '../lib/matchNotify'
 import { ScreenTitle, SectionLabel, Btn, inputStyle } from '../lib/components'
 
 const fmtDay   = (d) => new Date(d + 'T00:00:00').getDate()
@@ -80,6 +81,14 @@ export default function Events({ session, go, eventId }) {
     </div>
   )
 
+  // "Currency" for events: freshly posted, or happening soon.
+  const eventBadge = (e) => {
+    const today = new Date().toISOString().split('T')[0]
+    const days = Math.round((new Date((e.event_date)+'T00:00:00') - new Date(today+'T00:00:00')) / 86400000)
+    if (days >= 0 && days <= 7) return { txt: days === 0 ? 'TODAY' : days === 1 ? 'TOMORROW' : `IN ${days} DAYS`, col: C.gold }
+    if (isFresh(e.created_at, 10)) return { txt: 'NEW', col: C.mint }
+    return null
+  }
   // Clicking an event goes to its real website when it has one; otherwise it
   // opens the in-hub detail page.
   const Card = ({ e }) => (
@@ -97,7 +106,11 @@ export default function Events({ session, go, eventId }) {
           <div style={{ fontFamily:C.sans, fontSize:8.5, color:C.gold, marginTop:2 }}>–{fmtDay(e.end_date)} {fmtMonth(e.end_date)}</div>}
       </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:'0 0 4px', lineHeight:1.4 }}>{e.title}</p>
+        <div style={{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap', marginBottom:4 }}>
+          {eventBadge(e) && <span style={{ fontFamily:C.sans, fontSize:8.5, fontWeight:800, letterSpacing:'.1em',
+            color:'#fff', background:eventBadge(e).col, borderRadius:5, padding:'2px 6px' }}>{eventBadge(e).txt}</span>}
+          <p style={{ fontFamily:C.sans, fontSize:14.5, fontWeight:800, color:C.txt, margin:0, lineHeight:1.4 }}>{e.title}</p>
+        </div>
         <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 6px' }}>
           {fmtFull(e.event_date)}{e.start_time ? ` · ${e.start_time.slice(0,5)}` : ''}
           {e.is_virtual ? ' · 🌐 Online' : e.location ? ` · 📍 ${e.location}` : ''}
@@ -107,6 +120,7 @@ export default function Events({ session, go, eventId }) {
         <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap', justifyContent:'space-between' }}>
           <div onClick={ev => ev.stopPropagation()}><RsvpRow e={e}/></div>
           <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+            {session.isAdmin && <NotifyButton item={e} itemType="event"/>}
             {e.link && <button onClick={ev => { ev.stopPropagation(); openEvent(e) }}
               style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.mut, background:'none',
                 border:'none', cursor:'pointer', padding:0 }}>Details</button>}

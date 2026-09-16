@@ -160,3 +160,27 @@ export function parseBody(body) {
   if (last < body.length) segs.push({ type: 'text', text: body.slice(last) })
   return segs
 }
+
+// ── Resilient insert ─────────────────────────────────────────────────────────
+// Insert a row, but if the DB doesn't yet have one of the columns (e.g. a new
+// migration hasn't been applied on this environment), drop that column and retry
+// instead of failing the whole insert. Lets new front-end fields ship safely
+// ahead of the migration.
+export async function insertRow(table, row, { select } = {}) {
+  let payload = { ...row }
+  for (let i = 0; i < 8; i++) {
+    let q = sb.from(table).insert(payload)
+    if (select) q = q.select(select)
+    const res = await q
+    if (!res.error) return res
+    const msg = `${res.error.message || ''} ${res.error.details || ''}`
+    const m = msg.match(/['"]?([a-z0-9_]+)['"]?\s+column/i) || msg.match(/column\s+['"]?([a-z0-9_]+)['"]?/i)
+    const isColErr = res.error.code === '42703' || res.error.code === 'PGRST204' || /could not find the '.*' column|does not exist/i.test(msg)
+    if (isColErr && m && Object.prototype.hasOwnProperty.call(payload, m[1])) { delete payload[m[1]]; continue }
+    return res
+  }
+  return { error: { message: 'insert failed after retries' } }
+}
+
+// True if a timestamp is within the last `days` days — drives the "New" badge.
+export const isFresh = (ts, days = 14) => !!ts && (Date.now() - new Date(ts).getTime()) < days * 86400000
