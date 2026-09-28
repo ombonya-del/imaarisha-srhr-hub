@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-09-22T12:33:00Z",
+  "source": "X bookmark folder ImaarishaSRHR (@vombonya)",
+  "status": "NOT INSERTED — automated insert blocked. The service_role key in scripts/.secrets could not be materialized into the connected browser: the credential-materialization guardrail denied reading the key from scripts/.secrets, and neither the cloud sandbox nor the local device VM can reach Supabase (proxy 403 on CONNECT / curl exit 000). Same blocker as the 2026-09-17 and 2026-09-18 runs. Dedupe was done against the review-log history only, NOT against a live radar_items query. Insert manually (e.g. run scripts/insert_supplement.py on your Mac, which can reach Supabase) after de-duplicating each url against radar_items + auto-scanner ingests.",
+  "target_table": "public.radar_items",
+  "folder_posts_captured": 13,
+  "folder_note": "Folder timeline is virtualized and flaky (X intermittently resets scroll / times out). 13 unique posts captured this run. The 6 older posts inserted on 2026-09-19 (@John63681549, @Ndonglaw043, @FirstDoctor, @IMLU_org, @wambuijoan2024) plus @ericomondi_ (auto-scanner) did not re-render at the bottom this run but are already ingested, so nothing new is missing.",
+  "candidates": [
+    {
+      "source_name": "@NyakundiReport",
+      "title": "Father seeks justice as child sexual-assault case is repeatedly postponed",
+      "snippet": "Cyprian Nyakundi relays a father's account of waiting more than a year for justice after reporting a sexual assault involving his child, saying the case has been repeatedly postponed (attributed to Justice Ann Karimi). Child protection & access to justice for sexual violence.",
+      "url": "https://x.com/NyakundiReport/status/2101971691534512272",
+      "platform": "x",
+      "published_at": "2026-09-21T09:47:58Z",
+      "srhr_relevance": 6,
+      "harm_score": 1,
+      "sentiment": "alarming",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"],
+      "review_note": "SENSITIVE: single-source advocacy post that names a sitting judge and describes a child sexual-assault case. On-topic for the Radar's GBV/sexual-violence scope (cf. prior inserts @Ndonglaw043, @IMLU_org, @wambuijoan2024), but because radar_items is public-read and goes live on insert, confirm you are comfortable publishing before inserting."
+    }
+  ],
+  "ukweli_candidates": [],
+  "already_handled_this_folder": [
+    {"url": "https://x.com/Honeyfarsafi/status/2101234417737859142", "status": "inserted 2026-09-21 (row 02c4594a-7e96-4abe-89a9-265737fba20f)"},
+    {"url": "https://x.com/NationAfrica/status/2099853244117966922", "status": "auto-scanner ingest (maternity leave)"},
+    {"url": "https://x.com/sholard_mancity/status/2099206346197684540", "status": "auto-scanner ingest (age-of-consent)"},
+    {"url": "https://x.com/NomadicDothraki/status/2078119616912498887", "status": "inserted 2026-09-19 (vaginismus awareness) — verify which NomadicDothraki id"},
+    {"url": "https://x.com/NomadicDothraki/status/2078088166485975319", "status": "previously skipped (boxers-hygiene banter) — verify which NomadicDothraki id"},
+    {"url": "https://x.com/_mpekethu_/status/2067676771613319312", "status": "manual insert 2026-09-18 (contraception crash course)"},
+    {"url": "https://x.com/joshuamalidzo/status/2059979160857297102", "status": "manual insert 2026-09-18 (adolescent-sex judgment endorsement)"},
+    {"url": "https://x.com/joshuamalidzo/status/2057705531729424812", "status": "manual insert 2026-09-18 (gender-marker ruling)"},
+    {"url": "https://x.com/FaithOdhiambo8/status/2057359809305776499", "status": "manual insert 2026-09-18 (Petition E490/2025)"}
+  ],
+  "skipped": [
+    {"url": "https://x.com/adhiiiambo/status/2073815272473915638", "handle": "@adhiiiambo", "reason": "General community/belonging & money commentary; not SRHR (skipped in prior runs too)."},
+    {"url": "https://x.com/Iam_KendiH/status/2073744899090924001", "handle": "@Iam_KendiH", "reason": "One-line pregnancy-stigma joke; too thin/off-topic to file with confidence (skipped previously)."},
+    {"url": "https://x.com/kilundeezy/status/2095129913581801641", "handle": "@kilundeezy", "reason": "Vague Sheng insult over a clip; post text not classifiable as SRHR (skipped previously)."}
+  ]
+}

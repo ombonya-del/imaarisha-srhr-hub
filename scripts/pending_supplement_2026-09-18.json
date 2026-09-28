@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-09-18T10:31:38Z",
+  "source": "X bookmark folder ImaarishaSRHR (@vombonya)",
+  "status": "NOT INSERTED — automated insert blocked. The service_role key in scripts/.secrets could not be materialized into the connected browser (credential-materialization guardrail denied reading the key), and neither the cloud sandbox nor the local device VM can reach Supabase (curl exit 56). Dedupe against existing radar_items was therefore NOT possible. Insert manually (e.g. scripts/insert_supplement.py) after de-duplicating each url against radar_items + auto-scanner ingests.",
+  "target_table": "public.radar_items",
+  "folder_posts_total": 10,
+  "candidates": [
+    {
+      "source_name": "@NationAfrica",
+      "title": "Kenya's maternity leave could go from 90 days to six months",
+      "snippet": "Daily Nation reports on a proposal to extend statutory maternity leave from 90 days to six months — maternal health & workplace policy.",
+      "url": "https://x.com/NationAfrica/status/2099853244117966922",
+      "platform": "x",
+      "published_at": "2026-09-15T13:30:01Z",
+      "srhr_relevance": 7,
+      "harm_score": 0,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@sholard_mancity",
+      "title": "Commentary on adolescent relationship case and age-of-consent law",
+      "snippet": "Reaction to an NTV story on two 15-year-olds in a relationship, arguing against treating one as offender and the other as victim; touches Kenya's defilement / age-of-consent debate.",
+      "url": "https://x.com/sholard_mancity/status/2099206346197684540",
+      "platform": "x",
+      "published_at": "2026-09-13T18:39:28Z",
+      "srhr_relevance": 6,
+      "harm_score": 1,
+      "sentiment": "negative",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@ericomondi_",
+      "title": "Backlash against mocking endometriosis for clicks",
+      "snippet": "Eric Omondi calls out a creator who joked about endometriosis, stressing it is a serious reproductive-health condition affecting many women.",
+      "url": "https://x.com/ericomondi_/status/2094450780426178662",
+      "platform": "x",
+      "published_at": "2026-08-31T15:42:33Z",
+      "srhr_relevance": 6,
+      "harm_score": 1,
+      "sentiment": "negative",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en", "sw"]
+    },
+    {
+      "source_name": "@_mpekethu_",
+      "title": "Contraception crash course: pros and cons of methods",
+      "snippet": "A Sheng/English explainer on contraceptive options (abstinence, pills and more), covering effectiveness and trade-offs — youth-facing SRHR education. Educational/positive; routed to Radar tracking rather than published to Ukweli Learn (casual tone, goes live immediately).",
+      "url": "https://x.com/_mpekethu_/status/2067676771613319312",
+      "platform": "x",
+      "published_at": "2026-06-18T18:32:12Z",
+      "srhr_relevance": 8,
+      "harm_score": 0,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en", "sw"]
+    },
+    {
+      "source_name": "@joshuamalidzo",
+      "title": "Endorsement of Kenya's adolescent-sex judgment",
+      "snippet": "Lawyer Joshua Malidzo Nyawa highlights Gautam Bhatia's endorsement of the adolescent-sex judgment, noting the court's treatment of adolescents as constitutional rights-bearers.",
+      "url": "https://x.com/joshuamalidzo/status/2059979160857297102",
+      "platform": "x",
+      "published_at": "2026-05-28T12:44:39Z",
+      "srhr_relevance": 7,
+      "harm_score": 0,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@joshuamalidzo",
+      "title": "High Court: refusing to amend gender markers on IDs violates rights",
+      "snippet": "Legal update: refusal to amend sex/gender markers on official identification documents held to violate constitutional rights (Articles 27, 28, 29, 31, 33, 47) — bodily autonomy & identity.",
+      "url": "https://x.com/joshuamalidzo/status/2057705531729424812",
+      "platform": "x",
+      "published_at": "2026-05-22T06:10:03Z",
+      "srhr_relevance": 5,
+      "harm_score": 0,
+      "sentiment": "neutral",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@FaithOdhiambo8",
+      "title": "High Court judgment reshapes adolescent-sexuality law (Petition E490/2025)",
+      "snippet": "LSK president Faith Odhiambo explains the High Court judgment in Petition E490/2025 (HSO & 3 Others v. ODPP & 4 Others) on the misapplication of the Sexual Offences Act to prosecute adolescents.",
+      "url": "https://x.com/FaithOdhiambo8/status/2057359809305776499",
+      "platform": "x",
+      "published_at": "2026-05-21T07:16:17Z",
+      "srhr_relevance": 8,
+      "harm_score": 0,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    }
+  ],
+  "ukweli_candidates": [],
+  "skipped": [
+    {
+      "url": "https://x.com/kilundeezy/status/2095129913581801641",
+      "handle": "@kilundeezy",
+      "reason": "Vague Sheng insult over a video; no clearly discernible SRHR content (skipped previously too)."
+    },
+    {
+      "url": "https://x.com/adhiiiambo/status/2073815272473915638",
+      "handle": "@adhiiiambo",
+      "reason": "General social commentary on community/belonging and money; not SRHR."
+    },
+    {
+      "url": "https://x.com/Iam_KendiH/status/2073744899090924001",
+      "handle": "@Iam_KendiH",
+      "reason": "One-line joke about unmarried Christian influencers being pregnant; touches pregnancy stigma but too thin/off-topic to file with confidence."
+    }
+  ]
+}
