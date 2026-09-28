@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-09-27T10:45:00Z",
+  "source": "X bookmark folder ImaarishaSRHR (@vombonya)",
+  "status": "NOT INSERTED — automated insert blocked again. The credential guardrail denied materializing the service_role key from scripts/.secrets into the assistant (and this run it also began blocking the browser-automation tools themselves), so nothing could be POSTed. The local device VM still cannot reach Supabase (curl exit 56). Same blocker as 2026-09-17, -18, -22, -25. Dedupe here is against review-log history only, NOT a live radar_items query. Insert manually: run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-09-27.json` on your Mac (which can reach Supabase). The script dedupes each url against radar_items before inserting, so re-running / already-present urls are safe.",
+  "target_table": "public.radar_items",
+  "folder_note": "Folder reviewed from the top this run. Two posts are new since the 2026-09-25 sweep (@FitnessDr_ men's-health thread; @NationAfrica Sep 24 parliamentary-harassment story). The three prior candidates (@jumaf3, @action_activate, @NyakundiReport) are still in the folder and — per the review log — were never inserted (the insert was blocked on 09-22 and 09-25), so they are carried forward here again. All other folder posts are accounted for by prior runs (inserted, auto-scanner, or previously skipped). insert_supplement.py dedupes by url, so carrying items forward cannot create duplicates.",
+  "candidates": [
+    {
+      "source_name": "@jumaf3",
+      "title": "Sensationalized claim that a Kenyan High Court ruling legalizes sex/marriage between cousins",
+      "snippet": "Post amplifies a sokodirectory.com story ('Cousins Can Now Have Sex And Marry Each Other ~ Court'), claiming High Court Judge James Makau ruled the Sexual Offences Act does not list cousins among relatives liable for incest. Framed provocatively ('You may now marry, kiss, & have sex with ur cousin. Nobody will take you to court...'). Sexual-offences law reframed in a way that could mislead on incest/consent protections.",
+      "url": "https://x.com/jumaf3/status/2102451216609317096",
+      "platform": "x",
+      "published_at": "2026-09-22T17:33:26Z",
+      "srhr_relevance": 6,
+      "harm_score": 3,
+      "sentiment": "alarming",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": [
+        "en"
+      ],
+      "review_note": "Carried forward from 09-25 (still in folder, never inserted). Sensational/clickbait framing of a reported court ruling on the Sexual Offences Act. Underlying ruling not verified. is_disinfo=false (commentary on a reported ruling, not a confirmed fabrication) but flagged 'alarming', harm_score 3 for the misleading reframing. Verify the actual ruling before treating as fact."
+    },
+    {
+      "source_name": "@action_activate",
+      "title": "Activate Action & KELIN convene SRHR dialogue on reproductive healthcare access in Homa Bay",
+      "snippet": "Event promo: 'Join us as we bring together diverse SRHR voices to reflect on the realities young people and women face in accessing quality reproductive healthcare in Homa Bay County. Let's listen, learn, and move from evidence to action.' Flyer names the 23 Sep 2026 dialogue (moderator Nellie Adala; speakers Yvonne Odipo, Faith Wamburu, Nelson Onyimbi); tags @KELINKenya. Positive SRHR advocacy/convening.",
+      "url": "https://x.com/action_activate/status/2102117814630772956",
+      "platform": "x",
+      "published_at": "2026-09-21T19:28:37Z",
+      "srhr_relevance": 8,
+      "harm_score": 0,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": [
+        "en"
+      ],
+      "review_note": "Carried forward from 09-25 (still in folder, never inserted). Positive/neutral SRHR engagement (convening on reproductive-healthcare access). Not disinfo; tracked in Radar as positive-sentiment SRHR activity, consistent with prior runs."
+    },
+    {
+      "source_name": "@NyakundiReport",
+      "title": "Father seeks justice as child sexual-assault case is repeatedly postponed",
+      "snippet": "Cyprian Nyakundi relays a father's account of waiting more than a year for justice after reporting a sexual assault involving his child, saying the case has been repeatedly postponed (attributed to Justice Ann Karimi). Child protection & access to justice for sexual violence.",
+      "url": "https://x.com/NyakundiReport/status/2101971691534512272",
+      "platform": "x",
+      "published_at": "2026-09-21T09:47:58Z",
+      "srhr_relevance": 6,
+      "harm_score": 1,
+      "sentiment": "alarming",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": [
+        "en"
+      ],
+      "review_note": "CARRIED FORWARD since 09-22, still not inserted. SENSITIVE: single-source advocacy post that names a sitting judge and describes a child sexual-assault case. On-topic for the Radar's GBV/sexual-violence scope, but radar_items is public-read and goes live on insert — confirm you are comfortable publishing before inserting."
+    }
+  ],
+  "ukweli_candidates": [],
+  "new_this_run_needs_url": [
+    {
+      "source_name": "@NationAfrica",
+      "title": "Parliamentary officer sacked over alleged sexual harassment of intern",
+      "snippet": "Daily Nation report: a senior officer working in Parliament was sacked over alleged sexual harassment of an intern. GBV / sexual-harassment accountability news, on-topic for the Radar's GBV scope.",
+      "article_url": "https://nation.africa/kenya/counties/mombasa/parliamentary-officer-sacked-over-alleged-sexual-harassment-of-intern-5607014",
+      "url": null,
+      "platform": "x",
+      "published_at": "2026-09-24",
+      "srhr_relevance": 6,
+      "harm_score": 0,
+      "sentiment": "negative",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": [
+        "en"
+      ],
+      "review_note": "NEW since 09-25 (bookmarked after the last sweep). Could NOT capture the exact x.com/NationAfrica/status/ URL this run — the browser-automation tools were blocked by the guardrail before I could read the permalink. Article URL included for matching. Before inserting: (1) capture the tweet URL and set 'url', and (2) check the auto-scanner hasn't already ingested the nation.africa article version. Then move this object into 'candidates'. Likely a straightforward Radar add (GBV/sexual-harassment news)."
+    }
+  ],
+  "skipped_new_this_run": [
+    {
+      "source_name": "@FitnessDr_",
+      "url": null,
+      "reason": "Men's-health engagement-bait thread ('Most men think going down on her is the safe option... 6 science-backed facts every man needs to know'). Generic viral listicle, not Kenya-specific SRHR content or a discrete, verifiable claim to bust. Skipped as not confidently on-topic SRHR disinfo. Note if you disagree and want sexual-health listicles tracked."
+    }
+  ],
+  "already_handled_prior_runs": [
+    "@Honeyfarsafi/2101234417737859142 (inserted 09-21: Bungoma schoolgirls / teenage pregnancy)",
+    "@NationAfrica/2099853244117966922 (auto-scanner: maternity leave 90d->6mo)",
+    "@sholard_mancity/2099206346197684540 (auto-scanner: age-of-consent / Romeo & Juliet law)",
+    "@ericomondi_/2094450780426178662 (auto-scanner: endometriosis)",
+    "@John63681549/2093913637001777472 (inserted 09-19: forced marriage)",
+    "@Ndonglaw043/2090080007334797705 (inserted 09-19: revenge-porn ruling)",
+    "@FirstDoctor/2080250060097417489 (inserted 09-19: HPV/throat-cancer)",
+    "@IMLU_org/2079851050119344200 (inserted 09-19: Diana Chepng'eno petition)",
+    "@wambuijoan2024/2078353195483476378 (inserted 09-19: medical-negligence/cervix)",
+    "@NomadicDothraki/2078119616912498887 (inserted 09-19: vaginismus awareness)",
+    "@NomadicDothraki/2078088166485975319 (skipped: boxers-hygiene banter)",
+    "@_mpekethu_/2067676771613319312 (manual 09-18: contraception crash course)",
+    "@joshuamalidzo/2059979160857297102 (manual 09-18: adolescent-sex judgment endorsement)",
+    "@joshuamalidzo/2057705531729424812 (manual 09-18: gender-marker ruling)",
+    "@FaithOdhiambo8/2057359809305776499 (manual 09-18: Petition E490/2025)",
+    "@adhiiiambo/2073815272473915638 (skipped: community/belonging commentary)",
+    "@Iam_KendiH/2073744899090924001 (skipped: pregnancy-stigma joke)",
+    "@kilundeezy/2095129913581801641 (skipped: vague Sheng insult)",
+    "@alasirimotors/2101324715079909829 (skipped 09-25: VW Arteon car-giveaway over a Family Life Teachings clip)"
+  ]
+}
