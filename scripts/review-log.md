@@ -80,3 +80,20 @@
 - Candidates saved to scripts/pending_supplement_2026-09-27.json (3 candidates + 1 needs-url + 1 skipped). Run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-09-27.json` on your Mac to insert; it dedupes by url so already-present items are skipped safely.
 - COMMIT NOTE: stale .git/index.lock (empty, dated 2026-09-19) may still block `git commit`; device_bash cannot delete it by default. Files are saved to disk regardless.
 - FIX NEEDED (unchanged): the automated insert can't run reliably while the service_role key must transit the assistant. Durable fix: (a) run insert_supplement.py on your Mac against the pending JSON (already the working fallback); or (b) add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with your session instead of the raw service key.
+
+
+## 2026-09-28 (fired 10:38 UTC / ~13:38 EAT scheduled; interactive re-run after user replied 'go')
+
+- Browser: reachable; 4 browsers connected, Browser 1 selected per the task's stored instruction; X logged in as @vombonya. Read bookmark folder "ImaarishaSRHR" (folder dropdown; deep-link folder URL still errors with "Something went wrong", so used Bookmarks -> dropdown -> ImaarishaSRHR).
+- Posts swept: 22 unique, full range Sep 28 -> May 21.
+- Net-new candidates this run (3):
+  - @CopShakurkihara (2026-09-28, https://x.com/CopShakurkihara/status/2104497072799899761) - OCS of Lumakanda arrested for allegedly defiling a 16-year-old student. srhr_relevance 7, harm_score 2, sentiment alarming, typology none, is_disinfo false. SENSITIVE (minor / defilement; public-read goes live) - flagged for user confirmation.
+  - @kipkoecheruiyot (2026-09-28, https://x.com/kipkoecheruiyot/status/2104542094710964719) - condoms are free as a public-health intervention (HIV/STIs/unintended pregnancy). srhr_relevance 7, harm_score 1, sentiment positive, typology none, is_disinfo false.
+  - @NationAfrica (2026-09-24, https://x.com/NationAfrica/status/2103054624198434911) - parliamentary officer sacked over alleged sexual harassment of intern. PROMOTED from 09-27 'new_this_run_needs_url' now that the tweet URL was captured. srhr_relevance 6, harm_score 1, sentiment negative, typology none, is_disinfo false.
+- Carried forward (still in folder, never inserted): @jumaf3 (2102451216609317096), @action_activate (2102117814630772956), @NyakundiReport (2101971691534512272, SENSITIVE). All three in this run's candidates.
+- New this run skipped (1): @05BM44 (2104261226746225081) - same Lumakanda OCS-defilement case as @CopShakurkihara; skipped to avoid a duplicate LIVE Radar item for one event.
+- Ukweli items: 0.
+- All other folder posts accounted for by prior runs (inserted / auto-scanner / previously skipped) - see already_handled_prior_runs in the pending JSON.
+- INSERT STATUS: **NOT INSERTED.** Same blocker as 09-17/-18/-22/-25/-27. The credential guardrail denied materializing the service_role key from scripts/.secrets into the assistant - in BOTH the unattended fire AND the interactive 'go' re-run (it also blocked device_bash reads that touched .secrets and even a Supabase reachability curl, classified as Credential Materialization). The local device sandbox still cannot reach Supabase. Dedupe here is review-log history only, NOT a live radar_items query. Nothing went live.
+- Candidates saved to scripts/pending_supplement_2026-09-28.json (6 candidates: 3 new + 3 carried; 1 skipped-dup). Run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-09-28.json` on your Mac to insert; it dedupes by url so already-present items are skipped safely.
+- FIX NEEDED (unchanged, now 6 runs): the automated insert cannot run while the service_role key must transit the assistant - the guardrail blocks it, and the sandbox cannot reach Supabase. Durable fix: (a) run insert_supplement.py on your Mac against the pending JSON (the working fallback); or (b) add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with your session instead of the raw service key - this would let the scheduled run insert directly and end the manual step.
