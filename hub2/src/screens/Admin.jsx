@@ -877,6 +877,7 @@ function UlizaDesk({ session, onChange }) {
   const [answers, setAnswers] = usePersisted('uliza.answers', {})
   const [aiDrafted, setAiDrafted] = usePersisted('uliza.aiDrafted', {})   // ids whose text came from an AI draft
   const [focus, setFocus] = usePersisted('uliza.focus', null)            // question last worked on
+  const [prevDraft, setPrevDraft] = usePersisted('uliza.prevDraft', {})  // your text before an AI (re)draft replaced it
   const [busy, setBusy] = useState(null)
   const [drafting, setDrafting] = useState(null)
   const [photos, setPhotos] = useState({})          // id → short-lived signed URL (private bucket)
@@ -890,13 +891,22 @@ function UlizaDesk({ session, onChange }) {
   }
 
   const load = () => sb.from('uliza_questions').select('*').eq('status','pending')
-    .order('created_at',{ascending:true}).limit(50).then(({data}) => {
+    .order('created_at',{ascending:true}).limit(200).then(async ({data, error}) => {
+      if (error) { toast('Couldn’t load the queue — your drafts are safe. ' + error.message, 'red'); setPending(p => p || []); return }
       const rows = data || []
       setPending(rows); onChange?.()
-      // forget drafts for questions that are no longer waiting
+      // Forget a draft ONLY once that question is confirmed answered or hidden.
+      // (A failed or partial load must never wipe someone's work.)
       const live = new Set(rows.map(r => String(r.id)))
-      setAnswers(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
-      setAiDrafted(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
+      const orphanIds = Object.keys(getPersisted('uliza.answers', {})).filter(k => !live.has(k))
+      if (orphanIds.length) {
+        const { data: done, error: e2 } = await sb.from('uliza_questions').select('id,status').in('id', orphanIds)
+        if (!e2) {
+          const closed = new Set((done || []).filter(d => d.status !== 'pending').map(d => String(d.id)))
+          const drop = (a) => Object.fromEntries(Object.entries(a).filter(([k]) => !closed.has(k)))
+          setAnswers(drop); setAiDrafted(drop); setPrevDraft(drop)
+        }
+      }
       rows.filter(r => r.photo_path).forEach(r =>
         sb.storage.from('uliza-photos').createSignedUrl(r.photo_path, 3600)
           .then(({ data }) => data?.signedUrl && setPhotos(m => ({ ...m, [r.id]: data.signedUrl }))))
@@ -910,8 +920,16 @@ function UlizaDesk({ session, onChange }) {
   const draft = async (q) => {
     setDrafting(q.id); setFocus(q.id)
     const { data, error } = await sb.functions.invoke('uliza-draft', { body: { question: q.question, language: q.language || 'en' } })
-    if (error || data?.error) toast(error?.message || data?.error || 'Draft failed', 'red')
+    // supabase-js hides the function's own error message behind a generic
+    // "non-2xx status" — dig it out so the toast says what actually went wrong.
+    let msg = data?.error || ''
+    if (error) {
+      try { const b = await error.context?.json?.(); msg = b?.error || b?.message || error.message } catch { msg = error.message }
+    }
+    if (msg) toast('AI draft failed: ' + msg, 'red')
     else if (data?.draft) {
+      const mine = (answers[q.id] || '').trim()
+      if (mine && !aiDrafted[q.id]) setPrevDraft(p => ({ ...p, [q.id]: answers[q.id] }))   // keep your own words
       setAnswers(a => ({ ...a, [q.id]: data.draft }))
       setAiDrafted(m => ({ ...m, [q.id]: true }))
       toast('✨ AI draft ready — check it answers the actual question, then edit before publishing', 'gold')
@@ -989,6 +1007,11 @@ function UlizaDesk({ session, onChange }) {
               {busy===q.id ? 'Publishing…' : (q.keep_private ? '✓ Send answer' : '✓ Publish answer')}
             </Btn>
             <Btn small ghost onClick={()=>hide(q)}>Hide</Btn>
+            {prevDraft[q.id] && (
+              <Btn small ghost onClick={()=>{ setAnswers(a => ({ ...a, [q.id]: prevDraft[q.id] })); setAiDrafted(m => { const n = { ...m }; delete n[q.id]; return n }); setPrevDraft(p => { const n = { ...p }; delete n[q.id]; return n }) }}>
+                ↩ Restore my own draft
+              </Btn>
+            )}
           </div>
         </div>
       )})}

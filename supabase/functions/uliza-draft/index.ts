@@ -69,18 +69,27 @@ serve(async (req) => {
       sheng: "The asker used the Sheng version of the app. Reply in simple, everyday Kenyan English with light, natural Kiswahili/Sheng where it helps — never forced slang, and keep every medical term clear.",
     }
     const langLine = LANG_LINE[language] ? `\n\n${LANG_LINE[language]}` : ""
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-opus-5", max_tokens: 700, system: SYSTEM,
-        messages: [{ role: "user", content: `The young person asked:\n"""\n${question}\n"""${langLine}` }],
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok || !data.content) return json({ error: data?.error?.message || `Anthropic HTTP ${res.status}` }, 502)
-    const draft = (data.content?.find((b:any)=>b.type==='text')?.text || "").trim()
-    return json({ draft })
+    // Try the configured model, then fall back, so a retired or unavailable
+    // model id never silently breaks drafting. Override with ULIZA_MODEL.
+    const models = [Deno.env.get("ULIZA_MODEL"), "claude-opus-5-5", "claude-sonnet-5-5"].filter(Boolean) as string[]
+    let lastErr = ""
+    for (const model of [...new Set(models)]) {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({
+          model, max_tokens: 700, system: SYSTEM,
+          messages: [{ role: "user", content: `The young person asked:\n"""\n${question}\n"""${langLine}` }],
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      const draft = (data?.content?.find((b: any) => b.type === "text")?.text || "").trim()
+      if (res.ok && draft) return json({ draft, model })
+      lastErr = `${model}: ${data?.error?.message || `Anthropic HTTP ${res.status}`}`
+      // Only fall through to the next model for model-specific problems.
+      if (![400, 404, 529].includes(res.status)) break
+    }
+    return json({ error: lastErr || "No draft returned" }, 502)
   } catch (e) {
     return json({ error: String(e) }, 500)
   }
