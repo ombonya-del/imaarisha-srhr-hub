@@ -155,4 +155,35 @@ export const LEARN = [
       ],
     },
   },
+  {
+    // Added after the Oct 2026 youth test run: young people asked for mental
+    // health to sit alongside SRHR. Helplines checked Oct 2026 — re-verify yearly.
+    id: 'mental',
+    color: '#9D8CFF',
+    emoji: '🧠',
+    en: {
+      title: 'Mental health & SRHR',
+      intro: 'How you feel and your sexual and reproductive health are closely linked. Looking after your mind is part of looking after your body.',
+      points: [
+        ['They affect each other', 'A pregnancy scare, an HIV or STI result, a break-up, pressure from a partner or violence can all leave you anxious, low or numb. That is a normal reaction to something heavy — not weakness.'],
+        ['Signs to take seriously', 'Feeling hopeless or empty most days for two weeks or more, not sleeping or eating, pulling away from everyone, or using alcohol or drugs to cope. These are signs to talk to someone soon.'],
+        ['Stigma makes it worse', 'Shame about sex, pregnancy or HIV status keeps people silent. You deserve care without judgement — at a youth-friendly clinic you can ask for counselling as well as treatment.'],
+        ['Pregnancy and after birth', 'Low mood and anxiety during pregnancy or after giving birth are common and treatable. Tell your clinic or community health promoter how you are really feeling.'],
+        ['Small things that help', 'Sleep, moving your body, eating regularly and spending time with people who are good for you. Write down what you feel. Limit time with content online that makes you feel worse.'],
+        ['Talk to someone now', 'Kenya Red Cross: 1199 (free, 24 hours). Befrienders Kenya: 0722 178 177. One2One youth line: 1190 (free). If you are thinking of ending your life or are in danger, call 999 or 112, or go to the nearest hospital.'],
+      ],
+    },
+    sw: {
+      title: 'Afya ya akili na SRHR',
+      intro: 'Jinsi unavyohisi na afya yako ya ngono na uzazi vinahusiana sana. Kutunza akili yako ni sehemu ya kutunza mwili wako.',
+      points: [
+        ['Vinaathiriana', 'Hofu ya mimba, majibu ya VVU au magonjwa ya zinaa, kuachana na mpenzi, shinikizo kutoka kwa mpenzi au ukatili vinaweza kukuacha na wasiwasi, huzuni au ganzi. Hiyo ni hali ya kawaida baada ya jambo zito — si udhaifu.'],
+        ['Dalili za kuzingatia', 'Kujihisi bila matumaini au mtupu siku nyingi kwa wiki mbili au zaidi, kukosa usingizi au hamu ya kula, kujitenga na watu, au kutumia pombe au dawa za kulevya ili kustahimili. Hizi ni ishara za kuzungumza na mtu mapema.'],
+        ['Unyanyapaa huzidisha', 'Aibu kuhusu ngono, mimba au hali ya VVU huwanyamazisha watu. Unastahili huduma bila hukumu — katika kliniki rafiki kwa vijana unaweza kuomba ushauri nasaha pamoja na matibabu.'],
+        ['Wakati wa mimba na baada ya kujifungua', 'Huzuni na wasiwasi wakati wa mimba au baada ya kujifungua ni kawaida na vinatibika. Mweleze mhudumu wa kliniki au wa afya ya jamii jinsi unavyohisi kweli.'],
+        ['Mambo madogo yanayosaidia', 'Usingizi, kufanya mazoezi, kula kwa wakati na kukaa na watu wanaokujali. Andika unachohisi. Punguza muda na maudhui ya mtandaoni yanayokufanya ujihisi vibaya zaidi.'],
+        ['Ongea na mtu sasa', 'Kenya Red Cross: 1199 (bure, saa 24). Befrienders Kenya: 0722 178 177. One2One kwa vijana: 1190 (bure). Ukiwa unafikiria kujiua au uko hatarini, piga 999 au 112, au nenda hospitali iliyo karibu.'],
+      ],
+    },
+  },
 ]

@@ -15,13 +15,22 @@ const CORS = {
 
 // Only these columns are accepted from the client, per table. Anything else is dropped.
 const ALLOWED: Record<string, string[]> = {
-  uliza_questions:   ['question', 'language'],
+  uliza_questions:   ['question', 'language', 'keep_private'],
   fika_suggestions:  ['name', 'county', 'area', 'note', 'language'],
   fika_reviews:      ['facility_id', 'rating', 'attributes', 'comment', 'language'],
   ukweli_submissions:['caption', 'media_url', 'media_type', 'language'],
 }
 // Tables whose rows must always start as 'pending' (never client-controlled).
-const STATUS_PENDING = new Set(['fika_suggestions', 'fika_reviews', 'ukweli_submissions'])
+const STATUS_PENDING = new Set(['uliza_questions', 'fika_suggestions', 'fika_reviews', 'ukweli_submissions'])
+
+// Uliza private codes: the client generates a random code and keeps it; we store
+// only its SHA-256 (hex) so nobody — not even admins — can read the code back.
+// Normalisation must match public.uliza_lookup(): uppercase, alphanumerics only.
+const normCode = (c: unknown) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+async function sha256hex(s: string) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('')
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -50,6 +59,14 @@ Deno.serve(async (req) => {
     const row: Record<string, unknown> = {}
     for (const k of cols) if (payload && payload[k] !== undefined) row[k] = payload[k]
     if (STATUS_PENDING.has(table)) row.status = 'pending'
+    if (table === 'uliza_questions') {
+      const q = String(row.question || '').trim()
+      if (q.length < 8 || q.length > 2000) return json({ ok: false, error: 'Please write a question between 8 and 2000 characters.' })
+      row.question = q
+      row.keep_private = row.keep_private === true
+      const code = normCode(payload?.ticket)
+      if (code.length >= 10 && code.length <= 32) row.ticket_hash = await sha256hex(code)
+    }
 
     // 3) Insert with the service role (row is already sanitised).
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)

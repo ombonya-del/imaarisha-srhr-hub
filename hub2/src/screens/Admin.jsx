@@ -2,12 +2,21 @@ import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, toast, notifyMembers } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 import { MatchNotifyModal } from '../lib/matchNotify'
+import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
 export default function Admin({ session, bottomTabs }) {
   // Open a specific desk when routed from a Pulse activity row (#admin/<desk>).
   const deskFromHash = () => { const m = (typeof window !== 'undefined' ? window.location.hash : '').match(/#admin\/([a-z]+)/); return m ? m[1] : null }
-  const [view, setView] = useState(() => deskFromHash() || 'activity')
+  // Desk: from the hash (#admin/uliza) → else the last desk you had open → Activity.
+  const [view, setView] = useState(() => deskFromHash() || getPersisted('view', 'activity'))
+  useEffect(() => {
+    setPersisted('view', view)
+    try {
+      const h = '#admin/' + view
+      if (window.location.hash !== h) history.replaceState(null, '', window.location.pathname + window.location.search + h)
+    } catch { /* ignore */ }
+  }, [view])
   useEffect(() => {
     const onHash = () => { const d = deskFromHash(); if (d) setView(d) }
     window.addEventListener('hashchange', onHash)
@@ -144,13 +153,13 @@ const inferMedia = (u) => {
 }
 
 function RadarCurate() {
-  const [url, setUrl] = useState('')
-  const [typology, setTypology] = useState('contraceptive_myth')
-  const [note, setNote] = useState('')
+  const [url, setUrl] = usePersisted('radar.url', '')
+  const [typology, setTypology] = usePersisted('radar.typology', 'contraceptive_myth')
+  const [note, setNote] = usePersisted('radar.note', '')
   const [busy, setBusy] = useState(false)
   const [items, setItems] = useState([])
-  const [editId, setEditId] = useState(null)
-  const [edit, setEdit] = useState({ title:'', url:'', typology:'contraceptive_myth', snippet:'', is_disinfo:true })
+  const [editId, setEditId] = usePersisted('radar.editId', null)
+  const [edit, setEdit] = usePersisted('radar.edit', { title:'', url:'', typology:'contraceptive_myth', snippet:'', is_disinfo:true })
 
   const load = () => sb.from('radar_items').select('*').in('platform', CURATE_SOCIAL)
     .order('scanned_at', { ascending:false }).limit(30).then(({ data }) => setItems(data || []))
@@ -268,11 +277,11 @@ const EMPTY_MYTH = { claim:'', why_it_feels_true:'', truth:'', what_to_do:'', la
 
 function MythsDesk() {
   const [cards, setCards] = useState([])
-  const [form, setForm] = useState(EMPTY_MYTH)
-  const [editId, setEditId] = useState(null)
+  const [form, setForm] = usePersisted('myths.form', EMPTY_MYTH)
+  const [editId, setEditId] = usePersisted('myths.editId', null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [lang, setLang] = useState('en')
+  const [lang, setLang] = usePersisted('myths.lang', 'en')
 
   const load = () => sb.from('ukweli_cards').select('*').order('language').order('sort_order').then(({ data }) => setCards(data || []))
   useEffect(() => { load() }, [])
@@ -387,11 +396,11 @@ const pointsToText = (pts) => (Array.isArray(pts) ? pts : []).map(p => (p[0] ? p
 
 function LearnDesk() {
   const [rows, setRows] = useState([])
-  const [form, setForm] = useState(EMPTY_LEARN)
-  const [editId, setEditId] = useState(null)
+  const [form, setForm] = usePersisted('learn.form', EMPTY_LEARN)
+  const [editId, setEditId] = usePersisted('learn.editId', null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [lang, setLang] = useState('en')
+  const [lang, setLang] = usePersisted('learn.lang', 'en')
 
   const load = () => sb.from('ukweli_learn').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
   useEffect(() => { load() }, [])
@@ -504,7 +513,7 @@ function LearnDesk() {
 // ── 🙋 Community — moderate youth-submitted myths/media before they go live ────
 function CommunityDesk() {
   const [rows, setRows] = useState([])
-  const [filter, setFilter] = useState('pending')
+  const [filter, setFilter] = usePersisted('community.filter', 'pending')
 
   const load = () => sb.from('ukweli_submissions').select('*').order('created_at', { ascending:false }).limit(80).then(({ data }) => setRows(data || []))
   useEffect(() => { load() }, [])
@@ -557,8 +566,8 @@ function Badge({ n }) {
 
 // ── 📣 Broadcast a push notification to members who opted in ──────────────────
 function Broadcast() {
-  const [title, setTitle] = useState('📣 ImaarishaSRHR')
-  const [body, setBody] = useState('')
+  const [title, setTitle] = usePersisted('broadcast.title', '📣 ImaarishaSRHR')
+  const [body, setBody] = usePersisted('broadcast.body', '')
   const [busy, setBusy] = useState(false)
   const send = async () => {
     if (!body.trim()) { toast('Write a short message first.', 'red'); return }
@@ -588,7 +597,7 @@ function Broadcast() {
 // ── Full activity log with filters — who posted/uploaded/did what ────────────
 function Activity() {
   const [rows, setRows] = useState([])
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = usePersisted('activity.filter', 'all')
   useEffect(() => {
     sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(150)
       .then(({data}) => setRows(data || []))
@@ -679,8 +688,8 @@ function Metrics() {
 function Members() {
   const [profiles, setProfiles] = useState([])
   const [orgs, setOrgs] = useState([])
-  const [editOrg, setEditOrg] = useState(null)       // { id, name, short_name, focus_area }
-  const [editMember, setEditMember] = useState(null) // { id, full_name }
+  const [editOrg, setEditOrg] = usePersisted('members.editOrg', null)       // { id, name, short_name, focus_area }
+  const [editMember, setEditMember] = usePersisted('members.editMember', null) // { id, full_name }
 
   const [invites, setInvites] = useState([])
   const loadProfiles = () => sb.from('profiles').select('*').order('created_at',{ascending:false}).limit(300).then(({data}) => setProfiles(data || []))
@@ -860,25 +869,40 @@ function Members() {
 }
 
 // ── Uliza desk — answer the youth PWA's anonymous questions ──────────────────
+// Drafts are kept per question (localStorage) so an answer in progress survives
+// switching desks, reloading or closing the app; the question you were last
+// working on is scrolled back into view and highlighted.
 function UlizaDesk({ session, onChange }) {
-  const [pending, setPending] = useState([])
-  const [answers, setAnswers] = useState({})
+  const [pending, setPending] = useState(null)
+  const [answers, setAnswers] = usePersisted('uliza.answers', {})
+  const [aiDrafted, setAiDrafted] = usePersisted('uliza.aiDrafted', {})   // ids whose text came from an AI draft
+  const [focus, setFocus] = usePersisted('uliza.focus', null)            // question last worked on
   const [busy, setBusy] = useState(null)
   const [drafting, setDrafting] = useState(null)
-  const [aiDrafted, setAiDrafted] = useState({})   // ids whose text came from an AI draft
+
   const load = () => sb.from('uliza_questions').select('*').eq('status','pending')
-    .order('created_at',{ascending:true}).limit(50).then(({data}) => { setPending(data || []); onChange?.() })
+    .order('created_at',{ascending:true}).limit(50).then(({data}) => {
+      const rows = data || []
+      setPending(rows); onChange?.()
+      // forget drafts for questions that are no longer waiting
+      const live = new Set(rows.map(r => String(r.id)))
+      setAnswers(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
+      setAiDrafted(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
+    })
   useEffect(() => { load() }, [])
+  useEffect(() => { if (pending && focus) scrollToWork(focus) }, [pending === null])
+
+  const edit = (id, text) => { setAnswers(a => ({ ...a, [id]: text })); setFocus(id) }
 
   // AI proposes a draft; a human reviews/edits it in the box before publishing.
   const draft = async (q) => {
-    setDrafting(q.id)
+    setDrafting(q.id); setFocus(q.id)
     const { data, error } = await sb.functions.invoke('uliza-draft', { body: { question: q.question, language: q.language || 'en' } })
     if (error || data?.error) toast(error?.message || data?.error || 'Draft failed', 'red')
     else if (data?.draft) {
       setAnswers(a => ({ ...a, [q.id]: data.draft }))
       setAiDrafted(m => ({ ...m, [q.id]: true }))
-      toast('✨ AI draft ready — review & edit before publishing', 'gold')
+      toast('✨ AI draft ready — check it answers the actual question, then edit before publishing', 'gold')
     }
     setDrafting(null)
   }
@@ -893,44 +917,56 @@ function UlizaDesk({ session, onChange }) {
       answered_at: new Date().toISOString(),
     }).eq('id', q.id)
     if (error) toast(error.message,'red')
-    else { toast('✓ Published to Ukweli','green'); load() }
+    else { toast(q.keep_private ? '✓ Answer sent privately to the asker' : '✓ Published to Ukweli','green'); if (focus === q.id) setFocus(null); load() }
     setBusy(null)
   }
   const hide = async (q) => {
     await sb.from('uliza_questions').update({ status:'hidden' }).eq('id', q.id)
-    toast('Hidden','gold'); load()
+    toast('Hidden','gold'); if (focus === q.id) setFocus(null); load()
   }
 
+  const LANG = { en:'English', sw:'Kiswahili', sheng:'Sheng' }
+  const list = pending || []
   return (
     <div>
       <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 12px', lineHeight:1.6 }}>
-        Anonymous questions from the Ukweli youth PWA. Published answers appear there instantly,
-        credited to the answering professional — never to the asker.
+        Anonymous questions from the Ukweli youth PWA. The asker reads your answer with their private code in
+        “My questions”. Shared answers also appear in the public list, credited to you — never to the asker.
+        <strong style={{ color:C.txt }}> 🔒 Private</strong> questions are only ever shown to the asker.
+        Drafts save automatically on this device.
       </p>
-      {pending.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — every question answered. 🎉</p>}
-      {pending.map(q => (
-        <div key={q.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`,
-          borderRadius:12, padding:16, marginBottom:10 }}>
-          <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 4px' }}>{q.question}</p>
-          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 10px' }}>asked {timeAgo(q.created_at)} · {q.language || 'en'}</p>
+      {pending === null && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Loading…</p>}
+      {pending !== null && list.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Queue empty — every question answered. 🎉</p>}
+      {list.map(q => {
+        const isFocus = focus === q.id
+        const hasDraft = !!(answers[q.id] || '').trim()
+        return (
+        <div key={q.id} id={'work-' + q.id} style={{ background:C.card, border:`1px solid ${isFocus ? C.gold : C.line}`, borderLeft:`3px solid ${q.keep_private ? C.lilac : C.mint}`,
+          borderRadius:12, padding:16, marginBottom:10, boxShadow: isFocus ? `0 0 0 2px ${C.gold}33` : 'none' }}>
+          <p style={{ fontFamily:C.sans, fontSize:14, fontWeight:800, color:C.txt, margin:'0 0 4px', whiteSpace:'pre-line' }}>{q.question}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 10px' }}>
+            asked {timeAgo(q.created_at)} · {LANG[q.language] || q.language || 'English'} — answer in this language
+            {q.keep_private && <span style={{ color:C.lilac, fontWeight:800 }}> · 🔒 Private — only the asker will see the answer</span>}
+            {hasDraft && <span style={{ color:C.gold, fontWeight:800 }}> · ✎ draft saved</span>}
+          </p>
           {aiDrafted[q.id] && (
-            <p style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.gold, margin:'0 0 6px' }}>
-              ✨ AI draft — review & edit before publishing. You are the professional the answer is credited to.
+            <p style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.gold, margin:'0 0 6px', lineHeight:1.5 }}>
+              ✨ AI draft — before publishing, check: does it answer exactly what was asked? Is the grammar and tone right for a young Kenyan? Are the facts correct? You are the professional the answer is credited to.
             </p>
           )}
           <textarea style={{ ...inputStyle, minHeight:110 }} placeholder="Write the answer a trusted health worker would give — or generate an AI draft to edit…"
-            value={answers[q.id] || ''} onChange={e=>setAnswers(a=>({ ...a, [q.id]: e.target.value }))}/>
+            value={answers[q.id] || ''} onFocus={()=>setFocus(q.id)} onChange={e=>edit(q.id, e.target.value)}/>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             <Btn small ghost color={C.lilac} onClick={()=>draft(q)} disabled={drafting===q.id}>
               {drafting===q.id ? 'Drafting…' : (answers[q.id] ? '✨ Redraft' : '✨ AI draft')}
             </Btn>
             <Btn small onClick={()=>publish(q)} disabled={busy===q.id} color={C.mint}>
-              {busy===q.id ? 'Publishing…' : '✓ Publish answer'}
+              {busy===q.id ? 'Publishing…' : (q.keep_private ? '✓ Send answer' : '✓ Publish answer')}
             </Btn>
             <Btn small ghost onClick={()=>hide(q)}>Hide</Btn>
           </div>
         </div>
-      ))}
+      )})}
     </div>
   )
 }
@@ -947,18 +983,22 @@ function FikaDesk({ onChange }) {
   const [reviews, setReviews] = useState([])
   const [suggs, setSuggs] = useState([])
   const [busy, setBusy] = useState(null)
+  const [facs, setFacs] = useState([])
+  const [facCounty, setFacCounty] = usePersisted('fika.facCounty', 'Nairobi')
+  const [facEdit, setFacEdit] = usePersisted('fika.facEdit', null)   // facility being edited (draft survives navigation)
 
   const load = async () => {
     const [f, r, s] = await Promise.all([
-      sb.from('fika_facilities').select('id,name,county'),
+      sb.from('fika_facilities').select('*').order('name'),
       sb.from('fika_reviews').select('*').eq('status','pending').order('created_at',{ascending:true}).limit(80),
       sb.from('fika_suggestions').select('*').eq('status','pending').order('created_at',{ascending:true}).limit(80),
     ])
-    const m = {}; (f.data||[]).forEach(x => { m[x.id] = x.name }); setFacMap(m)
+    const m = {}; (f.data||[]).forEach(x => { m[x.id] = x.name }); setFacMap(m); setFacs(f.data || [])
     setReviews(r.data || []); setSuggs(s.data || [])
     onChange?.()
   }
   useEffect(() => { load() }, [])
+  useEffect(() => { if (facEdit && facs.length) scrollToWork(facEdit.id) }, [facs.length > 0])
 
   const setReview = async (id, status) => {
     setBusy(id)
@@ -975,6 +1015,19 @@ function FikaDesk({ onChange }) {
     if (e1) { toast(e1.message,'red'); setBusy(null); return }
     await sb.from('fika_suggestions').update({ status:'added' }).eq('id', s.id)
     toast('✓ Added to Hebu Fika','green'); load(); setBusy(null)
+  }
+  const saveFacility = async () => {
+    const e = facEdit; if (!e) return
+    setBusy(e.id)
+    const services = Array.isArray(e.services) ? e.services : String(e.services || '').split(',').map(x => x.trim()).filter(Boolean)
+    const { error } = await sb.from('fika_facilities').update({
+      name: e.name, area: e.area || null, kind: e.kind || 'public', services, verified: !!e.verified, active: e.active !== false,
+      cost_level: e.cost_level || null, cost_note: e.cost_note || null, hours: e.hours || null,
+      phone: e.phone || null, age_note: e.age_note || null, last_verified: e.last_verified || null,
+    }).eq('id', e.id)
+    if (error) toast(error.message, 'red')
+    else { toast('✓ Facility updated', 'green'); setFacEdit(null); load() }
+    setBusy(null)
   }
   const rejectSuggestion = async (s) => {
     await sb.from('fika_suggestions').update({ status:'rejected' }).eq('id', s.id)
@@ -1029,10 +1082,70 @@ function FikaDesk({ onChange }) {
             <Btn small ghost onClick={()=>rejectSuggestion(s)}>Reject</Btn>
           </div>
           <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'8px 0 0', fontStyle:'italic' }}>
-            Added as an unverified NGO listing — edit services/type in Supabase if needed.
+            Added as an unverified listing — then use “Facilities” below to set type, services, cost and hours.
           </p>
         </div>
       ))}
+
+      <SectionLabel color={C.sky}>🏥 Facilities — cost, hours & contact</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'-4px 0 10px', lineHeight:1.55 }}>
+        Young people asked to see what services cost before they travel. Only fill in what you have confirmed with the
+        facility (by phone or visit), and set the “checked on” date. Leave cost blank if unknown — the app then says
+        “Cost not confirmed — ask before you go”.
+      </p>
+      <select value={facCounty} onChange={e=>setFacCounty(e.target.value)} style={{ ...inputStyle, maxWidth:260 }}>
+        {[...new Set(facs.map(f => f.county))].sort().map(c => <option key={c} value={c}>{c}</option>)}
+      </select>
+      {facs.filter(f => f.county === facCounty).map(f => {
+        const editing = facEdit && facEdit.id === f.id
+        const e = editing ? facEdit : null
+        const set = (k) => (ev) => setFacEdit({ ...facEdit, [k]: ev.target.type === 'checkbox' ? ev.target.checked : ev.target.value })
+        return (
+          <div key={f.id} id={'work-' + f.id} style={{ background:C.card, border:`1px solid ${editing ? C.gold : C.line}`, borderLeft:`3px solid ${C.sky}`,
+            borderRadius:12, padding:14, marginBottom:9 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', gap:10, alignItems:'flex-start' }}>
+              <div>
+                <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:'0 0 2px' }}>{f.name}{f.active === false ? ' · (hidden)' : ''}</p>
+                <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:0 }}>
+                  {f.area || '—'} · {f.cost_level ? `💳 ${f.cost_level}` : '💳 cost unknown'}{f.hours ? ` · 🕘 ${f.hours}` : ''}{f.last_verified ? ` · checked ${f.last_verified}` : ''}
+                </p>
+              </div>
+              {!editing && <Btn small ghost onClick={()=>{ setFacEdit({ ...f, services:(f.services||[]).join(', ') }); scrollToWork(f.id) }}>Edit</Btn>}
+            </div>
+            {editing && (
+              <div style={{ marginTop:10 }}>
+                <input style={inputStyle} value={e.name || ''} onChange={set('name')} placeholder="Name"/>
+                <input style={inputStyle} value={e.area || ''} onChange={set('area')} placeholder="Area / estate (e.g. Dandora Phase II)"/>
+                <select style={inputStyle} value={e.kind || 'public'} onChange={set('kind')}>
+                  <option value="public">Public</option><option value="ngo">NGO / Youth</option>
+                  <option value="faith">Faith-based</option><option value="private">Private</option>
+                </select>
+                <input style={inputStyle} value={e.services || ''} onChange={set('services')} placeholder="Services, comma-separated (Family planning, HIV testing, …)"/>
+                <select style={inputStyle} value={e.cost_level || ''} onChange={set('cost_level')}>
+                  <option value="">Cost — not confirmed</option><option value="free">Free</option>
+                  <option value="subsidised">Low cost / subsidised</option><option value="paid">Paid</option><option value="varies">Varies by service</option>
+                </select>
+                <input style={inputStyle} value={e.cost_note || ''} onChange={set('cost_note')} placeholder="Cost detail (e.g. FP & HIV test free; consultation KES 200)"/>
+                <input style={inputStyle} value={e.hours || ''} onChange={set('hours')} placeholder="Hours (e.g. Mon–Fri 8am–5pm; youth corner Sat 9am–1pm)"/>
+                <input style={inputStyle} value={e.age_note || ''} onChange={set('age_note')} placeholder="Ages served (e.g. Youth corner 10–24)"/>
+                <input style={inputStyle} value={e.phone || ''} onChange={set('phone')} placeholder="Phone"/>
+                <label style={{ fontFamily:C.sans, fontSize:11, color:C.mut, display:'block', margin:'2px 0 4px' }}>Details checked on</label>
+                <input type="date" style={inputStyle} value={e.last_verified || ''} onChange={set('last_verified')}/>
+                <label style={{ fontFamily:C.sans, fontSize:12, color:C.txt, display:'flex', gap:8, alignItems:'center', margin:'4px 0' }}>
+                  <input type="checkbox" checked={!!e.verified} onChange={set('verified')}/> Known, established service point
+                </label>
+                <label style={{ fontFamily:C.sans, fontSize:12, color:C.txt, display:'flex', gap:8, alignItems:'center', margin:'4px 0 10px' }}>
+                  <input type="checkbox" checked={e.active !== false} onChange={set('active')}/> Show in the app
+                </label>
+                <div style={{ display:'flex', gap:8 }}>
+                  <Btn small color={C.mint} onClick={saveFacility} disabled={busy===f.id}>{busy===f.id ? 'Saving…' : '✓ Save'}</Btn>
+                  <Btn small ghost onClick={()=>setFacEdit(null)}>Cancel</Btn>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -1155,16 +1268,19 @@ function ResourceDesk({ onChange }) {
   const [showHiddenOpps, setShowHiddenOpps] = useState(false)
   const [evs, setEvs] = useState([])
   const [unhosted, setUnhosted] = useState([])
+  const [autoPub, setAutoPub] = useState([])   // recently auto-published resources (spot-check lane)
   const [busy, setBusy] = useState(null)
-  const [openSec, setOpenSec] = useState('resources')   // accordion: one section open at a time
+  const [openSec, setOpenSec] = usePersisted('resources.openSec', 'resources')   // accordion: one section open at a time
   const [notify, setNotify] = useState(null)            // { item, itemType } → match & notify modal after approval
-  const [q, setQ] = useState('')                        // search across the queues
+  const [q, setQ] = usePersisted('resources.q', '')                        // search across the queues
   const [rejectedKeys, setRejectedKeys] = useState(new Set()) // titles/links already rejected → hide re-scanned dupes
-  const [oppEdit, setOppEdit] = useState(null)                // draft being edited: { id, kind, org, deadline, amount, eligibility, link }
+  const [oppEdit, setOppEdit] = usePersisted('resources.oppEdit', null)                // draft being edited: { id, kind, org, deadline, amount, eligibility, link }
   const oppKey = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 70)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
+    sb.from('resources').select('*').eq('status','approved').eq('auto_approved',true).order('created_at',{ascending:false}).limit(50)
+      .then(({data}) => setAutoPub(data || []))
     sb.from('resource_requests').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => setReqs(data || []))
     sb.from('opportunities').select('*').eq('status','pending').order('created_at',{ascending:true})
@@ -1237,6 +1353,13 @@ function ResourceDesk({ onChange }) {
     setBusy(rq.id)
     const { error } = await sb.from('resource_requests').update({ status, decided_at: new Date().toISOString() }).eq('id', rq.id)
     if (error) toast(error.message,'red'); else { toast(status==='approved'?'✓ Access granted':'Denied', status==='approved'?'green':'gold'); load() }
+    setBusy(null)
+  }
+  // Pull an auto-published resource back into the manual queue (spot-check lane).
+  const unpublish = async (r) => {
+    setBusy(r.id)
+    const { error } = await sb.from('resources').update({ status:'pending', auto_approved:false }).eq('id', r.id)
+    if (error) toast(error.message,'red'); else { toast('Pulled back for review','gold'); load(); onChange?.() }
     setBusy(null)
   }
   const approve = async (r) => {
@@ -1434,7 +1557,7 @@ function ResourceDesk({ onChange }) {
         {fRes.map(r => (
           <div key={r.id} style={cardS(C.sky)}>
             <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
-            <p style={metaS}>by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}</p>
+            <p style={metaS}>by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}{typeof r.auto_score==='number' ? ` · score ${r.auto_score}` : ''}</p>
             {r.description && <p style={descS}>{r.description}</p>}
             <FactCard color={C.sky}
               chips={[{k:'Type',v:r.type||'Document',c:C.sky},{k:'Source',v:r.source_org,c:C.lilac},{k:'Access',v:r.is_restricted?'Restricted':null,c:C.coral}]}
@@ -1445,6 +1568,26 @@ function ResourceDesk({ onChange }) {
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
               <Btn small color={C.mint} onClick={()=>approve(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '✓ Approve'}</Btn>
               <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>✕ Reject</Btn>
+            </div>
+          </div>
+        ))}
+      </Section>
+
+      <Section id="autopub" color={C.mint} icon="🤖" label="Auto-published — spot-check" count={autoPub.length} {...secProps}>
+        <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px', lineHeight:1.5 }}>
+          These cleared the relevance score and came from a trusted source, so they published automatically. Skim them — tap <strong>Pull back</strong> to return anything to the manual queue.
+        </p>
+        {autoPub.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing auto-published recently.</p>}
+        {autoPub.map(r => (
+          <div key={r.id} style={cardS(C.mint)}>
+            <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
+            <p style={metaS}>by {r.submitter_name || 'a member'} · {timeAgo(r.created_at)}{typeof r.auto_score==='number' ? ` · score ${r.auto_score}` : ''}</p>
+            {r.description && <p style={descS}>{r.description}</p>}
+            <FactCard color={C.mint}
+              chips={[{k:'Type',v:r.type||'Document',c:C.sky},{k:'Source',v:r.source_org,c:C.lilac},{k:'Score',v:typeof r.auto_score==='number'?String(r.auto_score):null,c:C.mint}]}
+              url={r.file_path ? null : r.file_url} urlLabel="Open source"/>
+            <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <Btn small ghost color={C.coral} onClick={()=>unpublish(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '↩ Pull back for review'}</Btn>
             </div>
           </div>
         ))}

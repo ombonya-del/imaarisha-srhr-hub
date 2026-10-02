@@ -14,6 +14,8 @@ const ALERT_TO       = Deno.env.get('ALERT_TO') || 'imaarishasrhr@gmail.com'
 const ALERT_FROM     = Deno.env.get('ALERT_FROM') || 'Imaarisha Hub <onboarding@resend.dev>'
 const WEBHOOK_SECRET = Deno.env.get('WEBHOOK_SECRET') || ''
 const HUB_URL        = Deno.env.get('HUB_URL') || 'https://hub.imaarishasrhr.org'
+const ULIZA_DESK_URL = Deno.env.get('ULIZA_DESK_URL') || 'https://admin.imaarishasrhr.org/#admin/uliza'
+const LANG_NAME: Record<string, string> = { en: 'English', sw: 'Kiswahili', sheng: 'Sheng' }
 
 const esc = (s: string) => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 
@@ -31,7 +33,7 @@ Deno.serve(async (req) => {
   const table = String(body.table || '')
 
   // Build a human message per source table (one function, many webhooks).
-  let desc: string, kind: string, title = ''
+  let desc: string, kind: string, title = '', link = HUB_URL, linkLabel = 'Open the Hub →', subject = ''
   if (table === 'fika_reviews') {
     kind = 'Hebu Fika review'
     const stars = '★'.repeat(Number(rec.rating) || 0)
@@ -42,8 +44,14 @@ Deno.serve(async (req) => {
     desc = `New suggested service: ${rec.name} (${rec.county})`
       + (rec.note ? ` — ${String(rec.note).slice(0, 140)}` : '')
   } else if (table === 'uliza_questions') {
+    // Every new anonymous question. Never includes ticket_hash or anything that
+    // could identify the asker — there is nothing identifying stored anyway.
     kind = 'Ukweli question'
-    desc = `New anonymous question: ${String(rec.question || '').slice(0, 160)}`
+    const lang = LANG_NAME[String(rec.language || 'en')] || String(rec.language || 'en')
+    const priv = rec.keep_private ? ' · 🔒 asker wants the answer kept private' : ''
+    desc = `“${String(rec.question || '').slice(0, 400)}” — asked in ${lang}${priv}`
+    subject = `💬 New UkweliSRHR question waiting for an answer`
+    link = ULIZA_DESK_URL; linkLabel = 'Answer it in the Uliza desk →'
   } else {
     kind  = String(rec.activity_type || 'activity')
     desc  = String(rec.description || 'New activity on the Imaarisha Collective Hub')
@@ -65,7 +73,7 @@ Deno.serve(async (req) => {
         <p style="color:#2E3338;font-size:15px;margin:0;line-height:1.5">${esc(desc)}${esc(title)}</p>
         <p style="color:#8A8597;font-size:12px;margin:8px 0 0">${esc(when)}</p>
       </div>
-      <p style="margin:18px 0 0"><a href="${HUB_URL}" style="background:linear-gradient(135deg,#E8B14B,#D9822B);color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px">Open the Hub →</a></p>
+      <p style="margin:18px 0 0"><a href="${link}" style="background:linear-gradient(135deg,#E8B14B,#D9822B);color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px">${esc(linkLabel)}</a></p>
       <p style="color:#A8A4B5;font-size:11px;margin:20px 0 0;line-height:1.5">You're receiving this because activity alerts are enabled for the ImaarishaSRHR Hub.</p>
     </div>`
 
@@ -76,7 +84,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: ALERT_FROM,
         to: [ALERT_TO],
-        subject: `🌱 Imaarisha Hub · ${desc.slice(0, 80)}`,
+        subject: subject || `🌱 Imaarisha Hub · ${desc.slice(0, 80)}`,
         html,
       }),
     })

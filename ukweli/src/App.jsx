@@ -3,7 +3,8 @@ import { sb, timeAgo } from './lib/supabase'
 import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
-import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES, ATTR_LABEL } from './lib/fika'
+import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES } from './lib/fika'
+import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
 import KenyaMap from './KenyaMap'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
@@ -43,7 +44,11 @@ const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fik
 
 export default function App() {
   const { tr, lang, setLang } = useLang()
-  const [tab, setTab] = useState('ask')
+  // Tab + open item live in the URL hash so the reader keeps their place.
+  const [route, go] = useHashRoute()
+  const tab = route.tab
+  const setTab = (id) => { go(id); window.scrollTo(0, 0) }
+  const itemProps = { item: route.item, setItem: (it) => go(tab, it, { replace: true }) }
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900)
 
   useEffect(() => {
@@ -53,7 +58,11 @@ export default function App() {
     return () => mq.removeEventListener('change', fn)
   }, [])
 
-  const quickExit = () => { try { window.location.replace('https://www.google.com/search?q=weather+nairobi') } catch {} }
+  const quickExit = () => {
+    clearSessionDrafts()   // drop any half-typed question before leaving
+    try { history.replaceState(null, '', '/') } catch {}
+    try { window.location.replace('https://www.google.com/search?q=weather+nairobi') } catch {}
+  }
   const maxW = isDesktop ? 900 : 480
 
   return (
@@ -94,7 +103,7 @@ export default function App() {
               </span>
               <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:8, fontWeight:700,
                 letterSpacing: isDesktop?'.26em':'.18em', whiteSpace:'nowrap',
-                textTransform:'uppercase', color:Y.green, marginTop:5 }}>Fresh &amp; Friendly</span>
+                textTransform:'uppercase', color:Y.green, marginTop:5 }}>{tr('brand_sub')}</span>
             </div>
           </div>
 
@@ -141,14 +150,14 @@ export default function App() {
           lineHeight:1.6, fontWeight:500, maxWidth:560 }}>
           {tr('tagline')}
         </p>
-        {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} />}
-        {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} />}
+        {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
+        {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} />}
-        {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} />}
-        {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} />}
+        {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
+        {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
-            style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, textDecoration:'none' }}>Privacy Policy</a>
+            style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, textDecoration:'none' }}>{tr('privacy')}</a>
         </div>
       </main>
 
@@ -178,65 +187,147 @@ export default function App() {
 }
 
 // ── Uliza: anonymous Q&A ─────────────────────────────────────────────────────
-function Uliza({ tr, lang, isDesktop }) {
+// Youth feedback (Oct 2026) shaped this screen:
+//  • People couldn't find their answer again → every question gets a private
+//    code (only its hash is stored) and a "My questions" view.
+//  • Someone thought another person's story was theirs → the public list is now
+//    clearly labelled as other people's anonymous questions, and askers choose
+//    whether their answer is shared or kept just for them.
+//  • "It isn't responding" / "it didn't send" → the button always responds,
+//    the security check runs invisibly, and every send ends in a clear message.
+// A sub-view lives in the hash (#ask or #ask/mine) and the draft survives
+// navigating away (sessionStorage; cleared on Quick Exit / closing the tab).
+const KEEP_PRIVATE_DEFAULT = false   // flip to true to make "just for me" the default
+
+function Uliza({ tr, lang, isDesktop, item, setItem }) {
+  const view = item === 'mine' ? 'mine' : 'ask'
   const [answered, setAnswered] = useState([])
-  const [q, setQ] = useState('')
-  const [sent, setSent] = useState(false)
+  const [q, setQ] = useSessionState('ask_draft', '')
+  const [keepPrivate, setKeepPrivate] = useSessionState('ask_private', KEEP_PRIVATE_DEFAULT)
+  const [remember, setRemember] = useState(() => { try { return localStorage.getItem('ukweli_remember') !== '0' } catch { return true } })
+  const [sentCode, setSentCode] = useSessionState('ask_sent_code', '')
   const [busy, setBusy] = useState(false)
+  const [queued, setQueued] = useState(false)
+  const [err, setErr] = useState('')
   const [tsToken, setTsToken] = useState('')
+  const [savedCount, setSavedCount] = useState(() => loadSavedCodes().length)
 
   useEffect(() => {
-    sb.from('uliza_questions').select('*').eq('status','answered')
+    sb.from('uliza_questions').select('id,question,answer,answered_by,answered_at').eq('status','answered')
       .order('answered_at',{ascending:false}).limit(40).then(({data}) => setAnswered(data || []))
   }, [])
+  useEffect(() => { try { localStorage.setItem('ukweli_remember', remember ? '1' : '0') } catch {} }, [remember])
 
-  const submit = async () => {
-    if (q.trim().length < 8) return
-    if (!tsToken) return
-    setBusy(true)
-    const { error } = await tsInsert(sb, 'uliza_questions', { question: q.trim(), language: lang }, tsToken)
+  const tooShort = q.trim().length < 8
+
+  const doSubmit = async () => {
+    setQueued(false); setBusy(true); setErr('')
+    const code = newQuestionCode()
+    const { error } = await tsInsert(sb, 'uliza_questions',
+      { question: q.trim(), language: lang, keep_private: !!keepPrivate, ticket: code }, tsToken)
     setBusy(false)
-    if (!error) { setSent(true); setQ('') }
-    else { resetTurnstile(); setTsToken('') }
+    resetTurnstile(); setTsToken('')
+    if (error) { setErr(error.message && !/verification/i.test(error.message) ? error.message : tr('ask_error')); return }
+    if (remember) setSavedCount(saveCode(code).length)
+    setSentCode(code); setQ('')
   }
+  // Pressing Ask before the (invisible) security check finishes queues the send.
+  const submit = () => {
+    if (busy) return
+    if (tooShort) { setErr(tr('ask_min')); return }
+    setErr('')
+    if (!tsToken) { setQueued(true); return }
+    doSubmit()
+  }
+  useEffect(() => { if (queued && tsToken) doSubmit() }, [queued, tsToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const seg = (on) => ({ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'10px 0', borderRadius:12,
+    border:'none', cursor:'pointer', background: on ? Y.green : 'transparent', color: on ? '#06241C' : Y.mut })
 
   return (
     <div>
+      <div role="tablist" style={{ display:'flex', gap:4, padding:4, background:'rgba(255,255,255,0.05)',
+        border:`1px solid ${Y.line}`, borderRadius:15, marginBottom:14 }}>
+        <button role="tab" aria-selected={view==='ask'} onClick={()=>setItem(null)} className="uk-press" style={seg(view==='ask')}>💬 {tr('ask_cta')}</button>
+        <button role="tab" aria-selected={view==='mine'} onClick={()=>setItem('mine')} className="uk-press" style={seg(view==='mine')}>
+          🔑 {tr('myq_title')}{savedCount > 0 ? ` (${savedCount})` : ''}
+        </button>
+      </div>
+
+      {view === 'mine' ? (
+        <MyQuestions tr={tr} onCount={setSavedCount} remember={remember}/>
+      ) : (
+      <>
       <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${Y.green}`,
         borderRadius:18, padding:isDesktop?22:18, marginBottom:22, boxShadow:'0 10px 30px rgba(0,0,0,0.28)' }}>
-        {sent ? (
-          <div>
-            <p style={{ fontFamily:Y.sans, fontSize:14, color:Y.txt, margin:0, lineHeight:1.6, fontWeight:500 }}>
-              {tr('ask_sent')}
+        {sentCode ? (
+          <div aria-live="polite">
+            <p style={{ fontFamily:Y.disp, fontSize:17, color:Y.green, margin:'0 0 6px', fontWeight:600 }}>{tr('ask_sent')}</p>
+            <CodeCard code={sentCode} tr={tr}/>
+            <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.mut, margin:'10px 0 0', lineHeight:1.55 }}>
+              {remember ? tr('code_saved') : tr('code_not_saved')} {tr('status_pending')}
             </p>
-            <button onClick={()=>setSent(false)} className="uk-press" style={{ marginTop:13, background:Y.card2,
-              border:`1px solid ${Y.line}`, color:Y.green, fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'9px 16px',
-              borderRadius:12, cursor:'pointer' }}>{tr('ask_another')}</button>
+            <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
+              <button onClick={()=>{ setSentCode(''); setItem('mine') }} className="uk-press" style={{ background:Y.green,
+                border:'none', color:'#06241C', fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
+                borderRadius:12, cursor:'pointer' }}>🔑 {tr('myq_title')}</button>
+              <button onClick={()=>setSentCode('')} className="uk-press" style={{ background:Y.card2,
+                border:`1px solid ${Y.line}`, color:Y.green, fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
+                borderRadius:12, cursor:'pointer' }}>{tr('ask_another')}</button>
+            </div>
           </div>
         ) : (
           <>
-            <textarea value={q} onChange={e=>setQ(e.target.value)}
-              placeholder={tr('ask_placeholder')}
-              style={{ width:'100%', minHeight:100, resize:'vertical', background:Y.bg,
+            <ol style={{ margin:'0 0 14px', padding:'0 0 0 18px', fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, lineHeight:1.6 }}>
+              <li>{tr('ask_how_1')}</li><li>{tr('ask_how_2')}</li><li>{tr('ask_how_3')}</li>
+            </ol>
+            <label htmlFor="uk-q" style={{ position:'absolute', left:-9999 }}>{tr('ask_cta')}</label>
+            <textarea id="uk-q" value={q} onChange={e=>{ setQ(e.target.value); if (err) setErr('') }}
+              placeholder={tr('ask_placeholder')} maxLength={2000}
+              style={{ width:'100%', minHeight:110, resize:'vertical', background:Y.bg,
                 border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
-                fontFamily:Y.sans, fontSize:14.5, outline:'none', lineHeight:1.5 }}/>
-            <TurnstileWidget onVerify={setTsToken} />
-            <button onClick={submit} disabled={busy || q.trim().length < 8 || !tsToken} className="uk-press"
-              style={{ marginTop:12, width:'100%', fontFamily:Y.disp, fontSize:15, fontWeight:600, padding:'14px 0',
-                borderRadius:14, border:'none', cursor:'pointer', color:'#06241C',
+                fontFamily:Y.sans, fontSize:15, outline:'none', lineHeight:1.5 }}/>
+            <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 2px 0', lineHeight:1.5 }}>{tr('ask_voice_tip')}</p>
+
+            <fieldset style={{ border:'none', margin:'14px 0 0', padding:0 }}>
+              <legend style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, color:Y.txt, marginBottom:6, padding:0 }}>{tr('ask_visibility')}</legend>
+              {[[false, tr('ask_share_public')], [true, tr('ask_keep_private')]].map(([val, label]) => (
+                <label key={String(val)} style={{ display:'flex', gap:9, alignItems:'center', fontFamily:Y.sans, fontSize:13,
+                  color:Y.txt, padding:'7px 0', cursor:'pointer' }}>
+                  <input type="radio" name="uk-vis" checked={!!keepPrivate === val} onChange={()=>setKeepPrivate(val)}
+                    style={{ accentColor:Y.green, width:17, height:17, margin:0 }}/>
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+            <label style={{ display:'flex', gap:9, alignItems:'flex-start', fontFamily:Y.sans, fontSize:12, color:Y.mut,
+              padding:'6px 0 0', cursor:'pointer', lineHeight:1.45 }}>
+              <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}
+                style={{ accentColor:Y.green, width:16, height:16, margin:'1px 0 0', flexShrink:0 }}/>
+              {tr('remember_device')}
+            </label>
+
+            <TurnstileWidget onVerify={setTsToken} appearance="interaction-only" />
+            <button onClick={submit} disabled={busy} className="uk-press"
+              style={{ marginTop:6, width:'100%', fontFamily:Y.disp, fontSize:15.5, fontWeight:600, padding:'14px 0',
+                borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:'#06241C',
                 background:`linear-gradient(135deg, ${Y.green}, ${Y.teal})`,
-                boxShadow:'0 8px 20px rgba(63,224,160,0.28)',
-                opacity: (q.trim().length<8||!tsToken)?0.45:1 }}>
+                boxShadow:'0 8px 20px rgba(63,224,160,0.28)', opacity: tooShort ? 0.6 : 1 }}>
               {busy ? tr('ask_sending') : `💬 ${tr('ask_cta')}`}
             </button>
-            <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'10px 0 0', textAlign:'center', fontWeight:600 }}>
+            <div aria-live="polite" style={{ minHeight:18 }}>
+              {queued && !err && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.gold, margin:'8px 0 0', textAlign:'center', fontWeight:600 }}>{tr('ask_wait')}</p>}
+              {err && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', textAlign:'center', fontWeight:600, lineHeight:1.5 }}>{err}</p>}
+            </div>
+            <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 0 0', textAlign:'center', fontWeight:600 }}>
               🔒 {tr('ask_privacy')}
             </p>
           </>
         )}
       </div>
 
-      <SectionLabel color={Y.green}>{tr('answered_label')}</SectionLabel>
+      <SectionLabel color={Y.green}>{tr('public_label')}</SectionLabel>
+      <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'-6px 0 13px', lineHeight:1.5 }}>{tr('public_sub')}</p>
       {answered.length === 0 && (
         <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('no_answers')}</p>
       )}
@@ -244,25 +335,150 @@ function Uliza({ tr, lang, isDesktop }) {
         {answered.map(a => (
           <div key={a.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderRadius:16,
             padding:16, boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+            <p style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color:Y.mut, margin:'0 0 6px' }}>
+              {tr('asked_anon')}
+            </p>
             <p style={{ fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, margin:'0 0 7px', lineHeight:1.3 }}>{a.question}</p>
-            <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.8 }}>{a.answer}</p>
+            <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.85, whiteSpace:'pre-line' }}>{a.answer}</p>
             <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
               ✓ {a.answered_by || tr('verified_pro')} · {timeAgo(a.answered_at)}
             </p>
           </div>
         ))}
       </div>
+      </>
+      )}
+    </div>
+  )
+}
+
+function CodeCard({ code, tr }) {
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(prettyCode(code)); setCopied(true); setTimeout(()=>setCopied(false), 2000) } catch {}
+  }
+  return (
+    <div style={{ background:Y.bg, border:`1px dashed ${Y.gold}`, borderRadius:14, padding:'14px 14px 12px', marginTop:10 }}>
+      <p style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:800, letterSpacing:'.1em', textTransform:'uppercase', color:Y.gold, margin:'0 0 6px' }}>{tr('code_title')}</p>
+      <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+        <span style={{ fontFamily:"ui-monospace, 'SFMono-Regular', Menlo, monospace", fontSize:22, fontWeight:700,
+          letterSpacing:'.08em', color:Y.txt, userSelect:'all' }}>{prettyCode(code)}</span>
+        <button onClick={copy} className="uk-press" style={{ fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'7px 12px',
+          borderRadius:10, border:`1px solid ${Y.gold}`, background:'transparent', color:Y.gold, cursor:'pointer' }}>
+          {copied ? tr('code_copied') : tr('code_copy')}
+        </button>
+      </div>
+      <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, margin:'8px 0 0', lineHeight:1.55 }}>{tr('code_body')}</p>
+    </div>
+  )
+}
+
+// "My questions": codes saved on this phone + any code typed in. Answers come
+// from uliza_lookup(), which only ever returns rows matching a code you hold.
+function MyQuestions({ tr, onCount, remember }) {
+  const [codes, setCodes] = useState(() => loadSavedCodes().map(x => x.code))
+  const [rows, setRows] = useState(null)
+  const [entry, setEntry] = useSessionState('myq_entry', '')
+  const [extra, setExtra] = useSessionState('myq_extra', [])   // typed codes not saved to the phone
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const all = [...new Set([...codes, ...extra])]
+
+  const lookup = async (list) => {
+    if (!list.length) { setRows([]); return [] }
+    setBusy(true)
+    const { data, error } = await sb.rpc('uliza_lookup', { codes: list })
+    setBusy(false)
+    if (error) { setMsg(tr('ask_error')); return null }
+    setRows(data || [])
+    return data || []
+  }
+  useEffect(() => { lookup(all) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const check = async () => {
+    const c = normCode(entry)
+    if (c.length < 10) { setMsg(tr('myq_notfound')); return }
+    setMsg('')
+    const found = await lookup([...new Set([...all, c])])
+    if (found && !found.some(r => r.code === c)) { setMsg(tr('myq_notfound')); return }
+    if (remember) { const l = saveCode(c); setCodes(l.map(x => x.code)); onCount(l.length) }
+    else setExtra(e => [...new Set([...e, c])])
+    setEntry('')
+  }
+  const forget = () => { forgetSavedCodes(); setCodes([]); setExtra([]); setRows([]); onCount(0) }
+
+  const byCode = Object.fromEntries((rows || []).map(r => [r.code, r]))
+  const statusColor = { answered:Y.green, pending:Y.gold, closed:Y.coral }
+
+  return (
+    <div>
+      <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${Y.gold}`,
+        borderRadius:18, padding:16, marginBottom:18 }}>
+        <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.txt, margin:'0 0 10px', lineHeight:1.55 }}>{tr('myq_enter')}</p>
+        <div style={{ display:'flex', gap:8 }}>
+          <input value={entry} onChange={e=>{ setEntry(e.target.value); setMsg('') }} onKeyDown={e=>{ if (e.key==='Enter') check() }}
+            placeholder="XXXX-XXXX-XXXX" autoCapitalize="characters" autoComplete="off" spellCheck={false} aria-label={tr('code_title')}
+            style={{ flex:1, minWidth:0, background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'11px 12px',
+              color:Y.txt, fontFamily:"ui-monospace, Menlo, monospace", fontSize:15, letterSpacing:'.06em', outline:'none' }}/>
+          <button onClick={check} disabled={busy} className="uk-press" style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600,
+            padding:'0 16px', borderRadius:12, border:'none', background:Y.gold, color:'#06241C', cursor:'pointer' }}>{tr('myq_check')}</button>
+        </div>
+        {msg && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', fontWeight:600 }}>{msg}</p>}
+      </div>
+
+      {all.length === 0 && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('myq_empty')}</p>}
+      {all.length > 0 && rows === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
+      <div style={{ display:'grid', gap:11 }}>
+        {rows !== null && all.map(c => {
+          const r = byCode[c]
+          if (!r) return null
+          const col = statusColor[r.status] || Y.mut
+          return (
+            <div key={c} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${col}`,
+              borderRadius:16, padding:16 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+                <span style={{ fontFamily:"ui-monospace, Menlo, monospace", fontSize:11.5, color:Y.mut, letterSpacing:'.05em' }}>{prettyCode(c)}</span>
+                <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{timeAgo(r.created_at)}</span>
+              </div>
+              <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:600, color:Y.txt, margin:'0 0 8px', lineHeight:1.3 }}>{r.question}</p>
+              {r.status === 'answered' ? (
+                <>
+                  <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.88, whiteSpace:'pre-line' }}>{r.answer}</p>
+                  <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
+                    ✓ {r.answered_by || tr('verified_pro')} · {timeAgo(r.answered_at)}{r.keep_private ? ` · 🔒 ${tr('myq_private_tag')}` : ''}
+                  </p>
+                </>
+              ) : (
+                <p style={{ fontFamily:Y.sans, fontSize:12.5, color:col, margin:0, fontWeight:600, lineHeight:1.5 }}>
+                  {r.status === 'closed' ? tr('status_closed') : `⏳ ${tr('status_pending')}`}
+                </p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {all.length > 0 && (
+        <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginTop:16 }}>
+          <button onClick={()=>lookup(all)} disabled={busy} className="uk-press" style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600,
+            padding:'9px 14px', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.green, cursor:'pointer' }}>
+            ↻ {busy ? tr('loading') : tr('myq_refresh')}</button>
+          <button onClick={forget} className="uk-press" style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600,
+            padding:'9px 14px', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>
+            {tr('myq_forget')}</button>
+        </div>
+      )}
     </div>
   )
 }
 
 // ── Myth-buster cards ────────────────────────────────────────────────────────
-function Myths({ tr, lang, isDesktop }) {
+function Myths({ tr, lang, isDesktop, item, setItem }) {
   const [cards, setCards] = useState(null)
-  const [open, setOpen] = useState(null)
+  const open = item, setOpen = setItem          // open card lives in the URL (#myths/<id>)
   const [community, setCommunity] = useState([])
-  const [shareOpen, setShareOpen] = useState(false)
-  const [caption, setCaption] = useState('')
+  const [shareOpen, setShareOpen] = useSessionState('myth_share_open', false)
+  const [caption, setCaption] = useSessionState('myth_caption', '')
   const [subMedia, setSubMedia] = useState(null)   // { url, type }
   const [subUploading, setSubUploading] = useState(false)
   const [subToken, setSubToken] = useState('')
@@ -300,6 +516,8 @@ function Myths({ tr, lang, isDesktop }) {
   }, [])
   const byLang = (cards || []).filter(c => c.language === lang)
   const list = byLang.length ? byLang : (cards || []).filter(c => c.language === 'en')
+  const fellBack = cards !== null && lang !== 'en' && !byLang.length && list.length > 0
+  useScrollToItem(open, cards !== null)
 
   return (
     <div>
@@ -325,7 +543,7 @@ function Myths({ tr, lang, isDesktop }) {
               </label>
             </div>
             <input value={subMedia?.url || ''} onChange={e=>{ const u=e.target.value; setSubMedia(u ? { url:u, type:inferMedia(u) } : null) }}
-              placeholder="…or paste a link (image, mp4, YouTube)"
+              placeholder={tr('paste_link')}
               style={{ width:'100%', marginTop:8, background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:10, padding:'9px 11px', color:Y.txt, fontFamily:Y.sans, fontSize:12.5, outline:'none' }}/>
             <TurnstileWidget onVerify={setSubToken}/>
             <div style={{ display:'flex', gap:8 }}>
@@ -342,15 +560,16 @@ function Myths({ tr, lang, isDesktop }) {
       </div>
 
       {cards === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
+      {fellBack && <LangNote tr={tr}/>}
       {cards !== null && list.length === 0 && (
         <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('no_answers')}</p>
       )}
       <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
         {list.map((c, i) => {
           const acc = MYTH_COLORS[i % MYTH_COLORS.length]
-          const isOpen = open === c.id
+          const isOpen = open === String(c.id)
           return (
-            <div key={c.id} onClick={()=>setOpen(isOpen?null:c.id)} className="uk-card uk-press"
+            <div key={c.id} id={'uk-item-' + c.id} onClick={()=>setOpen(isOpen?null:String(c.id))} className="uk-card uk-press"
               style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${acc}`,
                 borderRadius:16, padding:16, cursor:'pointer', alignSelf:'start',
                 boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
@@ -362,7 +581,7 @@ function Myths({ tr, lang, isDesktop }) {
               </div>
               {isOpen && (
                 <div style={{ marginTop:13, paddingTop:13, borderTop:`1px solid ${Y.line}` }}>
-                  {c.media_url && <MythMedia url={c.media_url} type={c.media_type}/>}
+                  {c.media_url && <MythMedia url={c.media_url} type={c.media_type} label={tr('open_attachment')}/>}
                   <Block label={tr('why_feels_true')} text={c.why_it_feels_true} color={Y.gold}/>
                   <Block label={tr('the_truth')} text={c.truth} color={Y.green}/>
                   <Block label={tr('what_to_do')} text={c.what_to_do} color={Y.teal}/>
@@ -381,7 +600,7 @@ function Myths({ tr, lang, isDesktop }) {
           <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
             {community.map(s => (
               <div key={s.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.coral}`, borderRadius:16, padding:16, alignSelf:'start', boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
-                {s.media_url && <MythMedia url={s.media_url} type={s.media_type}/>}
+                {s.media_url && <MythMedia url={s.media_url} type={s.media_type} label={tr('open_attachment')}/>}
                 <p style={{ fontFamily:Y.disp, fontSize:15.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.35 }}>“{s.caption}”</p>
                 <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'8px 0 0' }}>{timeAgo(s.created_at)}</p>
               </div>
@@ -551,7 +770,7 @@ function Disinfo({ tr, lang, isDesktop }) {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginTop:11 }}>
                 <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{it.source_name} · {timeAgo(it.scanned_at)}</span>
                 {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
-                  style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>See post ↗</a>}
+                  style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>{tr('see_post')}</a>}
               </div>
               {it.is_disinfo && responseFor(it.typology) && (
                 <div style={{ marginTop:11, borderTop:`1px solid ${Y.line}`, paddingTop:11 }}>
@@ -594,7 +813,7 @@ const inferMedia = (u) => {
   if (/\.(mp4|webm|mov|m4v)(\?|#|$)/.test(u)) return 'video'
   return 'file'
 }
-function MythMedia({ url, type }) {
+function MythMedia({ url, type, label = 'Open attachment ↗' }) {
   if (!url) return null
   const box = { borderRadius:12, overflow:'hidden', marginBottom:12, border:`1px solid ${Y.line}`, display:'block', width:'100%' }
   if (type === 'image') return <img src={url} alt="" loading="lazy" style={{ ...box, maxHeight:320, objectFit:'cover' }}/>
@@ -604,7 +823,11 @@ function MythMedia({ url, type }) {
     const src = yt ? `https://www.youtube-nocookie.com/embed/${yt}` : url
     return <div style={{ position:'relative', paddingBottom:'56.25%', height:0, overflow:'hidden', borderRadius:12, marginBottom:12, border:`1px solid ${Y.line}` }}><iframe src={src} style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', border:0 }} loading="lazy" allow="encrypted-media;picture-in-picture" allowFullScreen title="Embedded media"/></div>
   }
-  return <a href={url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-block', fontFamily:Y.disp, fontSize:13, fontWeight:600, color:Y.teal, textDecoration:'none', marginBottom:12 }}>📎 Open attachment ↗</a>
+  return <a href={url} target="_blank" rel="noopener noreferrer" style={{ display:'inline-block', fontFamily:Y.disp, fontSize:13, fontWeight:600, color:Y.teal, textDecoration:'none', marginBottom:12 }}>📎 {label}</a>
+}
+
+function LangNote({ tr }) {
+  return <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.gold, margin:'0 0 12px', fontWeight:600 }}>ⓘ {tr('lang_fallback')}</p>
 }
 
 function Block({ label, text, color }) {
@@ -619,9 +842,9 @@ function Block({ label, text, color }) {
 }
 
 // ── Learn: real SRHR explainers (from lib/learn.js) ──────────────────────────
-function Learn({ tr, lang, isDesktop }) {
-  const [open, setOpen] = useState(null)
-  const [vid, setVid] = useState(null)          // which nested video is expanded
+function Learn({ tr, lang, isDesktop, item, setItem }) {
+  const open = item, setOpen = setItem          // open topic lives in the URL (#learn/<topic>)
+  const [vid, setVid] = useSessionState('learn_vid', null)   // which nested video is expanded
   const [db, setDb] = useState([])
   useEffect(() => {
     sb.from('ukweli_learn').select('*').eq('active', true).order('sort_order').then(({ data }) => setDb(data || []))
@@ -629,7 +852,7 @@ function Learn({ tr, lang, isDesktop }) {
 
   // Media (Imara TV videos, articles) attach to one of the six themes via `topic`
   // and render INSIDE that theme's card. Rows without a topic stay standalone.
-  const CATS = new Set(['contraception','consent','hiv','rights','gbv','body'])
+  const CATS = new Set(['contraception','consent','hiv','rights','gbv','body','mental'])
   const mediaByTopic = {}
   db.filter(d => d.topic && CATS.has(d.topic) && d.media_url).forEach(d => {
     (mediaByTopic[d.topic] = mediaByTopic[d.topic] || []).push(d)
@@ -645,6 +868,7 @@ function Learn({ tr, lang, isDesktop }) {
   const sRows = sLang.length ? sLang : standalone.filter(d => d.language === 'en')
   const dbTopics = sRows.map(d => ({ key:'db-'+d.id, color:d.color || Y.green, emoji:d.emoji || '📖', title:d.title, intro:d.intro || '', points:Array.isArray(d.points) ? d.points : [], media:[], single:{ url:d.media_url, type:d.media_type } }))
   const topics = [...staticTopics, ...dbTopics]
+  useScrollToItem(open, true)
 
   return (
     <div>
@@ -655,7 +879,7 @@ function Learn({ tr, lang, isDesktop }) {
         {topics.map(topic => {
           const isOpen = open === topic.key
           return (
-            <div key={topic.key} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
+            <div key={topic.key} id={'uk-item-' + topic.key} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderTop:`3px solid ${topic.color}`, borderRadius:16, overflow:'hidden', alignSelf:'start',
               boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
               <button onClick={()=>setOpen(isOpen?null:topic.key)} className="uk-press"
@@ -672,7 +896,7 @@ function Learn({ tr, lang, isDesktop }) {
               </button>
               {isOpen && (
                 <div style={{ padding:'2px 16px 16px' }}>
-                  {topic.single && topic.single.url && <MythMedia url={topic.single.url} type={topic.single.type}/>}
+                  {topic.single && topic.single.url && <MythMedia url={topic.single.url} type={topic.single.type} label={tr('open_attachment')}/>}
                   {topic.points.map(([head, body], j) => (
                     <div key={j} style={{ marginBottom:12, paddingLeft:13, borderLeft:`3px solid ${topic.color}66` }}>
                       <p style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, color:topic.color, margin:'0 0 3px' }}>{head}</p>
@@ -682,7 +906,7 @@ function Learn({ tr, lang, isDesktop }) {
                   {topic.media.length > 0 && (
                     <div style={{ marginTop:6, borderTop:`1px solid ${Y.line}`, paddingTop:12 }}>
                       <p style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:800, letterSpacing:'.12em', textTransform:'uppercase', color:topic.color, margin:'0 0 8px' }}>
-                        &#9654; Watch &amp; learn
+                        &#9654; {tr('watch_learn')}
                       </p>
                       {topic.media.map(mv => {
                         const vOpen = vid === mv.id
@@ -697,8 +921,8 @@ function Learn({ tr, lang, isDesktop }) {
                             </button>
                             {vOpen && (
                               <div style={{ marginTop:8 }}>
-                                <MythMedia url={mv.media_url} type={mv.media_type || 'embed'}/>
-                                <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'5px 2px 0' }}>Video: Imara TV</p>
+                                <MythMedia url={mv.media_url} type={mv.media_type || 'embed'} label={tr('open_attachment')}/>
+                                <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'5px 2px 0' }}>{tr('video_credit')}</p>
                               </div>
                             )}
                           </div>
@@ -720,8 +944,10 @@ function Learn({ tr, lang, isDesktop }) {
 }
 
 // ── Hebu Fika: youth-rated access to SRHR services, by county ────────────────
-function Fika({ tr, lang, isDesktop }) {
-  const [county, setCounty] = useState('Nairobi')
+function Fika({ tr, lang, isDesktop, item, setItem }) {
+  // Selected county lives in the URL (#fika/Kisumu) so you come back to it.
+  const county = KENYA_COUNTIES.includes(item) ? item : 'Nairobi'
+  const setCounty = (c) => setItem(c)
   const [facilities, setFacilities] = useState(null)
   const [reviews, setReviews] = useState([])
   const [usingFallback, setUsingFallback] = useState(false)
@@ -830,7 +1056,7 @@ function Fika({ tr, lang, isDesktop }) {
                   <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'3px 0 0' }}>📍 {f.area} · {f.county}</p>
                 </div>
                 {f.verified && <span style={{ fontFamily:Y.sans, fontSize:9.5, fontWeight:800, color:Y.green,
-                  border:`1px solid ${Y.green}`, borderRadius:8, padding:'2px 7px', whiteSpace:'nowrap' }}>✓ Known</span>}
+                  border:`1px solid ${Y.green}`, borderRadius:8, padding:'2px 7px', whiteSpace:'nowrap' }}>{tr('known')}</span>}
               </div>
 
               <div style={{ display:'flex', alignItems:'center', gap:8, margin:'10px 0' }}>
@@ -842,12 +1068,14 @@ function Fika({ tr, lang, isDesktop }) {
 
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                 <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, color:ft.color,
-                  background:ft.color+'22', border:`1px solid ${ft.color}55`, borderRadius:10, padding:'2px 9px' }}>{ft.label}</span>
+                  background:ft.color+'22', border:`1px solid ${ft.color}55`, borderRadius:10, padding:'2px 9px' }}>{tr('ft_' + (FACILITY_TYPES[f.kind] ? f.kind : 'public'))}</span>
                 {(f.services||[]).map((s,j) => (
                   <span key={j} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:600, color:Y.txt, opacity:.8,
                     background:'rgba(255,255,255,0.06)', border:`1px solid ${Y.line}`, borderRadius:10, padding:'2px 9px' }}>{s}</span>
                 ))}
               </div>
+
+              <FacilityFacts f={f} tr={tr}/>
 
               {f.praised.length > 0 && (
                 <div style={{ marginTop:10 }}>
@@ -857,7 +1085,7 @@ function Fika({ tr, lang, isDesktop }) {
                     {f.praised.map(a => (
                       <span key={a} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:700, color:Y.green,
                         background:'rgba(63,224,160,0.12)', border:`1px solid ${Y.green}44`, borderRadius:10, padding:'2px 9px' }}>
-                        {ATTR_LABEL[a] || a}
+                        {tr('attr_' + a)}
                       </span>
                     ))}
                   </span>
@@ -973,6 +1201,32 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
   )
 }
 
+// Cost, hours, contact and age info for a facility (youth asked to see costs
+// before travelling). Unknown cost is said plainly rather than left blank.
+const COST_COLOR = { free:Y.green, subsidised:Y.teal, paid:Y.gold, varies:Y.gold }
+function FacilityFacts({ f, tr }) {
+  const row = (icon, text) => (
+    <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.txt, opacity:.85, margin:'4px 0 0', lineHeight:1.5, overflowWrap:'anywhere' }}>
+      <span aria-hidden style={{ marginRight:6 }}>{icon}</span>{text}
+    </p>)
+  const cc = COST_COLOR[f.cost_level]
+  return (
+    <div style={{ margin:'10px 0 2px' }}>
+      <p style={{ margin:0 }}>
+        <span style={{ fontFamily:Y.sans, fontSize:11, fontWeight:800, borderRadius:10, padding:'3px 10px',
+          color: cc || Y.mut, border:`1px solid ${(cc || Y.mut)}66`, background:(cc || Y.mut)+'14' }}>
+          💳 {f.cost_level ? tr('cost_' + f.cost_level) : tr('cost_unknown')}
+        </span>
+        {f.cost_note && <span style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, marginLeft:8 }}>{f.cost_note}</span>}
+      </p>
+      {f.hours && row('🕘', `${tr('fika_hours')}: ${f.hours}`)}
+      {f.age_note && row('🎂', `${tr('fika_age')}: ${f.age_note}`)}
+      {f.phone && row('📞', <a href={'tel:' + String(f.phone).replace(/[^+0-9]/g, '')} style={{ color:Y.teal, fontWeight:700, textDecoration:'none' }}>{tr('fika_call')} {f.phone}</a>)}
+      {f.last_verified && <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'5px 0 0' }}>{tr('fika_checked')}: {new Date(f.last_verified).toLocaleDateString('en-KE', { month:'short', year:'numeric' })}</p>}
+    </div>
+  )
+}
+
 const fikaInput = {
   width:'100%', boxSizing:'border-box', fontFamily:'inherit', fontSize:13.5, color:'#F1F5EE',
   background:'#0A2620', border:'1px solid rgba(214,243,230,0.12)', borderRadius:12, padding:'11px 12px',
@@ -1049,13 +1303,13 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
         <p style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, letterSpacing:'.04em', textTransform:'uppercase',
           color:Y.mut, margin:'0 0 8px' }}>{tr('fika_whatgood')}</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:7, marginBottom:14 }}>
-          {ATTRIBUTES.map(([k,label]) => {
+          {ATTRIBUTES.map(([k]) => {
             const on = attrs.includes(k)
             return (
               <button key={k} onClick={()=>toggleAttr(k)} className="uk-press"
                 style={{ fontFamily:Y.sans, fontSize:11.5, fontWeight:700, padding:'6px 11px', borderRadius:20, cursor:'pointer',
                   border:`1px solid ${on?Y.green:Y.line}`, background: on?'rgba(63,224,160,0.16)':'transparent',
-                  color: on?Y.green:Y.mut }}>{label}</button>
+                  color: on?Y.green:Y.mut }}>{tr('attr_' + k)}</button>
             )
           })}
         </div>

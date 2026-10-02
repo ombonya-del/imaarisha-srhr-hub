@@ -24,7 +24,9 @@ function loadTurnstile() {
 
 // Renders the Turnstile widget. Calls onVerify(token) when solved, onVerify('')
 // when the token expires or errors (so the caller can disable submit again).
-export function TurnstileWidget({ onVerify, theme = 'auto' }) {
+// appearance 'interaction-only' keeps the widget invisible unless Cloudflare
+// actually needs the person to tick a box — fewer moving parts on the Ask screen.
+export function TurnstileWidget({ onVerify, theme = 'auto', appearance = 'always' }) {
   const boxRef = useRef(null)
   const idRef = useRef(null)
   useEffect(() => {
@@ -34,6 +36,7 @@ export function TurnstileWidget({ onVerify, theme = 'auto' }) {
       idRef.current = window.turnstile.render(boxRef.current, {
         sitekey: TURNSTILE_SITE_KEY,
         theme,
+        appearance,
         callback: (t) => onVerify(t),
         'expired-callback': () => onVerify(''),
         'error-callback': () => onVerify(''),
