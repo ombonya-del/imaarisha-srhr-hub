@@ -69,6 +69,11 @@ Voice:
 
 This is a DRAFT a human professional will check and edit before it is published. Write only the answer text.`
 
+// Sheng = the Kiswahili-based street language of young Nairobians, mixing in English.
+// The model drifts back to English unless told firmly, especially when the notes
+// it's given are in English, so the instruction is explicit and has an example.
+const SHENG_RULES = `LANGUAGE: Write in SHENG, not English. Sheng here means the everyday Kiswahili-based way young people in Nairobi talk, with English words mixed in where they naturally are (e.g. "Kama uko na stress kuhusu hii, enda kliniki ya youth — wako friendly na hawatakujudge."). Kiswahili grammar and connecting words (kama, lakini, kwa sababu, ndio, sahii, aje, poa) must carry the sentences; do NOT write English sentences with a few Sheng words added. Keep it respectful and clear — no crude slang. Keep medical and legal terms precise (e.g. PEP, ARVs, emergency contraception/P2, age of consent, Court of Appeal) and explain them in simple Sheng. Even if the source text is in English, translate everything into Sheng.`
+
 // ── "Catch the Latest" helper: notes/article text → structured youth summary ──
 const LATEST_SYSTEM = `You help editors of UkweliSRHR, a Kenyan youth (15–24) SRHR app, explain a recent development (court ruling, law, bill, policy, new health method, guidance or service) in plain language.
 
@@ -81,7 +86,7 @@ async function draftLatest(body: any) {
   const notes = String(body?.notes || "").trim().slice(0, 20000)
   if (notes.length < 40) return json({ error: "notes too short" }, 400)
   const lang = String(body?.language || "en")
-  const langLine = lang === "sw" ? "\n\nWrite every field in clear standard Kiswahili (Kenyan usage)." : lang === "sheng" ? "\n\nWrite in simple Kenyan English with light, natural Sheng; keep legal and medical terms clear." : ""
+  const langLine = lang === "sw" ? "\n\nWrite every field in clear standard Kiswahili (Kenyan usage)." : lang === "sheng" ? "\n\nWrite every field (including the title) in Sheng.\n" + SHENG_RULES : ""
   const models = [Deno.env.get("ULIZA_MODEL"), "claude-opus-5-5", "claude-sonnet-5-5"].filter(Boolean) as string[]
   let lastErr = ""
   for (const model of [...new Set(models)]) {
@@ -118,7 +123,7 @@ serve(async (req) => {
 
     const LANG_LINE: Record<string, string> = {
       sw: "Write the answer in clear, standard Kiswahili (Kenyan usage), with correct grammar.",
-      sheng: "The asker used the Sheng version of the app. Reply in simple, everyday Kenyan English with light, natural Kiswahili/Sheng where it helps — never forced slang, and keep every medical term clear.",
+      sheng: "The asker used the Sheng version of the app, so write the whole answer in Sheng.\n" + SHENG_RULES,
     }
     const langLine = LANG_LINE[language] ? `\n\n${LANG_LINE[language]}` : ""
     // Try the configured model, then fall back, so a retired or unavailable
