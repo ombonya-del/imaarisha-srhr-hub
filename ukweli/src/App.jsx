@@ -178,7 +178,7 @@ export default function App() {
         </p>
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
-        {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} />}
+        {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
@@ -766,7 +766,7 @@ function SocialEmbed({ url, platform, tr, accent, typoColor }) {
   return <div ref={box} style={{ background:'#fff', borderRadius:12, overflow:'hidden', minHeight:60 }} />
 }
 
-function Disinfo({ tr, lang, isDesktop }) {
+function Disinfo({ tr, lang, isDesktop, item, setItem }) {
   const [items, setItems] = useState(null)
   const [ty, setTy] = useState('all')
   const [responses, setResponses] = useState([])
@@ -797,7 +797,10 @@ function Disinfo({ tr, lang, isDesktop }) {
 
   return (
     <div>
-      <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 16px', lineHeight:1.6, fontWeight:500 }}>
+      <CatchTheLatest tr={tr} lang={lang} isDesktop={isDesktop} item={item} setItem={setItem}/>
+
+      <SectionLabel color={Y.rose}>{tr('trending_label')}</SectionLabel>
+      <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'-4px 0 16px', lineHeight:1.6, fontWeight:500 }}>
         {tr('disinfo_intro')}
       </p>
       {/* trending disinfo counter */}
@@ -881,6 +884,109 @@ function Disinfo({ tr, lang, isDesktop }) {
         </p>
       )}
     </div>
+  )
+}
+
+// ── Catch the Latest: plain-language breakdowns of new rulings, laws, policies
+// and methods. Rows live in ukweli_updates (EN/SW share a group_key); the open
+// item is kept in the URL (#disinfo/latest-<group>) so readers keep their place.
+const KIND_COLOR = { ruling:Y.gold, law:Y.teal, bill:Y.coral, policy:Y.green, method:Y.green, guidance:Y.teal, service:Y.green }
+function CatchTheLatest({ tr, lang, isDesktop, item, setItem }) {
+  const [rows, setRows] = useState(null)
+  const [showAll, setShowAll] = useState(false)
+  const [kind, setKind] = useState('all')
+  useEffect(() => {
+    sb.from('ukweli_updates').select('*').eq('active', true)
+      .order('pinned', { ascending:false }).order('happened_on', { ascending:false })
+      .then(({ data, error }) => setRows(error ? [] : (data || [])))
+  }, [])
+  // One card per group: the reader's language, else English.
+  const groups = []
+  const seen = new Set()
+  ;(rows || []).forEach(r => {
+    if (seen.has(r.group_key)) return
+    const all = (rows || []).filter(x => x.group_key === r.group_key)
+    const pick = all.find(x => x.language === lang) || all.find(x => x.language === 'en') || all[0]
+    seen.add(r.group_key)
+    groups.push({ ...pick, fellBack: pick.language !== lang })
+  })
+  const open = item && item.startsWith('latest-') ? item.slice(7) : null
+  useScrollToItem(open ? 'latest-' + open : null, rows !== null)
+  const kinds = [...new Set(groups.map(g => g.kind))]
+  const filtered = groups.filter(g => kind === 'all' || g.kind === kind)
+  const shown = showAll || open ? filtered : filtered.slice(0, 4)
+  if (rows !== null && groups.length === 0) return null
+
+  return (
+    <section style={{ marginBottom:28 }} aria-labelledby="uk-latest">
+      <p id="uk-latest" style={{ fontFamily:Y.disp, fontSize:22, fontWeight:600, color:Y.txt, margin:'0 0 4px', letterSpacing:'-.01em' }}>
+        {tr('latest_title')}
+      </p>
+      <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 14px', lineHeight:1.6 }}>{tr('latest_intro')}</p>
+      {kinds.length > 1 && (
+        <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, marginBottom:10 }}>
+          {['all', ...kinds].map(k => (
+            <button key={k} onClick={()=>setKind(k)} className="uk-press" style={{ fontFamily:Y.disp, fontSize:12.5, fontWeight:600,
+              padding:'6px 12px', borderRadius:20, border:`1px solid ${kind===k ? Y.green : Y.line}`, cursor:'pointer', whiteSpace:'nowrap',
+              background: kind===k ? Y.green : 'transparent', color: kind===k ? '#06241C' : Y.mut }}>
+              {k === 'all' ? tr('disinfo_all') : tr('kind_' + k)}
+            </button>
+          ))}
+        </div>
+      )}
+      {rows === null && <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('loading')}</p>}
+      <div style={{ display:'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap:11 }}>
+        {shown.map(g => {
+          const isOpen = open === g.group_key
+          const col = KIND_COLOR[g.kind] || Y.green
+          const srcs = Array.isArray(g.sources) ? g.sources : []
+          return (
+            <article key={g.group_key} id={'uk-item-latest-' + g.group_key} className="uk-card"
+              style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${col}`, borderRadius:16, padding:16, alignSelf:'start' }}>
+              <button onClick={()=>setItem(isOpen ? null : 'latest-' + g.group_key)} aria-expanded={isOpen}
+                style={{ all:'unset', cursor:'pointer', display:'block', width:'100%' }}>
+                <span style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:7 }}>
+                  <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase',
+                    color:'#06241C', background:col, borderRadius:7, padding:'2px 8px' }}>{tr('kind_' + g.kind)}</span>
+                  {g.date_label && <span style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut }}>{g.date_label}</span>}
+                </span>
+                <span style={{ display:'block', fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, lineHeight:1.3 }}>{g.title}</span>
+                <span style={{ display:'block', fontFamily:Y.disp, fontSize:12.5, fontWeight:600, color:col, marginTop:9 }}>
+                  {isOpen ? tr('close_card') : tr('latest_open') + ' →'}
+                </span>
+              </button>
+              {isOpen && (
+                <div style={{ marginTop:12, paddingTop:12, borderTop:`1px solid ${Y.line}` }}>
+                  {g.fellBack && <LangNote tr={tr}/>}
+                  <Block label={tr('latest_happened')} text={g.what_happened} color={Y.gold}/>
+                  <Block label={tr('latest_means')} text={g.what_it_means} color={Y.green}/>
+                  <Block label={tr('latest_status')} text={g.status_note} color={Y.teal}/>
+                  {g.care_note && (
+                    <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, background:'rgba(255,111,97,0.10)', border:`1px solid ${Y.coral}55`,
+                      borderRadius:10, padding:'9px 11px', margin:'0 0 12px', lineHeight:1.55 }}>{g.care_note}</p>
+                  )}
+                  {srcs.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:Y.mut, margin:'0 0 4px' }}>{tr('latest_sources')}</p>
+                      {srcs.map((sx, i) => (
+                        <a key={i} href={sx.url} target="_blank" rel="noopener noreferrer" style={{ display:'block', fontFamily:Y.sans, fontSize:12,
+                          fontWeight:600, color:Y.teal, textDecoration:'none', margin:'3px 0', overflowWrap:'anywhere' }}>↗ {sx.label || sx.url}</a>
+                      ))}
+                    </div>
+                  )}
+                  <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, margin:'10px 0 0', lineHeight:1.5 }}>{tr('latest_disclaimer')}</p>
+                </div>
+              )}
+            </article>
+          )
+        })}
+      </div>
+      {!showAll && !open && filtered.length > 4 && (
+        <button onClick={()=>setShowAll(true)} className="uk-press" style={{ ...ghostBtn, marginTop:12 }}>
+          {tr('latest_more')} ({filtered.length - 4})
+        </button>
+      )}
+    </section>
   )
 }
 

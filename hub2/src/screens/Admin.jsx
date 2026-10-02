@@ -53,7 +53,7 @@ export default function Admin({ session, bottomTabs }) {
       ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-      ['radar','🚩 Trending'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
+      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
   ]
   const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
   const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
@@ -94,6 +94,7 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'radar'     && <RadarCurate/>}
       {view === 'myths'     && <MythsDesk/>}
       {view === 'learn'     && <LearnDesk/>}
+      {view === 'latest'    && <LatestDesk/>}
       {view === 'community' && <CommunityDesk/>}
 
       {/* Fixed bottom tab bar for the standalone Admin PWA (four sections). */}
@@ -862,6 +863,136 @@ function Members() {
             <Btn small ghost onClick={()=>setEditMember({ id:p.id, full_name:p.full_name || '' })}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>deleteMember(p)}>🗑</Btn>
           </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Latest desk — "Catch the Latest" on Ukweli's Trending tab ───────────────
+// Plain-language breakdowns of court rulings, laws, bills, policies and new
+// methods. EN and SW versions share a group_key. The AI helper turns pasted
+// notes/article text into a draft the editor must check against the source.
+const LATEST_KINDS = [['ruling','Court ruling'],['law','Law'],['bill','Bill'],['policy','Policy'],['method','New option'],['guidance','Guidance'],['service','Service']]
+const EMPTY_LATEST = { group_key:'', language:'en', kind:'ruling', title:'', happened_on:'', date_label:'', what_happened:'', what_it_means:'',
+  status_note:'', care_note:'', sources:[], pinned:false, active:true }
+const slugKey = (t) => (t || 'update').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40) + '-' + Math.random().toString(36).slice(2,6)
+
+function LatestDesk() {
+  const [rows, setRows] = useState([])
+  const [form, setForm] = usePersisted('latest.form', EMPTY_LATEST)
+  const [editId, setEditId] = usePersisted('latest.editId', null)
+  const [notes, setNotes] = usePersisted('latest.notes', '')
+  const [busy, setBusy] = useState(false)
+  const [drafting, setDrafting] = useState(false)
+  const load = () => sb.from('ukweli_updates').select('*').order('pinned',{ascending:false}).order('happened_on',{ascending:false})
+    .then(({ data, error }) => { if (error) toast('Couldn’t load updates — has the Latest SQL been run? ' + error.message, 'red'); else setRows(data || []) })
+  useEffect(() => { load(); if (editId) scrollToWork('latest-form') }, [])
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+  const srcText = (form.sources || []).map(x => (x.label ? x.label + ' | ' : '') + x.url).join('\n')
+  const setSources = (txt) => setForm(f => ({ ...f, sources: txt.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.lastIndexOf('|'); return i > 0 ? { label: l.slice(0, i).trim(), url: l.slice(i + 1).trim() } : { label: '', url: l }
+  }) }))
+
+  const aiDraft = async () => {
+    if (notes.trim().length < 40) { toast('Paste the article text or your notes first (a few sentences at least)', 'red'); return }
+    setDrafting(true)
+    const { data, error } = await sb.functions.invoke('uliza-draft', { body: { mode:'latest', notes, language: form.language || 'en' } })
+    let msg = data?.error || ''
+    if (error) { try { const b = await error.context?.json?.(); msg = b?.error || error.message } catch { msg = error.message } }
+    if (msg) toast('AI draft failed: ' + msg, 'red')
+    else if (data?.update) {
+      const u = data.update
+      setForm(f => ({ ...f, ...Object.fromEntries(Object.entries(u).filter(([k, v]) => v && k in EMPTY_LATEST)) }))
+      toast('✨ Draft filled in — check every fact against the source before publishing', 'gold')
+    }
+    setDrafting(false)
+  }
+
+  const save = async () => {
+    if (!form.title.trim() || !form.what_happened.trim()) { toast('Add at least a title and “What happened”', 'red'); return }
+    setBusy(true)
+    const row = { ...form, group_key: form.group_key || slugKey(form.title), happened_on: form.happened_on || null, updated_at: new Date().toISOString() }
+    delete row.id; delete row.created_at
+    const q = editId ? sb.from('ukweli_updates').update(row).eq('id', editId) : sb.from('ukweli_updates').insert(row)
+    const { error } = await q
+    if (error) toast(error.code === '23505' ? 'There is already a version of this item in that language — edit that one instead.' : error.message, 'red')
+    else { toast(editId ? '✓ Update saved' : '✓ Published to Catch the Latest', 'green'); setForm(EMPTY_LATEST); setEditId(null); setNotes(''); load() }
+    setBusy(false)
+  }
+  const edit = (r) => { setForm({ ...EMPTY_LATEST, ...r, happened_on: r.happened_on || '' }); setEditId(r.id); scrollToWork('latest-form') }
+  const translate = (r) => { setForm({ ...EMPTY_LATEST, group_key: r.group_key, kind: r.kind, happened_on: r.happened_on || '', sources: r.sources || [], language: r.language === 'en' ? 'sw' : 'en', pinned: r.pinned }); setEditId(null); setNotes([r.title, r.what_happened, r.what_it_means, r.status_note, r.care_note].filter(Boolean).join('\n\n')); scrollToWork('latest-form') }
+  const toggle = async (r, k) => { await sb.from('ukweli_updates').update({ [k]: !r[k] }).eq('id', r.id); load() }
+
+  const groups = {}
+  rows.forEach(r => { (groups[r.group_key] = groups[r.group_key] || []).push(r) })
+  const lab = { fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.mut, display:'block', margin:'6px 0 3px' }
+
+  return (
+    <div>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 12px', lineHeight:1.6 }}>
+        Shown as “Catch the Latest” at the top of Ukweli’s Trending tab. Write for a 16-year-old: what happened, what it means for them,
+        where it stands now. Be precise on law — never say something is “legal now” unless it is — and add helplines for sensitive topics.
+        Drafts save automatically on this device.
+      </p>
+
+      <div id="work-latest-form" style={{ background:C.card, border:`1px solid ${C.gold}`, borderRadius:12, padding:14, marginBottom:18 }}>
+        <SectionLabel color={C.gold}>{editId ? '✎ Editing update' : '＋ New update'}{form.group_key && !editId ? ' (translation)' : ''}</SectionLabel>
+
+        <label style={lab}>✨ AI helper — paste the article text, judgment summary or your notes</label>
+        <textarea style={{ ...inputStyle, minHeight:80 }} value={notes} onChange={e=>setNotes(e.target.value)}
+          placeholder="Paste the news article or judgment summary here, then press “Draft with AI”. It fills in the fields below for you to check."/>
+        <Btn small ghost color={C.lilac} onClick={aiDraft} disabled={drafting}>{drafting ? 'Drafting…' : '✨ Draft with AI'}</Btn>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:12 }}>
+          <div><label style={lab}>Type</label>
+            <select style={inputStyle} value={form.kind} onChange={set('kind')}>{LATEST_KINDS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}</select></div>
+          <div><label style={lab}>Language</label>
+            <select style={inputStyle} value={form.language} onChange={set('language')}><option value="en">English</option><option value="sw">Kiswahili</option><option value="sheng">Sheng</option></select></div>
+          <div><label style={lab}>Date (for sorting)</label><input type="date" style={inputStyle} value={form.happened_on || ''} onChange={set('happened_on')}/></div>
+          <div><label style={lab}>Date as readers see it</label><input style={inputStyle} value={form.date_label || ''} onChange={set('date_label')} placeholder="20 May 2026"/></div>
+        </div>
+        <label style={lab}>Title (plain, under ~12 words)</label>
+        <input style={inputStyle} value={form.title} onChange={set('title')}/>
+        <label style={lab}>What happened</label>
+        <textarea style={{ ...inputStyle, minHeight:90 }} value={form.what_happened} onChange={set('what_happened')}/>
+        <label style={lab}>What it means for you</label>
+        <textarea style={{ ...inputStyle, minHeight:90 }} value={form.what_it_means} onChange={set('what_it_means')}/>
+        <label style={lab}>Where it stands now (in force / under appeal / pending…)</label>
+        <input style={inputStyle} value={form.status_note || ''} onChange={set('status_note')}/>
+        <label style={lab}>Help & care note (helplines, content note) — optional</label>
+        <input style={inputStyle} value={form.care_note || ''} onChange={set('care_note')}/>
+        <label style={lab}>Sources — one per line: Label | https://link</label>
+        <textarea style={{ ...inputStyle, minHeight:60 }} value={srcText} onChange={e=>setSources(e.target.value)}/>
+        <label style={{ fontFamily:C.sans, fontSize:12, color:C.txt, display:'flex', gap:8, alignItems:'center', margin:'4px 0' }}>
+          <input type="checkbox" checked={!!form.pinned} onChange={set('pinned')}/> Pin to the top
+        </label>
+        <label style={{ fontFamily:C.sans, fontSize:12, color:C.txt, display:'flex', gap:8, alignItems:'center', margin:'4px 0 10px' }}>
+          <input type="checkbox" checked={form.active !== false} onChange={set('active')}/> Show in the app
+        </label>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          <Btn small color={C.mint} onClick={save} disabled={busy}>{busy ? 'Saving…' : (editId ? '✓ Save changes' : '✓ Publish')}</Btn>
+          {(editId || form.title || notes) && <Btn small ghost onClick={()=>{ setForm(EMPTY_LATEST); setEditId(null); setNotes('') }}>Clear form</Btn>}
+        </div>
+      </div>
+
+      <SectionLabel color={C.sky}>Published & hidden updates ({Object.keys(groups).length})</SectionLabel>
+      {Object.entries(groups).map(([gk, list]) => (
+        <div key={gk} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.sky}`, borderRadius:12, padding:12, marginBottom:8 }}>
+          {list.map(r => (
+            <div key={r.id} style={{ marginBottom:6 }}>
+              <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, margin:0 }}>
+                {r.pinned ? '📌 ' : ''}{r.title} <span style={{ fontWeight:600, color:C.mut, fontSize:11 }}>· {r.language} · {r.kind} · {r.date_label || r.happened_on || ''}{r.active ? '' : ' · hidden'}</span>
+              </p>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:5 }}>
+                <Btn small ghost onClick={()=>edit(r)}>Edit</Btn>
+                <Btn small ghost onClick={()=>toggle(r,'active')}>{r.active ? 'Hide' : 'Show'}</Btn>
+                <Btn small ghost onClick={()=>toggle(r,'pinned')}>{r.pinned ? 'Unpin' : 'Pin'}</Btn>
+              </div>
+            </div>
+          ))}
+          {!list.some(r => r.language === 'sw') && <Btn small ghost color={C.lilac} onClick={()=>translate(list[0])}>＋ Add Kiswahili version</Btn>}
         </div>
       ))}
     </div>

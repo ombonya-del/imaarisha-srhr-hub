@@ -435,6 +435,41 @@ const COPY = {
 }
 for (const l of Object.keys(COPY)) Object.assign(STRINGS[l], COPY[l])
 
+// ── Catch the Latest (Trending tab)
+const LATEST = {
+  en: {
+    latest_title: 'Catch the Latest',
+    latest_intro: 'New court rulings, laws, policies and health options — what changed and what it means for you.',
+    latest_open: 'What it means', latest_happened: 'What happened', latest_means: 'What it means for you',
+    latest_status: 'Where it stands now', latest_sources: 'Read the source', latest_more: 'See all updates',
+    latest_disclaimer: 'This is general information, not legal advice. Laws and rulings can change on appeal.',
+    trending_label: 'Spreading right now',
+    kind_ruling: 'Court ruling', kind_law: 'Law', kind_bill: 'Bill', kind_policy: 'Policy',
+    kind_method: 'New option', kind_guidance: 'Guidance', kind_service: 'Service',
+  },
+  sw: {
+    latest_title: 'Habari Mpya',
+    latest_intro: 'Maamuzi mapya ya mahakama, sheria, sera na huduma za afya — kilichobadilika na maana yake kwako.',
+    latest_open: 'Maana yake', latest_happened: 'Kilichotokea', latest_means: 'Maana yake kwako',
+    latest_status: 'Hali ilivyo sasa', latest_sources: 'Soma chanzo', latest_more: 'Ona habari zote',
+    latest_disclaimer: 'Hii ni taarifa ya jumla, si ushauri wa kisheria. Sheria na maamuzi yanaweza kubadilika kwa rufaa.',
+    trending_label: 'Yanayosambaa sasa',
+    kind_ruling: 'Uamuzi wa mahakama', kind_law: 'Sheria', kind_bill: 'Mswada', kind_policy: 'Sera',
+    kind_method: 'Chaguo jipya', kind_guidance: 'Mwongozo', kind_service: 'Huduma',
+  },
+  sheng: {
+    latest_title: 'Catch the Latest',
+    latest_intro: 'Rulings mpya za korti, sheria, policies na options za afya — nini imebadilika na inamaanisha nini kwako.',
+    latest_open: 'Inamaanisha nini', latest_happened: 'Nini ilifanyika', latest_means: 'Inamaanisha nini kwako',
+    latest_status: 'Iko aje sahii', latest_sources: 'Soma source', latest_more: 'Cheki zote',
+    latest_disclaimer: 'Hii ni info ya jumla, si legal advice. Sheria na rulings zinaweza badilika kwa appeal.',
+    trending_label: 'Zinaspread sahii',
+    kind_ruling: 'Ruling ya korti', kind_law: 'Sheria', kind_bill: 'Bill', kind_policy: 'Policy',
+    kind_method: 'Option mpya', kind_guidance: 'Mwongozo', kind_service: 'Service',
+  },
+}
+for (const l of Object.keys(LATEST)) Object.assign(STRINGS[l], LATEST[l])
+
 let current = (() => { try { return localStorage.getItem('imaarisha_lang') || 'en' } catch { return 'en' } })()
 const listeners = new Set()
 

@@ -69,12 +69,49 @@ Voice:
 
 This is a DRAFT a human professional will check and edit before it is published. Write only the answer text.`
 
+// ── "Catch the Latest" helper: notes/article text → structured youth summary ──
+const LATEST_SYSTEM = `You help editors of UkweliSRHR, a Kenyan youth (15–24) SRHR app, explain a recent development (court ruling, law, bill, policy, new health method, guidance or service) in plain language.
+
+Use ONLY facts stated in the editor's notes. Never invent case numbers, dates, judges, numbers or outcomes; if something isn't in the notes, leave that field empty. Be legally precise: say exactly what changed and what did NOT change (for example, if a ruling is about prosecution of close-in-age teens, say clearly the age of consent is still 18). Never say something is "now legal" unless the notes say so. Neutral tone on contested issues; no legal or medical advice beyond pointing to clinics and helplines.
+
+Return ONLY a JSON object with these string keys:
+title (plain, max 12 words), kind (one of: ruling, law, bill, policy, method, guidance, service), happened_on (YYYY-MM-DD or empty), date_label (e.g. "20 May 2026" or empty), what_happened (2–4 short sentences), what_it_means (2–4 short sentences addressed to "you", practical), status_note (one sentence: in force / under appeal / pending in Parliament / unknown), care_note (helplines if the topic involves violence, abuse, pregnancy or mental health — Kenya: 1195 GBV, 116 Childline, 1190 One2One, 1199 Kenya Red Cross — otherwise empty).`
+
+async function draftLatest(body: any) {
+  const notes = String(body?.notes || "").trim().slice(0, 20000)
+  if (notes.length < 40) return json({ error: "notes too short" }, 400)
+  const lang = String(body?.language || "en")
+  const langLine = lang === "sw" ? "\n\nWrite every field in clear standard Kiswahili (Kenyan usage)." : lang === "sheng" ? "\n\nWrite in simple Kenyan English with light, natural Sheng; keep legal and medical terms clear." : ""
+  const models = [Deno.env.get("ULIZA_MODEL"), "claude-opus-5-5", "claude-sonnet-5-5"].filter(Boolean) as string[]
+  let lastErr = ""
+  for (const model of [...new Set(models)]) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model, max_tokens: 1200, system: LATEST_SYSTEM + langLine,
+        messages: [{ role: "user", content: `Editor's notes / source text:\n"""\n${notes}\n"""` }] }),
+    })
+    const data = await res.json().catch(() => ({}))
+    const text = (data?.content?.find((b: any) => b.type === "text")?.text || "").trim()
+    if (res.ok && text) {
+      const m = text.match(/\{[\s\S]*\}/)
+      try { const update = JSON.parse(m ? m[0] : text); console.log(`uliza-draft: latest ok via ${model}`); return json({ update, model }) }
+      catch { lastErr = `${model}: could not read the AI's answer as JSON`; console.error("uliza-draft:", lastErr); continue }
+    }
+    lastErr = `${model}: ${data?.error?.message || `Anthropic HTTP ${res.status}`}`
+    console.error(`uliza-draft: latest Anthropic ${res.status} — ${lastErr}`)
+    if (![400, 404, 529].includes(res.status)) break
+  }
+  return json({ error: lastErr || "No draft returned" }, 502)
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
   try {
     if (!(await callerIsAdmin(req))) { console.error("uliza-draft: caller is not an admin (or no/expired login token)"); return json({ error: "admin only — sign out and back in, and check profiles.is_admin" }, 403) }
     if (!ANTHROPIC_KEY) { console.error("uliza-draft: ANTHROPIC_API_KEY secret is not set"); return json({ error: "ANTHROPIC_API_KEY not set" }, 500) }
     const body = await req.json().catch(() => ({}))
+    if (body?.mode === "latest") return await draftLatest(body)
     const question = String(body?.question || "").trim()
     const language = String(body?.language || "en").trim()
     if (!question) return json({ error: "no question" }, 400)
