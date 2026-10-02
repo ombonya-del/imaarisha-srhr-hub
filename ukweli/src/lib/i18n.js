@@ -385,6 +385,56 @@ const EXTRA = {
 }
 for (const l of Object.keys(EXTRA)) Object.assign(STRINGS[l], EXTRA[l])
 
+// ── Wording pass (Oct 2026): plainer, warmer, fewer slogans. Plus photo & voice.
+const COPY = {
+  en: {
+    tagline: 'Ask the questions you can’t ask out loud. Real health workers answer — no names, no judgement.',
+    ask_tab: 'Ask', ask_send: 'Send my question',
+    ask_privacy: 'No account. No name. Nothing that shows who you are.',
+    myths_intro: 'Heard something about sex, pregnancy or contraception that doesn’t sound right? Tap a card to see what’s actually true.',
+    bust_myth: 'See what’s true',
+    disinfo_intro: 'False claims about your body spread fast on TikTok and other apps. These are the ones going around right now, and what the facts say.',
+    learn_intro: 'Clear, correct information about your body, relationships and rights — without shame.',
+    fika_intro: 'Find clinics where young people are treated well, rated by people your age. Been somewhere? Tell others what it was like.',
+    fika_share: 'Rate a clinic',
+    voice_start: 'Speak instead', voice_stop: 'Stop', voice_listening: 'Listening… speak now, then tap Stop.',
+    voice_note: 'Speaking uses your phone’s own speech service to turn your voice into text. We only receive the text.',
+    photo_add: 'Add a photo (optional)', photo_change: 'Change photo', photo_remove: 'Remove photo',
+    photo_rules: 'Only our health team can see this photo, and it is deleted once your question is answered. Please don’t include your face, your name, an ID card or anything that shows who you are.',
+    photo_error: 'That photo couldn’t be added. Try a different photo, or send your question without it.',
+  },
+  sw: {
+    tagline: 'Uliza maswali usiyoweza kuuliza kwa sauti. Wahudumu halisi wa afya wanajibu — bila majina, bila hukumu.',
+    ask_tab: 'Uliza', ask_send: 'Tuma swali langu',
+    ask_privacy: 'Bila akaunti. Bila jina. Hakuna kinachoonyesha wewe ni nani.',
+    myths_intro: 'Umesikia jambo kuhusu ngono, mimba au uzazi wa mpango ambalo halionekani sawa? Gusa kadi uone ukweli.',
+    bust_myth: 'Ona ukweli',
+    disinfo_intro: 'Madai ya uongo kuhusu mwili wako husambaa haraka TikTok na mitandao mingine. Haya ndiyo yanayozunguka sasa, na ukweli wake.',
+    learn_intro: 'Taarifa wazi na sahihi kuhusu mwili wako, mahusiano na haki zako — bila aibu.',
+    fika_intro: 'Pata kliniki ambapo vijana wanahudumiwa vizuri, zilizokadiriwa na vijana wenzako. Umewahi kwenda mahali? Waeleze wengine ilivyokuwa.',
+    fika_share: 'Kadiria kliniki',
+    learn: 'Jifunze',
+    voice_start: 'Ongea badala yake', voice_stop: 'Simamisha', voice_listening: 'Inasikiliza… ongea sasa, kisha gusa Simamisha.',
+    voice_note: 'Kuongea kunatumia huduma ya sauti ya simu yako kugeuza sauti kuwa maandishi. Sisi tunapokea maandishi tu.',
+    photo_add: 'Ongeza picha (hiari)', photo_change: 'Badilisha picha', photo_remove: 'Ondoa picha',
+    photo_rules: 'Timu yetu ya afya pekee ndiyo itaona picha hii, na itafutwa swali lako likishajibiwa. Tafadhali usionyeshe uso wako, jina lako, kitambulisho au chochote kinachoonyesha wewe ni nani.',
+    photo_error: 'Picha hiyo haikuweza kuongezwa. Jaribu picha nyingine, au tuma swali bila picha.',
+  },
+  sheng: {
+    tagline: 'Uliza maswali huwezi uliza kwa sauti. Health workers wa ukweli wanajibu — hakuna majina, hakuna kujudge.',
+    ask_tab: 'Uliza', ask_send: 'Tuma swali',
+    ask_privacy: 'Hakuna account. Hakuna jina. Hakuna kitu inaonyesha ni wewe.',
+    bust_myth: 'Cheki ukweli',
+    fika_share: 'Rate kliniki',
+    voice_start: 'Ongea badala', voice_stop: 'Stop', voice_listening: 'Inasikiza… ongea sahii, alafu bonyeza Stop.',
+    voice_note: 'Kuongea kunatumia speech service ya simu yako kugeuza sauti iwe text. Sisi tunapata text pekee.',
+    photo_add: 'Ongeza picha (optional)', photo_change: 'Badilisha picha', photo_remove: 'Toa picha',
+    photo_rules: 'Ni health team yetu pekee itaona hii picha, na itadeletiwa swali lako likijibiwa. Usiweke sura yako, jina, ID ama kitu inaonyesha ni wewe.',
+    photo_error: 'Hiyo picha haijaweza kuongezwa. Jaribu ingine, ama tuma swali bila picha.',
+  },
+}
+for (const l of Object.keys(COPY)) Object.assign(STRINGS[l], COPY[l])
+
 let current = (() => { try { return localStorage.getItem('imaarisha_lang') || 'en' } catch { return 'en' } })()
 const listeners = new Set()
 

@@ -15,7 +15,7 @@ const CORS = {
 
 // Only these columns are accepted from the client, per table. Anything else is dropped.
 const ALLOWED: Record<string, string[]> = {
-  uliza_questions:   ['question', 'language', 'keep_private'],
+  uliza_questions:   ['question', 'language', 'keep_private', 'photo_path'],
   fika_suggestions:  ['name', 'county', 'area', 'note', 'language'],
   fika_reviews:      ['facility_id', 'rating', 'attributes', 'comment', 'language'],
   ukweli_submissions:['caption', 'media_url', 'media_type', 'language'],
@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       row.keep_private = row.keep_private === true
       const code = normCode(payload?.ticket)
       if (code.length >= 10 && code.length <= 32) row.ticket_hash = await sha256hex(code)
+      // Optional photo: must be a file the client just put in the private bucket's q/ folder.
+      if (row.photo_path != null && !/^q\/[A-Za-z0-9-]{8,80}\.(jpg|webp)$/.test(String(row.photo_path))) delete row.photo_path
     }
 
     // 3) Insert with the service role (row is already sanitised).

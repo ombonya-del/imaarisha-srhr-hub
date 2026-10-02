@@ -879,6 +879,15 @@ function UlizaDesk({ session, onChange }) {
   const [focus, setFocus] = usePersisted('uliza.focus', null)            // question last worked on
   const [busy, setBusy] = useState(null)
   const [drafting, setDrafting] = useState(null)
+  const [photos, setPhotos] = useState({})          // id → short-lived signed URL (private bucket)
+  const [showPublished, setShowPublished] = usePersisted('uliza.showPublished', false)
+
+  // Delete a question's photo from the private bucket (after answering / hiding).
+  const dropPhoto = async (q) => {
+    if (!q.photo_path) return
+    await sb.storage.from('uliza-photos').remove([q.photo_path])
+    await sb.from('uliza_questions').update({ photo_path: null }).eq('id', q.id)
+  }
 
   const load = () => sb.from('uliza_questions').select('*').eq('status','pending')
     .order('created_at',{ascending:true}).limit(50).then(({data}) => {
@@ -888,6 +897,9 @@ function UlizaDesk({ session, onChange }) {
       const live = new Set(rows.map(r => String(r.id)))
       setAnswers(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
       setAiDrafted(a => Object.fromEntries(Object.entries(a).filter(([k]) => live.has(k))))
+      rows.filter(r => r.photo_path).forEach(r =>
+        sb.storage.from('uliza-photos').createSignedUrl(r.photo_path, 3600)
+          .then(({ data }) => data?.signedUrl && setPhotos(m => ({ ...m, [r.id]: data.signedUrl }))))
     })
   useEffect(() => { load() }, [])
   useEffect(() => { if (pending && focus) scrollToWork(focus) }, [pending === null])
@@ -917,12 +929,13 @@ function UlizaDesk({ session, onChange }) {
       answered_at: new Date().toISOString(),
     }).eq('id', q.id)
     if (error) toast(error.message,'red')
-    else { toast(q.keep_private ? '✓ Answer sent privately to the asker' : '✓ Published to Ukweli','green'); if (focus === q.id) setFocus(null); load() }
+    else { await dropPhoto(q); toast(q.keep_private ? '✓ Answer sent privately to the asker' : '✓ Published to Ukweli','green'); if (focus === q.id) setFocus(null); load() }
     setBusy(null)
   }
   const hide = async (q) => {
     await sb.from('uliza_questions').update({ status:'hidden' }).eq('id', q.id)
-    toast('Hidden','gold'); if (focus === q.id) setFocus(null); load()
+    await dropPhoto(q)
+    toast('Hidden — the asker is told to contact One2One 1190 or a clinic','gold'); if (focus === q.id) setFocus(null); load()
   }
 
   const LANG = { en:'English', sw:'Kiswahili', sheng:'Sheng' }
@@ -949,6 +962,18 @@ function UlizaDesk({ session, onChange }) {
             {q.keep_private && <span style={{ color:C.lilac, fontWeight:800 }}> · 🔒 Private — only the asker will see the answer</span>}
             {hasDraft && <span style={{ color:C.gold, fontWeight:800 }}> · ✎ draft saved</span>}
           </p>
+          {q.photo_path && (
+            <div style={{ margin:'0 0 10px' }}>
+              {photos[q.id]
+                ? <a href={photos[q.id]} target="_blank" rel="noopener noreferrer"><img src={photos[q.id]} alt="Photo sent with the question"
+                    style={{ maxWidth:'100%', maxHeight:260, borderRadius:10, border:`1px solid ${C.line}`, display:'block' }}/></a>
+                : <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:0 }}>📷 Loading photo…</p>}
+              <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'4px 0 0' }}>
+                📷 Private photo — only admins can see it. It is deleted automatically when you answer or hide this question.
+                The AI draft does not see the photo, so describe anything relevant in your answer yourself.
+              </p>
+            </div>
+          )}
           {aiDrafted[q.id] && (
             <p style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color:C.gold, margin:'0 0 6px', lineHeight:1.5 }}>
               ✨ AI draft — before publishing, check: does it answer exactly what was asked? Is the grammar and tone right for a young Kenyan? Are the facts correct? You are the professional the answer is credited to.
@@ -967,6 +992,65 @@ function UlizaDesk({ session, onChange }) {
           </div>
         </div>
       )})}
+
+      <div style={{ marginTop:22 }}>
+        <Btn small ghost onClick={()=>setShowPublished(v => !v)}>
+          {showPublished ? '▲ Hide published answers' : '▼ Review published answers (quality check)'}
+        </Btn>
+        {showPublished && <PublishedAnswers/>}
+      </div>
+    </div>
+  )
+}
+
+// Quality check for answers already live (youth said some felt generic,
+// mismatched or had grammar slips). Edit in place, or unpublish back to the queue.
+function PublishedAnswers() {
+  const [rows, setRows] = useState(null)
+  const [edits, setEdits] = usePersisted('uliza.publishedEdits', {})
+  const [busy, setBusy] = useState(null)
+  const load = () => sb.from('uliza_questions').select('*').eq('status','answered')
+    .order('answered_at',{ ascending:false }).limit(100).then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+  const save = async (q) => {
+    const text = (edits[q.id] ?? q.answer ?? '').trim()
+    if (text.length < 20) { toast('Answer is too short','red'); return }
+    setBusy(q.id)
+    const { error } = await sb.from('uliza_questions').update({ answer:text }).eq('id', q.id)
+    if (error) toast(error.message,'red')
+    else { toast('✓ Answer updated','green'); setEdits(e => { const n = { ...e }; delete n[q.id]; return n }); load() }
+    setBusy(null)
+  }
+  const unpublish = async (q) => {
+    setBusy(q.id)
+    const { error } = await sb.from('uliza_questions').update({ status:'pending' }).eq('id', q.id)
+    if (error) toast(error.message,'red'); else { toast('Moved back to the queue','gold'); load() }
+    setBusy(null)
+  }
+  if (rows === null) return <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic', marginTop:10 }}>Loading…</p>
+  return (
+    <div style={{ marginTop:12 }}>
+      <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px', lineHeight:1.55 }}>
+        For each one, check: does the first sentence answer exactly what was asked? Is it correct, in the asker’s language,
+        with clean grammar and a warm, non-judgemental tone? Edits save as drafts on this device until you press Save.
+      </p>
+      {rows.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing published yet.</p>}
+      {rows.map(q => (
+        <div key={q.id} id={'work-pub-' + q.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.sky}`, borderRadius:12, padding:14, marginBottom:9 }}>
+          <p style={{ fontFamily:C.sans, fontSize:13, fontWeight:800, color:C.txt, margin:'0 0 4px', whiteSpace:'pre-line' }}>{q.question}</p>
+          <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'0 0 8px' }}>
+            {q.language || 'en'} · answered {timeAgo(q.answered_at)} by {q.answered_by || '—'}{q.keep_private ? ' · 🔒 private' : ' · public'}
+            {edits[q.id] !== undefined && <span style={{ color:C.gold, fontWeight:800 }}> · ✎ unsaved edit</span>}
+          </p>
+          <textarea style={{ ...inputStyle, minHeight:100 }} value={edits[q.id] ?? q.answer ?? ''}
+            onChange={e => setEdits(x => ({ ...x, [q.id]: e.target.value }))}/>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            <Btn small color={C.mint} onClick={()=>save(q)} disabled={busy===q.id || edits[q.id] === undefined}>✓ Save edit</Btn>
+            {edits[q.id] !== undefined && <Btn small ghost onClick={()=>setEdits(e => { const n = { ...e }; delete n[q.id]; return n })}>Discard edit</Btn>}
+            <Btn small ghost onClick={()=>unpublish(q)} disabled={busy===q.id}>↩ Back to queue</Btn>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

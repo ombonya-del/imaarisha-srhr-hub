@@ -48,7 +48,8 @@ Deno.serve(async (req) => {
     // could identify the asker — there is nothing identifying stored anyway.
     kind = 'Ukweli question'
     const lang = LANG_NAME[String(rec.language || 'en')] || String(rec.language || 'en')
-    const priv = rec.keep_private ? ' · 🔒 asker wants the answer kept private' : ''
+    const priv = (rec.keep_private ? ' · 🔒 asker wants the answer kept private' : '')
+      + (rec.photo_path ? ' · 📷 includes a photo (view it in the Uliza desk)' : '')
     desc = `“${String(rec.question || '').slice(0, 400)}” — asked in ${lang}${priv}`
     subject = `💬 New UkweliSRHR question waiting for an answer`
     link = ULIZA_DESK_URL; linkLabel = 'Answer it in the Uliza desk →'

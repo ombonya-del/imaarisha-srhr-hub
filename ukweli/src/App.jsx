@@ -4,6 +4,7 @@ import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
 import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES } from './lib/fika'
+import { cleanPhoto, uploadPhoto, speechSupported, startDictation } from './lib/photo'
 import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
 import KenyaMap from './KenyaMap'
 
@@ -37,8 +38,32 @@ function Bolt({ size = 12, color = '#F2C75C' }) {
   )
 }
 
-const TABS = [['ask','💬'],['myths','⚡'],['disinfo','🚩'],['learn','📖'],['fika','📍']]
-const TAB_ACCENT = { ask: Y.green, myths: Y.coral, disinfo: Y.rose, learn: Y.teal, fika: Y.gold }
+const TABS = [['ask','ask'],['myths','myths'],['disinfo','disinfo'],['learn','learn'],['fika','fika']]
+// One accent for navigation (house style: restrained palette, not a rainbow).
+const TAB_ACCENT = { ask: Y.green, myths: Y.green, disinfo: Y.green, learn: Y.green, fika: Y.green }
+
+// Simple line icons — replace the emoji that made the app read as templated.
+const ICONS = {
+  ask:    'M4 5h16v11H9l-5 4z',
+  myths:  'M13 2 4 14h7l-1 8 9-12h-7z',
+  disinfo:'M5 21V4m0 0h11l-2 4 2 4H5',
+  learn:  'M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z',
+  fika:   'M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11zm0-8.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  mic:    'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+  key:    'M7.5 15a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM11 11.5h10M18 11.5v3M21 11.5v2',
+  lock:   'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+}
+function Icon({ name, size = 18, color = 'currentColor', style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink:0, verticalAlign:'-3px', ...style }}>
+      <path d={ICONS[name]}/>
+    </svg>
+  )
+}
+const ghostBtn = { display:'inline-flex', alignItems:'center', gap:7, fontFamily:Y.disp, fontSize:13, fontWeight:600,
+  padding:'8px 12px', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.txt, cursor:'pointer' }
 const MYTH_COLORS = [Y.coral, Y.green, Y.teal, Y.gold]
 const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fika_nav' : id)
 
@@ -78,6 +103,7 @@ export default function App() {
         ::-webkit-scrollbar { width:8px } ::-webkit-scrollbar-thumb { background:#1d4a3c; border-radius:4px }
         @keyframes pop { from { transform: translateY(4px); opacity:0 } to { transform:none; opacity:1 } }
         .uk-card { animation: pop .2s ease; }
+        @media (prefers-reduced-motion: reduce) { .uk-card { animation: none } .uk-press { transition: none } }
         .uk-press { transition: transform .12s ease, box-shadow .15s ease, background .15s ease; }
         .uk-press:active { transform: scale(.985); }
         .uk-navlink { transition: color .15s ease, border-color .15s ease; }
@@ -117,8 +143,8 @@ export default function App() {
                     style={{ fontFamily:Y.disp, fontSize:14.5, fontWeight:600, padding:'9px 14px', borderRadius:12,
                       border:'none', cursor:'pointer', letterSpacing:'.01em', whiteSpace:'nowrap',
                       background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
-                      boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
-                    <span style={{ marginRight:6, filter:on?'none':'grayscale(1) opacity(.7)' }}>{icon}</span>{navLabel(tr, id)}
+                      boxShadow:'none' }}>
+                    <Icon name={icon} size={16} style={{ marginRight:7 }}/>{navLabel(tr, id)}
                   </button>
                 )
               })}
@@ -174,8 +200,8 @@ export default function App() {
                 style={{ flex:1, minWidth:0, cursor:'pointer', border:'none', borderRadius:14,
                   display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, padding:'8px 2px',
                   background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
-                  boxShadow: on ? `0 4px 14px ${acc}55` : 'none' }}>
-                <span style={{ fontSize:17, lineHeight:1, filter: on?'none':'grayscale(1) opacity(.6)' }}>{icon}</span>
+                  boxShadow:'none' }}>
+                <Icon name={icon} size={20}/>
                 <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:600, whiteSpace:'nowrap', letterSpacing:'-.01em' }}>{navLabel(tr, id)}</span>
               </button>
             )
@@ -211,6 +237,28 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
   const [err, setErr] = useState('')
   const [tsToken, setTsToken] = useState('')
   const [savedCount, setSavedCount] = useState(() => loadSavedCodes().length)
+  const [photo, setPhoto] = useState(null)        // { blob, url } — never persisted
+  const [photoErr, setPhotoErr] = useState('')
+  const [listening, setListening] = useState(false)
+  const stopRef = useRef(null)
+  const canSpeak = speechSupported()
+
+  const pickPhoto = async (file) => {
+    setPhotoErr('')
+    if (!file) return
+    try {
+      const blob = await cleanPhoto(file)
+      if (photo) URL.revokeObjectURL(photo.url)
+      setPhoto({ blob, url: URL.createObjectURL(blob) })
+    } catch { setPhotoErr(tr('photo_error')) }
+  }
+  const dropPhoto = () => { if (photo) URL.revokeObjectURL(photo.url); setPhoto(null) }
+  const toggleMic = () => {
+    if (listening) { stopRef.current?.(); setListening(false); return }
+    setListening(true)
+    stopRef.current = startDictation(lang, (t) => setQ(v => (v ? v.trimEnd() + ' ' : '') + t), () => setListening(false))
+  }
+  useEffect(() => () => stopRef.current?.(), [])
 
   useEffect(() => {
     sb.from('uliza_questions').select('id,question,answer,answered_by,answered_at').eq('status','answered')
@@ -223,13 +271,18 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
   const doSubmit = async () => {
     setQueued(false); setBusy(true); setErr('')
     const code = newQuestionCode()
+    let photo_path = null
+    if (photo) {
+      try { photo_path = await uploadPhoto(sb, photo.blob) }
+      catch { setBusy(false); setErr(tr('photo_error')); return }
+    }
     const { error } = await tsInsert(sb, 'uliza_questions',
-      { question: q.trim(), language: lang, keep_private: !!keepPrivate, ticket: code }, tsToken)
+      { question: q.trim(), language: lang, keep_private: !!keepPrivate, ticket: code, ...(photo_path ? { photo_path } : {}) }, tsToken)
     setBusy(false)
     resetTurnstile(); setTsToken('')
     if (error) { setErr(error.message && !/verification/i.test(error.message) ? error.message : tr('ask_error')); return }
     if (remember) setSavedCount(saveCode(code).length)
-    setSentCode(code); setQ('')
+    setSentCode(code); setQ(''); dropPhoto()
   }
   // Pressing Ask before the (invisible) security check finishes queues the send.
   const submit = () => {
@@ -248,9 +301,9 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
     <div>
       <div role="tablist" style={{ display:'flex', gap:4, padding:4, background:'rgba(255,255,255,0.05)',
         border:`1px solid ${Y.line}`, borderRadius:15, marginBottom:14 }}>
-        <button role="tab" aria-selected={view==='ask'} onClick={()=>setItem(null)} className="uk-press" style={seg(view==='ask')}>💬 {tr('ask_cta')}</button>
+        <button role="tab" aria-selected={view==='ask'} onClick={()=>setItem(null)} className="uk-press" style={seg(view==='ask')}><Icon name="ask" size={16} style={{ marginRight:6 }}/>{tr('ask_tab')}</button>
         <button role="tab" aria-selected={view==='mine'} onClick={()=>setItem('mine')} className="uk-press" style={seg(view==='mine')}>
-          🔑 {tr('myq_title')}{savedCount > 0 ? ` (${savedCount})` : ''}
+          <Icon name="key" size={16} style={{ marginRight:6 }}/>{tr('myq_title')}{savedCount > 0 ? ` (${savedCount})` : ''}
         </button>
       </div>
 
@@ -259,7 +312,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
       ) : (
       <>
       <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${Y.green}`,
-        borderRadius:18, padding:isDesktop?22:18, marginBottom:22, boxShadow:'0 10px 30px rgba(0,0,0,0.28)' }}>
+        borderRadius:18, padding:isDesktop?22:18, marginBottom:22, boxShadow:'none' }}>
         {sentCode ? (
           <div aria-live="polite">
             <p style={{ fontFamily:Y.disp, fontSize:17, color:Y.green, margin:'0 0 6px', fontWeight:600 }}>{tr('ask_sent')}</p>
@@ -270,7 +323,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
               <button onClick={()=>{ setSentCode(''); setItem('mine') }} className="uk-press" style={{ background:Y.green,
                 border:'none', color:'#06241C', fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
-                borderRadius:12, cursor:'pointer' }}>🔑 {tr('myq_title')}</button>
+                borderRadius:12, cursor:'pointer' }}>{tr('myq_title')}</button>
               <button onClick={()=>setSentCode('')} className="uk-press" style={{ background:Y.card2,
                 border:`1px solid ${Y.line}`, color:Y.green, fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
                 borderRadius:12, cursor:'pointer' }}>{tr('ask_another')}</button>
@@ -287,7 +340,35 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
               style={{ width:'100%', minHeight:110, resize:'vertical', background:Y.bg,
                 border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
                 fontFamily:Y.sans, fontSize:15, outline:'none', lineHeight:1.5 }}/>
-            <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 2px 0', lineHeight:1.5 }}>{tr('ask_voice_tip')}</p>
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
+              {canSpeak && (
+                <button type="button" onClick={toggleMic} className="uk-press" aria-pressed={listening}
+                  style={{ ...ghostBtn, color: listening ? Y.coral : Y.txt, borderColor: listening ? Y.coral : Y.line }}>
+                  <Icon name="mic" size={16}/> {listening ? tr('voice_stop') : tr('voice_start')}
+                </button>
+              )}
+              <label className="uk-press" style={{ ...ghostBtn, cursor:'pointer' }}>
+                <Icon name="camera" size={16}/> {photo ? tr('photo_change') : tr('photo_add')}
+                <input type="file" accept="image/*" style={{ display:'none' }}
+                  onChange={e => { pickPhoto(e.target.files?.[0]); e.target.value = '' }}/>
+              </label>
+            </div>
+            {listening && <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.coral, margin:'6px 2px 0', fontWeight:600 }}>{tr('voice_listening')}</p>}
+            <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 2px 0', lineHeight:1.5 }}>
+              {canSpeak ? tr('voice_note') : tr('ask_voice_tip')}
+            </p>
+            {photo && (
+              <div style={{ display:'flex', gap:12, alignItems:'flex-start', marginTop:10, padding:10, borderRadius:12,
+                border:`1px solid ${Y.line}`, background:Y.bg }}>
+                <img src={photo.url} alt="" style={{ width:72, height:72, objectFit:'cover', borderRadius:8, flexShrink:0 }}/>
+                <div style={{ flex:1 }}>
+                  <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.txt, margin:0, lineHeight:1.5 }}>{tr('photo_rules')}</p>
+                  <button type="button" onClick={dropPhoto} style={{ background:'none', border:'none', padding:0, marginTop:6,
+                    color:Y.coral, fontFamily:Y.sans, fontSize:12, fontWeight:700, cursor:'pointer' }}>{tr('photo_remove')}</button>
+                </div>
+              </div>
+            )}
+            {photoErr && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'6px 2px 0' }}>{photoErr}</p>}
 
             <fieldset style={{ border:'none', margin:'14px 0 0', padding:0 }}>
               <legend style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, color:Y.txt, marginBottom:6, padding:0 }}>{tr('ask_visibility')}</legend>
@@ -311,16 +392,15 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             <button onClick={submit} disabled={busy} className="uk-press"
               style={{ marginTop:6, width:'100%', fontFamily:Y.disp, fontSize:15.5, fontWeight:600, padding:'14px 0',
                 borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:'#06241C',
-                background:`linear-gradient(135deg, ${Y.green}, ${Y.teal})`,
-                boxShadow:'0 8px 20px rgba(63,224,160,0.28)', opacity: tooShort ? 0.6 : 1 }}>
-              {busy ? tr('ask_sending') : `💬 ${tr('ask_cta')}`}
+                background:Y.green, opacity: tooShort ? 0.6 : 1 }}>
+              {busy ? tr('ask_sending') : tr('ask_send')}
             </button>
             <div aria-live="polite" style={{ minHeight:18 }}>
               {queued && !err && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.gold, margin:'8px 0 0', textAlign:'center', fontWeight:600 }}>{tr('ask_wait')}</p>}
               {err && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', textAlign:'center', fontWeight:600, lineHeight:1.5 }}>{err}</p>}
             </div>
             <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 0 0', textAlign:'center', fontWeight:600 }}>
-              🔒 {tr('ask_privacy')}
+              <Icon name="lock" size={13} style={{ marginRight:5 }}/>{tr('ask_privacy')}
             </p>
           </>
         )}
@@ -334,7 +414,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
       <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:11 }}>
         {answered.map(a => (
           <div key={a.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderRadius:16,
-            padding:16, boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+            padding:16, boxShadow:'none' }}>
             <p style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color:Y.mut, margin:'0 0 6px' }}>
               {tr('asked_anon')}
             </p>
@@ -445,7 +525,7 @@ function MyQuestions({ tr, onCount, remember }) {
                 <>
                   <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.88, whiteSpace:'pre-line' }}>{r.answer}</p>
                   <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
-                    ✓ {r.answered_by || tr('verified_pro')} · {timeAgo(r.answered_at)}{r.keep_private ? ` · 🔒 ${tr('myq_private_tag')}` : ''}
+                    ✓ {r.answered_by || tr('verified_pro')} · {timeAgo(r.answered_at)}{r.keep_private ? ` · ${tr('myq_private_tag')}` : ''}
                   </p>
                 </>
               ) : (
@@ -530,7 +610,7 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
           <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, margin:0, fontWeight:500 }}>{tr('share_sent')}</p>
         ) : !shareOpen ? (
           <button onClick={()=>setShareOpen(true)} className="uk-press" style={{ width:'100%', textAlign:'left', background:'transparent', border:'none', cursor:'pointer', fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt }}>
-            💬 {tr('share_title')}
+            {tr('share_title')}
           </button>
         ) : (
           <>
@@ -549,12 +629,12 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={submitShare} disabled={subBusy || caption.trim().length<4 || !subToken} className="uk-press"
                 style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-                  background:`linear-gradient(135deg, ${Y.coral}, ${Y.gold})`, opacity:(caption.trim().length<4||!subToken)?0.5:1 }}>
+                  background:Y.coral, opacity:(caption.trim().length<4||!subToken)?0.5:1 }}>
                 {subBusy ? tr('ask_sending') : tr('share_cta')}
               </button>
               <button onClick={()=>setShareOpen(false)} className="uk-press" style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 16px', borderRadius:12, border:`1px solid ${Y.line}`, background:'transparent', color:Y.mut, cursor:'pointer' }}>{tr('close_card')}</button>
             </div>
-            <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, margin:'8px 0 0', textAlign:'center' }}>🔒 {tr('ask_privacy')}</p>
+            <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, margin:'8px 0 0', textAlign:'center' }}><Icon name="lock" size={12} style={{ marginRight:5 }}/>{tr('ask_privacy')}</p>
           </>
         )}
       </div>
@@ -572,9 +652,8 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
             <div key={c.id} id={'uk-item-' + c.id} onClick={()=>setOpen(isOpen?null:String(c.id))} className="uk-card uk-press"
               style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${acc}`,
                 borderRadius:16, padding:16, cursor:'pointer', alignSelf:'start',
-                boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+                boxShadow:'none' }}>
               <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                <span style={{ fontSize:17, lineHeight:1.25 }}>💬</span>
                 <p style={{ fontFamily:Y.disp, fontSize:17.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.3 }}>
                   “{c.claim}”
                 </p>
@@ -588,7 +667,7 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
                 </div>
               )}
               <p style={{ fontFamily:Y.disp, fontSize:13, color:acc, margin:'12px 0 0', fontWeight:600 }}>
-                {isOpen ? `▲ ${tr('close_card')}` : `⚡ ${tr('bust_myth')}`}
+                {isOpen ? tr('close_card') : `${tr('bust_myth')} →`}
               </p>
             </div>
           )
@@ -599,7 +678,7 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
           <p style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, letterSpacing:'.08em', textTransform:'uppercase', color:Y.coral, margin:'0 0 12px' }}>{tr('community_title')}</p>
           <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
             {community.map(s => (
-              <div key={s.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.coral}`, borderRadius:16, padding:16, alignSelf:'start', boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+              <div key={s.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`4px solid ${Y.coral}`, borderRadius:16, padding:16, alignSelf:'start', boxShadow:'none' }}>
                 {s.media_url && <MythMedia url={s.media_url} type={s.media_type} label={tr('open_attachment')}/>}
                 <p style={{ fontFamily:Y.disp, fontSize:15.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.35 }}>“{s.caption}”</p>
                 <p style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut, margin:'8px 0 0' }}>{timeAgo(s.created_at)}</p>
@@ -713,7 +792,7 @@ function Disinfo({ tr, lang, isDesktop }) {
     fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'7px 13px', borderRadius:20,
     cursor:'pointer', whiteSpace:'nowrap', border:'none',
     background: on ? color : 'rgba(255,255,255,0.06)', color: on ? '#06241C' : Y.mut,
-    boxShadow: on ? `0 4px 12px ${color}44` : 'none',
+    boxShadow:'none',
   })
 
   return (
@@ -753,7 +832,7 @@ function Disinfo({ tr, lang, isDesktop }) {
           return (
             <div key={it.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderLeft:`4px solid ${acc}`, borderRadius:16, padding:16, alignSelf:'start',
-              boxShadow:'0 6px 18px rgba(0,0,0,0.20)', overflowWrap:'anywhere' }}>
+              boxShadow:'none', overflowWrap:'anywhere' }}>
               {canEmbedItem(it) && <div style={{ marginBottom:11 }}><SocialEmbed url={it.url} platform={it.platform} tr={tr} accent={acc} typoColor={acc} /></div>}
               <div style={{ display:'flex', flexWrap:'wrap', gap:7, alignItems:'center', marginBottom:9 }}>
                 <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color:'#06241C',
@@ -881,7 +960,7 @@ function Learn({ tr, lang, isDesktop, item, setItem }) {
           return (
             <div key={topic.key} id={'uk-item-' + topic.key} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderTop:`3px solid ${topic.color}`, borderRadius:16, overflow:'hidden', alignSelf:'start',
-              boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+              boxShadow:'none' }}>
               <button onClick={()=>setOpen(isOpen?null:topic.key)} className="uk-press"
                 style={{ width:'100%', textAlign:'left', cursor:'pointer', border:'none', background:'transparent',
                   display:'flex', alignItems:'center', gap:13, padding:'15px 16px' }}>
@@ -1001,7 +1080,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
 
       {/* Map + tracker indicator */}
       <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${Y.gold}`,
-        borderRadius:16, padding:16, marginBottom:18, boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+        borderRadius:16, padding:16, marginBottom:18, boxShadow:'none' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:10, marginBottom:4 }}>
           <SectionLabel color={Y.gold}>{tr('fika_map_title')}</SectionLabel>
           <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{tr('fika_tap_county')}</span>
@@ -1025,8 +1104,8 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
         </select>
         <button onClick={()=>setSubmitOpen(true)} className="uk-press"
           style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'10px 16px', borderRadius:12, border:'none',
-            cursor:'pointer', color:'#06241C', background:Y.gold, boxShadow:'0 4px 12px rgba(242,199,92,0.3)' }}>
-          ＋ {tr('fika_share')}
+            cursor:'pointer', color:'#06241C', background:Y.gold }}>
+          {tr('fika_share')}
         </button>
       </div>
 
@@ -1047,7 +1126,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
           return (
             <div key={f.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`,
               borderLeft:`4px solid ${ft.color}`, borderRadius:16, padding:16, alignSelf:'start',
-              boxShadow:'0 6px 18px rgba(0,0,0,0.20)' }}>
+              boxShadow:'none' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10 }}>
                 <div>
                   <p style={{ fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, margin:0, lineHeight:1.25 }}>
@@ -1111,7 +1190,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
         <button onClick={()=>setSuggestOpen(true)} className="uk-press"
           style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'10px 18px', borderRadius:12, cursor:'pointer',
             border:`1px solid ${Y.gold}`, background:'transparent', color:Y.gold }}>
-          ＋ {tr('fika_suggest')}
+          + {tr('fika_suggest')}
         </button>
       </div>
 
@@ -1169,7 +1248,7 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
             <p style={{ fontFamily:Y.sans, fontSize:14, color:Y.txt, lineHeight:1.6, fontWeight:500, margin:'0 0 14px' }}>{tr('fika_suggest_sent')}</p>
             <button onClick={onClose} className="uk-press" style={{ width:'100%', fontFamily:Y.disp, fontSize:14, fontWeight:600,
               padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-              background:`linear-gradient(135deg, ${Y.green}, ${Y.teal})` }}>{tr('close_card')}</button>
+              background:Y.green }}>{tr('close_card')}</button>
           </>
         ) : (
           <>
@@ -1190,7 +1269,7 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
               </button>
               <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
                 padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-                background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})`, opacity:(canWrite && !tsToken)?0.5:1 }}>
+                background:Y.gold, opacity:(canWrite && !tsToken)?0.5:1 }}>
                 {busy ? tr('ask_sending') : tr('fika_suggest_title')}
               </button>
             </div>
@@ -1326,7 +1405,7 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
           </button>
           <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
             padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
-            background:`linear-gradient(135deg, ${Y.gold}, ${Y.coral})`, opacity:(canWrite && !tsToken)?0.5:1 }}>
+            background:Y.gold, opacity:(canWrite && !tsToken)?0.5:1 }}>
             {busy ? tr('ask_sending') : tr('fika_share')}
           </button>
         </div>
