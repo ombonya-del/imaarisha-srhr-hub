@@ -57,8 +57,8 @@ This is a DRAFT a human professional will check and edit before it is published.
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS })
   try {
-    if (!(await callerIsAdmin(req))) return json({ error: "admin only" }, 403)
-    if (!ANTHROPIC_KEY) return json({ error: "ANTHROPIC_API_KEY not set" }, 500)
+    if (!(await callerIsAdmin(req))) { console.error("uliza-draft: caller is not an admin (or no/expired login token)"); return json({ error: "admin only — sign out and back in, and check profiles.is_admin" }, 403) }
+    if (!ANTHROPIC_KEY) { console.error("uliza-draft: ANTHROPIC_API_KEY secret is not set"); return json({ error: "ANTHROPIC_API_KEY not set" }, 500) }
     const body = await req.json().catch(() => ({}))
     const question = String(body?.question || "").trim()
     const language = String(body?.language || "en").trim()
@@ -84,13 +84,15 @@ serve(async (req) => {
       })
       const data = await res.json().catch(() => ({}))
       const draft = (data?.content?.find((b: any) => b.type === "text")?.text || "").trim()
-      if (res.ok && draft) return json({ draft, model })
+      if (res.ok && draft) { console.log(`uliza-draft: ok via ${model}`); return json({ draft, model }) }
       lastErr = `${model}: ${data?.error?.message || `Anthropic HTTP ${res.status}`}`
+      console.error(`uliza-draft: Anthropic ${res.status} — ${lastErr}`)
       // Only fall through to the next model for model-specific problems.
       if (![400, 404, 529].includes(res.status)) break
     }
     return json({ error: lastErr || "No draft returned" }, 502)
   } catch (e) {
+    console.error("uliza-draft: crashed —", String(e))
     return json({ error: String(e) }, 500)
   }
 })
