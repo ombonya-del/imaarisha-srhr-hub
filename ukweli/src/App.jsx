@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { sb, timeAgo } from './lib/supabase'
+import { sb, timeAgo, cleanText } from './lib/supabase'
 import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
 import { LEARN } from './lib/learn'
@@ -775,7 +775,20 @@ function Disinfo({ tr, lang, isDesktop, item, setItem }) {
   useEffect(() => {
     sb.from('radar_items').select('*')
       .order('scanned_at', { ascending:false }).limit(120)
-      .then(({ data }) => setItems((data || []).filter(i => i.is_disinfo || i.harm_score >= 5)))
+      .then(({ data }) => {
+        // Reviewed-out items (youth_visible=false) never show; the same story from
+        // two outlets shows once; a snippet that just repeats the headline is dropped.
+        const seen = new Set()
+        const norm = (t) => t.replace(/\s+[-|–]\s+[^-|–]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '')
+        setItems((data || [])
+          .filter(i => i.youth_visible !== false && (i.is_disinfo || i.harm_score >= 5))
+          .map(i => {
+            const title = cleanText(i.title), snippet = cleanText(i.snippet)
+            const dupSnippet = snippet && norm(title).length > 10 && snippet.toLowerCase().replace(/[^a-z0-9]/g, '').startsWith(norm(title))
+            return { ...i, title, snippet: dupSnippet ? '' : snippet, source_name: cleanText(i.source_name) }
+          })
+          .filter(i => { if (!i.title) return false; const k = norm(i.title); if (seen.has(k)) return false; seen.add(k); return true }))
+      })
       .catch(() => setItems([]))
     sb.from('disinfo_responses').select('*').eq('active', true).then(({ data }) => setResponses(data || [])).catch(() => {})
   }, [])
@@ -850,7 +863,7 @@ function Disinfo({ tr, lang, isDesktop, item, setItem }) {
               {it.snippet && <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.txt, opacity:.75, lineHeight:1.6, margin:'8px 0 0' }}>
                 {it.snippet.slice(0,180)}{it.snippet.length>180?'…':''}</p>}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginTop:11 }}>
-                <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{it.source_name} · {timeAgo(it.scanned_at)}</span>
+                <span style={{ fontFamily:Y.sans, fontSize:10.5, color:Y.mut }}>{it.source_name}{it.published_at ? ' · ' + new Date(it.published_at).toLocaleDateString('en-KE', { month:'short', year:'numeric' }) : ''}</span>
                 {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer nofollow"
                   style={{ fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:acc, textDecoration:'none', whiteSpace:'nowrap' }}>{tr('see_post')}</a>}
               </div>

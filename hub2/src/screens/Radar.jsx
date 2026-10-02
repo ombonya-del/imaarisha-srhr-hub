@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { sb, C, timeAgo } from '../lib/supabase'
+import { sb, C, timeAgo, cleanText } from '../lib/supabase'
 
 const TYPOLOGY = {
   contraceptive_myth: { label:'Contraceptive myths', color:'#D7574B', key:'myth_signals' },
@@ -110,7 +110,7 @@ export default function Radar() {
               <span style={{ fontFamily:C.sans, fontSize:10, color:C.mut }}>{it.source_name} · {timeAgo(it.scanned_at)}</span>
               {it.harm_score >= 7 && <span style={{ fontFamily:C.sans, fontSize:10, color:C.red, fontWeight:700 }}>harm {it.harm_score}/10</span>}
             </div>
-            <div style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:600, color:C.txt, lineHeight:1.4 }}>{it.title}</div>
+            <div style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:600, color:C.txt, lineHeight:1.4 }}>{cleanText(it.title)}</div>
           </a>
         )
       })}

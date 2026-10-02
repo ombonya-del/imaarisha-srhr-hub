@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { sb, C, timeAgo, toast, notifyMembers } from '../lib/supabase'
+import { sb, C, timeAgo, toast, notifyMembers, cleanText } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 import { MatchNotifyModal } from '../lib/matchNotify'
 import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
@@ -162,8 +162,19 @@ function RadarCurate() {
   const [editId, setEditId] = usePersisted('radar.editId', null)
   const [edit, setEdit] = usePersisted('radar.edit', { title:'', url:'', typology:'contraceptive_myth', snippet:'', is_disinfo:true })
 
-  const load = () => sb.from('radar_items').select('*').in('platform', CURATE_SOCIAL)
-    .order('scanned_at', { ascending:false }).limit(30).then(({ data }) => setItems(data || []))
+  const [news, setNews] = useState([])
+  const [newsFilter, setNewsFilter] = usePersisted('radar.newsFilter', 'shown')
+  const load = () => {
+    sb.from('radar_items').select('*').in('platform', CURATE_SOCIAL)
+      .order('scanned_at', { ascending:false }).limit(30).then(({ data }) => setItems(data || []))
+    sb.from('radar_items').select('id,title,source_name,typology,is_disinfo,harm_score,youth_visible,review_note,published_at,url')
+      .eq('platform', 'news').or('is_disinfo.eq.true,harm_score.gte.5')
+      .order('scanned_at', { ascending:false }).limit(200).then(({ data }) => setNews(data || []))
+  }
+  const setVisible = async (it, v) => {
+    const { error } = await sb.from('radar_items').update({ youth_visible: v, review_note: v ? 'Shown by an admin' : 'Hidden by an admin' }).eq('id', it.id)
+    if (error) toast(error.message, 'red'); else { toast(v ? '✓ Shown in Ukweli' : 'Hidden from Ukweli', v ? 'green' : 'gold'); load() }
+  }
   useEffect(() => { load() }, [])
 
   const plat = platformOfUrl(url)
@@ -195,7 +206,7 @@ function RadarCurate() {
 
   const startEdit = (it) => {
     setEditId(it.id)
-    setEdit({ title:it.title||'', url:it.url||'', typology:it.typology||'contraceptive_myth', snippet:it.snippet||'', is_disinfo: it.is_disinfo !== false })
+    setEdit({ title:cleanText(it.title), url:it.url||'', typology:it.typology||'contraceptive_myth', snippet:cleanText(it.snippet), is_disinfo: it.is_disinfo !== false })
   }
   const saveEdit = async () => {
     const u = edit.url.trim()
@@ -258,7 +269,7 @@ function RadarCurate() {
           background:C.card, border:`1px solid ${C.line}`, borderRadius:10, padding:'10px 12px', marginBottom:8 }}>
           <div style={{ minWidth:0 }}>
             <div style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, color:C.coral, textTransform:'uppercase', letterSpacing:'.04em' }}>{it.platform} · {it.typology}{it.is_disinfo ? '' : ' · not flagged'}</div>
-            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:600, overflowWrap:'anywhere', margin:'2px 0' }}>{it.title}</div>
+            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:600, overflowWrap:'anywhere', margin:'2px 0' }}>{cleanText(it.title)}</div>
             <a href={it.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, overflowWrap:'anywhere' }}>{it.url}</a>
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
@@ -267,6 +278,31 @@ function RadarCurate() {
           </div>
         </div>
       ))}
+
+      <div style={{ marginTop:22 }}>
+        <SectionLabel color={C.sky}>📰 News items the scanner found — shown to young people?</SectionLabel>
+        <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'-4px 0 10px', lineHeight:1.55 }}>
+          Only show genuine misleading claims that young Kenyans are likely to meet now. Hide regulator warnings, fact-checks,
+          duplicates, old stories and other countries’ debates. The hub’s Radar still keeps everything.
+        </p>
+        <div style={{ display:'flex', gap:6, marginBottom:10 }}>
+          {[['shown','Shown'],['hidden','Hidden']].map(([k,l]) => <Chip key={k} active={newsFilter===k} color={C.sky} onClick={()=>setNewsFilter(k)}>{l} ({news.filter(n => (n.youth_visible !== false) === (k==='shown')).length})</Chip>)}
+        </div>
+        {news.filter(n => (n.youth_visible !== false) === (newsFilter === 'shown')).map(n => (
+          <div key={n.id} style={{ display:'flex', gap:10, justifyContent:'space-between', alignItems:'flex-start', background:C.card,
+            border:`1px solid ${C.line}`, borderRadius:10, padding:'9px 12px', marginBottom:6 }}>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, fontWeight:700, overflowWrap:'anywhere' }}>{cleanText(n.title)}</div>
+              <div style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, marginTop:2 }}>
+                {n.typology} · harm {n.harm_score}{n.published_at ? ' · ' + new Date(n.published_at).getFullYear() : ''}{n.review_note ? ' · ' + n.review_note : ''}
+              </div>
+            </div>
+            <Btn small ghost color={n.youth_visible !== false ? C.coral : C.mint} onClick={()=>setVisible(n, n.youth_visible === false)}>
+              {n.youth_visible !== false ? 'Hide' : 'Show'}
+            </Btn>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -922,7 +958,7 @@ function LatestDesk() {
     setBusy(false)
   }
   const edit = (r) => { setForm({ ...EMPTY_LATEST, ...r, happened_on: r.happened_on || '' }); setEditId(r.id); scrollToWork('latest-form') }
-  const translate = (r) => { setForm({ ...EMPTY_LATEST, group_key: r.group_key, kind: r.kind, happened_on: r.happened_on || '', sources: r.sources || [], language: r.language === 'en' ? 'sw' : 'en', pinned: r.pinned }); setEditId(null); setNotes([r.title, r.what_happened, r.what_it_means, r.status_note, r.care_note].filter(Boolean).join('\n\n')); scrollToWork('latest-form') }
+  const translate = (r, to) => { setForm({ ...EMPTY_LATEST, group_key: r.group_key, kind: r.kind, happened_on: r.happened_on || '', date_label: r.date_label || '', sources: r.sources || [], language: to, pinned: r.pinned }); setEditId(null); setNotes([r.title, r.what_happened, r.what_it_means, r.status_note, r.care_note].filter(Boolean).join('\n\n')); scrollToWork('latest-form') }
   const toggle = async (r, k) => { await sb.from('ukweli_updates').update({ [k]: !r[k] }).eq('id', r.id); load() }
 
   const groups = {}
@@ -992,7 +1028,11 @@ function LatestDesk() {
               </div>
             </div>
           ))}
-          {!list.some(r => r.language === 'sw') && <Btn small ghost color={C.lilac} onClick={()=>translate(list[0])}>＋ Add Kiswahili version</Btn>}
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {[['sw','Kiswahili'],['sheng','Sheng']].filter(([k]) => !list.some(r => r.language === k)).map(([k, l]) => (
+              <Btn key={k} small ghost color={C.lilac} onClick={()=>translate(list.find(r => r.language === 'en') || list[0], k)}>＋ Add {l} version</Btn>
+            ))}
+          </div>
         </div>
       ))}
     </div>

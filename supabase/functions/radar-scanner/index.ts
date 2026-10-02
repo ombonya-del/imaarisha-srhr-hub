@@ -34,10 +34,26 @@ async function sendClassifierAlert(count: number, err: string): Promise<boolean>
   } catch (e) { console.error('sendClassifierAlert error:', String(e)); return false }
 }
 
+// Feeds (Google News, Reddit, YouTube) put HTML *encoded* inside descriptions
+// (&lt;a href…&gt;, &#32;). Stripping tags before decoding left raw <a …> code in
+// the app, so: decode entities → strip tags, twice (some feeds double-encode),
+// then drop Reddit boilerplate, bare links and invisible characters.
+const ENT: Record<string, string> = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', hellip:'…', mdash:'—', ndash:'–', rsquo:'’', lsquo:'‘', rdquo:'”', ldquo:'“' }
 function stripHtml(s: string): string {
-  return (s || '').replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
-    .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' ').trim()
+  let t = s || ''
+  for (let i = 0; i < 2; i++) {
+    t = t.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, c) => {
+      if (c[0] === '#') {
+        const hex = c[1] === 'x' || c[1] === 'X'
+        const n = parseInt(hex ? c.slice(2) : c.slice(1), hex ? 16 : 10)
+        try { return n > 0 ? String.fromCodePoint(n) : '' } catch { return '' }
+      }
+      return ENT[c.toLowerCase()] ?? m
+    })
+    t = t.replace(/<!\[CDATA\[|\]\]>/g, '').replace(/<[^>]*>/g, ' ')
+  }
+  return t.replace(/<[^>]*$/, '').replace(/submitted by\s+\/?u\/\S+/gi, '').replace(/\[(link|comments)\]/gi, '')
+    .replace(/https?:\/\/\S+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim()
 }
 
 // ── FEEDS — Kenya SRHR discourse across news, social & video ─────────────────
@@ -99,6 +115,18 @@ const SRHR_TERMS = ['contracept','family planning','reproductive','srhr','aborti
   'adolescent','maternal','antiretroviral','prep','sti','fgm','faith healing','healed','arv',
   // Swahili / Sheng — where much of the myth framing actually circulates
   'uzazi wa mpango','uzazi','mimba','ukimwi','kondomu','utoaji','ugumba','elimu ya ngono','maombi']
+
+// Headline without the " - Outlet" suffix, for spotting the same story twice.
+const normTitle = (t: string) => (t || '').replace(/\s+[-|–]\s+[^-|–]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 80)
+// Shown in the youth app (Ukweli) only if it's flagged misinformation, recent, and
+// about Kenya / a Kenyan outlet. Everything still goes to the hub's Radar.
+const KENYA_RX = /\bkenya|kenyan|nairobi|mombasa|kisumu|nakuru|eldoret|kiswahili|nation\.africa|daily nation|standard(media)?|the star|citizen|tuko|mpasho|k24|kbc|capital ?fm|business daily|kenyans\.co\.ke|ntv kenya|taifa leo/i
+function youthVisible(a: any): boolean {
+  if (!a.is_disinfo) return false
+  const t = a.pubDate ? new Date(a.pubDate).getTime() : NaN
+  if (!isNaN(t) && Date.now() - t > 1000 * 60 * 60 * 24 * 730) return false   // older than ~2 years
+  return KENYA_RX.test(`${a.title} ${a.snippet || ''} ${a.source || ''} ${a.url || ''}`)
+}
 
 function isKenyaSRHR(title: string, snippet: string): boolean {
   const text = `${title} ${snippet}`.toLowerCase()
@@ -170,10 +198,11 @@ function platformOf(url: string): string {
 }
 
 async function getExistingTitles(): Promise<Set<string>> {
-  const since = new Date(Date.now() - 30*24*60*60*1000).toISOString()
-  const { data } = await supabase.from('radar_items').select('title').gte('scanned_at', since)
+  // All stored headlines (not just the last 30 days) — otherwise old stories that
+  // Google News resurfaces get stored again as "new" every month.
+  const { data } = await supabase.from('radar_items').select('title').order('scanned_at', { ascending:false }).limit(10000)
   const set = new Set<string>()
-  for (const r of data || []) if (r.title) set.add(r.title.slice(0,80).toLowerCase().trim())
+  for (const r of data || []) if (r.title) set.add(normTitle(r.title))
   return set
 }
 
@@ -262,7 +291,8 @@ Deno.serve(async (req: Request) => {
     if (!relevant.length) { await updateIndex(); return new Response(JSON.stringify({success:true,message:'no relevant',total:all.length}),{status:200}) }
 
     const existing = await getExistingTitles()
-    const fresh = relevant.filter(a => !existing.has(a.title.slice(0,80).toLowerCase().trim()))
+    // New stories only — and the same story from two outlets counts once.
+    const fresh = relevant.filter(a => { const k = normTitle(a.title); if (existing.has(k)) return false; existing.add(k); return true })
     if (!fresh.length) { await updateIndex(); return new Response(JSON.stringify({success:true,message:'all stored',relevant:relevant.length,new:0}),{status:200}) }
 
     const toClassify = fresh.slice(0, 24)
@@ -277,7 +307,10 @@ Deno.serve(async (req: Request) => {
       await sendClassifierAlert(classifierFailed, (classified.find(a => a._classifyError)?._classifyError) || 'AI classifier failed (bad model or depleted Anthropic credits)')
     }
     const toInsert = classified.filter(a => a.srhr_relevance >= 4).map(a => ({
-      source_name: a.source, title: stripHtml(a.title), snippet: stripHtml((a.snippet||'').slice(0,500)),
+      source_name: a.source, title: stripHtml(a.title),
+      // drop the snippet when it only repeats the headline (typical for Google News)
+      snippet: (() => { const sn = stripHtml(a.snippet || '').slice(0, 500); return normTitle(a.title).length > 10 && sn.toLowerCase().replace(/[^a-z0-9]/g, '').startsWith(normTitle(a.title)) ? null : sn })(),
+      youth_visible: youthVisible(a),
       url: a.url, platform: platformOf(a.url),
       published_at: a.pubDate ? new Date(a.pubDate).toISOString() : null,
       srhr_relevance: a.srhr_relevance, harm_score: a.harm_score, sentiment: a.sentiment,

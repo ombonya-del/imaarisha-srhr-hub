@@ -36,3 +36,26 @@ export function timeAgo(ts) {
   if (d === 1) return 'Yesterday'
   return d + 'd ago'
 }
+
+// Feed text often arrives with HTML encoded inside it (&lt;a href…&gt;, &#32;),
+// which used to show up as raw code in Trending. Decode → strip tags (twice, for
+// double-encoded feeds) → drop Reddit boilerplate, bare links and invisible chars.
+const ENT = { amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", nbsp:' ', hellip:'…', mdash:'—', ndash:'–',
+  rsquo:'’', lsquo:'‘', rdquo:'”', ldquo:'“', laquo:'«', raquo:'»', copy:'©' }
+export function cleanText(s) {
+  if (s == null) return ''
+  let t = String(s)
+  for (let i = 0; i < 2; i++) {
+    t = t.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, c) => {
+      if (c[0] === '#') {
+        const hex = c[1] === 'x' || c[1] === 'X'
+        const n = parseInt(hex ? c.slice(2) : c.slice(1), hex ? 16 : 10)
+        try { return n > 0 ? String.fromCodePoint(n) : '' } catch { return '' }
+      }
+      return ENT[c.toLowerCase()] ?? m
+    })
+    t = t.replace(/<!\[CDATA\[|\]\]>/g, '').replace(/<[^>]*>/g, ' ')
+  }
+  return t.replace(/<[^>]*$/, '').replace(/submitted by\s+\/?u\/\S+/gi, '').replace(/\[(link|comments)\]/gi, '')
+    .replace(/https?:\/\/\S+/g, '').replace(/[​-‍﻿]/g, '').replace(/\s+/g, ' ').trim()
+}
