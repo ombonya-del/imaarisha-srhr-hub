@@ -452,6 +452,9 @@ function AdminShell({ session, onSignOut }) {
       <main style={{ maxWidth:1100, margin:'0 auto', padding:'22px 16px 96px' }}>
         <Admin session={session} bottomTabs/>
       </main>
+      {/* Pop-up messages (errors, "✓ Published", AI-draft results) — the standalone
+          admin shell never rendered these, so every admin message was silent. */}
+      <Toasts/>
     </div>
   )
 }

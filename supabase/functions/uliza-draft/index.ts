@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? ""
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+const ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? ""
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? ""
 const sb = createClient(SUPABASE_URL, SERVICE)
 
@@ -21,15 +22,29 @@ const json = (body: unknown, status = 200) =>
 
 async function callerIsAdmin(req: Request): Promise<boolean> {
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim()
-  if (!jwt) return false
+  if (!jwt) { console.error("uliza-draft: no Authorization token on the request"); return false }
   if (jwt === SERVICE) return true
+  // 1) Ask the database exactly what the admin app's own data access relies on:
+  //    public.is_admin(), evaluated AS the signed-in caller.
   try {
-    const { data } = await sb.auth.getUser(jwt)
+    const asCaller = createClient(SUPABASE_URL, ANON, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { data, error } = await asCaller.rpc("is_admin")
+    if (data === true) return true
+    if (error) console.error("uliza-draft: is_admin() check failed —", error.message)
+    else console.error("uliza-draft: is_admin() returned", JSON.stringify(data))
+  } catch (e) { console.error("uliza-draft: is_admin() threw —", String(e)) }
+  // 2) Fallback: verify the token with Auth, then read profiles.is_admin.
+  try {
+    const { data, error } = await sb.auth.getUser(jwt)
+    if (error) console.error("uliza-draft: auth.getUser failed —", error.message)
     const uid = data?.user?.id
     if (!uid) return false
     const { data: p } = await sb.from("profiles").select("is_admin").eq("id", uid).single()
     return !!p?.is_admin
-  } catch { return false }
+  } catch (e) { console.error("uliza-draft: admin fallback threw —", String(e)); return false }
 }
 
 const SYSTEM = `You are drafting an answer for UkweliSRHR, a Kenyan youth sexual & reproductive health and rights (SRHR) service. A young person (usually 15–24) has asked an anonymous question. Draft the reply a warm, trusted, non-judgmental Kenyan youth-friendly health worker would give.
