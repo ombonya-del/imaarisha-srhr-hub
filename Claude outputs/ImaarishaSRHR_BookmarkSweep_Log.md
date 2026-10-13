@@ -41,3 +41,21 @@ Carried forward (still in folder, never inserted): @jumaf3, @action_activate, @N
 BLOCKER (unchanged): the service_role key must transit the assistant to POST from the browser, which the credential guardrail denies in both the unattended fire and the interactive 'go' re-run; the sandbox also cannot reach Supabase. Nothing inserted; dedupe was review-log history only.
 
 Next step: on your Mac, run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-09-28.json` (reads .secrets locally, dedupes by url, safe to re-run). Durable fix: a hub admin endpoint / edge function the logged-in admin browser can call, so the scheduled run never handles the raw key.
+
+
+## Run 2026-10-02 (scheduled DAILY 13:30 EAT; fired 10:30 UTC)
+
+Status: BLOCKED for auto-insert — 6 candidates saved to scripts/pending_supplement_2026-10-02.json for one-command manual insert.
+
+Browser reachable, X logged in as @vombonya. Swept "ImaarishaSRHR" (24 posts, Sep 30 -> May 21).
+
+Net-new since 09-28 (1 event): the Lumakanda OCS defilement case reached the official DPP charge.
+  - @ODPP_KE (2026-09-30) https://x.com/ODPP_KE/status/2105289330864345136 — official charge, defilement of a 14-year-old. Added as the authoritative source. SENSITIVE (named minor).
+  - @_James041 (same event, charge-section quote) — skipped.
+  Same event as @CopShakurkihara (09-28 pending, said 16yo) and @05BM44 (skipped). INSERT ONLY ONE — prefer @ODPP_KE. Do not run both the 09-28 and 10-02 files.
+
+Carried (never inserted, re-listed so this file is self-contained): @kipkoecheruiyot, @NationAfrica (harassment sacking), @jumaf3 (flagged), @action_activate, @NyakundiReport (SENSITIVE). Ukweli: 0.
+
+BLOCKER (unchanged): the service_role key must transit the assistant to POST from the browser; the credential guardrail denied it again (7th blocked run of the last ~11). Nothing went live; dedupe was review-log history only.
+
+Next step: on your Mac run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-02.json` (reads .secrets locally, dedupes by url, safe to re-run). Durable fix: a hub admin endpoint / edge function the logged-in admin browser can call, so the scheduled run never handles the raw key.

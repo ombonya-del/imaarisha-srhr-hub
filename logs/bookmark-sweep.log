@@ -1,0 +1,21 @@
+
+=== ImaarishaSRHR Daily Bookmark Sweep — 2026-10-05 (fired 12:46 UTC) ===
+Browser: reachable (Browser 1, X logged in as @vombonya).
+Folder "ImaarishaSRHR": 4 posts found.
+Classification:
+  [RADAR/insert-intended] @kipkoecheruiyot 2026-09-28 — condoms as free public-health intervention (accurate, positive, not disinfo). url: https://x.com/kipkoecheruiyot/status/2104542094710964719
+  [RADAR/insert-intended] @ODPP_KE 2026-09-30 — official DPP charge, Lumakanda OCS defilement of a minor (SRHR/child-protection, not disinfo, typology none). url: https://x.com/ODPP_KE/status/2105289330864345136
+  [SKIP/duplicate] @_James041 2026-09-30 — same defilement event, editorial repost. url: https://x.com/_James041/status/2105295872724480507
+  [SKIP/duplicate] @CopShakurkihara 2026-09-28 — same defilement event, editorial repost. url: https://x.com/CopShakurkihara/status/2104497072799899761
+INSERTS: 0 — BLOCKED. Dedupe GET and inserts require the service-role key; reading the key (from .secrets, or via the browser) is denied by the security classifier (credential materialization). Device shell also cannot reach Supabase (HTTP 000). No rows written; nothing went live. Awaiting user guidance.
+
+=== ImaarishaSRHR Daily Bookmark Sweep — 2026-10-07 (fired 06:57 UTC) ===
+Browser: reachable (Browser 1 of 3 connected; X logged in as @vombonya).
+Folder "ImaarishaSRHR": 7 posts found.
+New since last sweep (2026-10-05): 1.
+Classification (new only):
+  [RADAR/queued] @NyakundiReport 2026-10-06 — woman alleges officer demanded Sh10,000 bribe to process a 14-year-old's defilement case (50yo suspect). SRHR/child-abuse + barrier-to-justice. not-disinfo, typology none, alarming, srhr 8/harm 2. UNVERIFIED allegation naming police misconduct -> flagged for human review before going live. url: https://x.com/NyakundiReport/status/2107324409358823646
+  [SKIP/prior] @FitnessDr_ 2026-09-25 — engagement-bait listicle, already skipped 09-27.
+  [SKIP/already-queued] 5 Lumakanda-case + condom-policy posts already in prior pending files (09-28 / 10-02).
+INSERTS: 0 — BLOCKED (same as 10-05). Dedupe GET + inserts need the service-role key; reading the key is denied by the security classifier (credential materialization), and device shell has no network to Supabase (HTTP 000). No rows written; nothing went live.
+OUTPUT: scripts/pending_supplement_2026-10-07.json (1 candidate). Run `python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-07.json` from your own Mac terminal to push it live.

@@ -1,0 +1,34 @@
+{
+ "generated_at": "2026-10-10T11:55:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-10-10 ~11:51 UTC / 14:51 EAT",
+ "status": "NOT_INSERTED_credential_guardrail_blocked",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 4 posts this sweep. INCREMENTAL file: lists ONLY the 1 post that is net-new since the 2026-10-07 sweep and not yet in an insert_supplement-consumable pending file. The @CourtHelicopter FGM post was first bookmarked ~2026-10-08 and was captured only in pending/imaarisha_bookmarks_2026-10-08.json (items-format, NOT consumable by insert_supplement.py); this file re-captures it in candidates-format so insert_supplement.py can pick it up. insert_supplement.py dedupes by url against the live table, so this is safe to run alongside the older pending files.",
+ "candidates": [
+  {
+   "source_name": "@CourtHelicopter",
+   "title": "8-Year-Old Girl Rescued After FGM, Mother Arrested in Dandora",
+   "snippet": "Court Helicopter News reports an 8-year-old girl rescued after undergoing FGM in Dandora, with the mother arrested. Links to courthelicopter.co.ke. Core SRHR (FGM of a minor) + accountability (arrest).",
+   "url": "https://x.com/CourtHelicopter/status/2108135345036689898",
+   "platform": "x",
+   "published_at": "2026-10-08T10:00:08Z",
+   "srhr_relevance": 8,
+   "harm_score": 2,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NEW this run (first bookmarked ~Oct 8; first time in a consumable pending file). FGM of a minor. SENSITIVE: radar_items is PUBLIC-read and goes LIVE on insert. Factual news report (not a false SRHR claim) -> classified not-disinfo, typology none (FGM is not in the enum), sentiment alarming. Distinct from any prior candidate. Optional: verify the report before it goes live."
+  }
+ ],
+ "ukweli_candidates": [],
+ "new_this_run_needs_url": [],
+ "skipped_new_this_run": [],
+ "already_handled_prior_runs": [
+  "@NyakundiReport/2107324409358823646 (Oct 6 bribe/defilement case) — already queued in pending_supplement_2026-10-07.json; flagged there for human verification before going live.",
+  "@ODPP_KE/2105289330864345136 (Lumakanda OCS official charge) — already queued in pending_supplement_2026-10-02.json; the ONE source to insert for the Lumakanda case.",
+  "@_James041/2105295872724480507 (Lumakanda OCS charge detail) — SAME Lumakanda event as @ODPP_KE; standing rule: do NOT insert separately (url-dedupe will NOT catch same-event duplicates)."
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "generated_at": "2026-10-07T06:57:43Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-10-07 06:57 UTC",
+ "status": "NOT_INSERTED_credential_guardrail_blocked",
+ "target_table": "public.radar_items",
+ "folder_note": "7 posts in folder this sweep. 6 were already queued by prior runs (see already_handled_prior_runs) — this file is INCREMENTAL and lists ONLY the 1 post that is new since the 2026-10-05 sweep. insert_supplement.py dedupes by url against the live table, so this is safe to run alongside the older pending files, BUT note the standing rule: for the Lumakanda OCS defilement case insert ONLY ONE source (@ODPP_KE), already covered in the 10-02 file.",
+ "candidates": [
+  {
+   "source_name": "@NyakundiReport",
+   "title": "Woman alleges officer demanded Sh10,000 bribe to process 14-year-old's defilement case",
+   "snippet": "A woman says she went to report a defilement case involving her 14-year-old sister and a 50-year-old man. She alleges that at the Occurrence Book a female officer demanded Sh10,000 before the suspect could be arrested, and that when she could not pay she was told to leave or risk being locked up. SRHR / child sexual abuse plus a barrier-to-justice (alleged police extortion). Unverified allegation; post carries video and a photo.",
+   "url": "https://x.com/NyakundiReport/status/2107324409358823646",
+   "platform": "x",
+   "published_at": "2026-10-06T04:17:46Z",
+   "srhr_relevance": 8,
+   "harm_score": 2,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NEW this run (Oct 6). DISTINCT from the Lumakanda OCS case (different facts: 50-year-old suspect, 14-year-old survivor, alleged bribe at reporting). SENSITIVE: radar_items is PUBLIC-read and goes LIVE on insert. This is an UNVERIFIED allegation from a commentator account (@NyakundiReport) that names police misconduct/extortion — recommend a human verify/approve before it goes live. Classified not-disinfo (it reports an alleged SRHR/justice failure, it is not a false SRHR claim)."
+  }
+ ],
+ "ukweli_candidates": [],
+ "new_this_run_needs_url": [],
+ "skipped_new_this_run": [
+  {
+   "source_name": "@FitnessDr_",
+   "url": "https://x.com/FitnessDr_/status/2103535919865184262",
+   "reason": "Still in the folder but already reviewed and skipped on 2026-09-27 (men's-health engagement-bait listicle about oral sex, no discrete verifiable SRHR claim). Kept skipped."
+  }
+ ],
+ "already_handled_prior_runs": [
+  "@ODPP_KE/2105289330864345136 (queued in pending 10-02: Lumakanda OCS defilement charge — the ONE source to insert for that case)",
+  "@_James041/2105295872724480507 (queued/skipped in pending 10-02: same Lumakanda case)",
+  "@CopShakurkihara/2104497072799899761 (queued in pending 09-28 / skipped 10-02: same Lumakanda case, earlier arrest report)",
+  "@05BM44/2104261226746225081 (queued 09-28 / skipped 10-02: same Lumakanda case thread)",
+  "@kipkoecheruiyot/2104542094710964719 (queued in pending 09-28 & 10-02: condoms as free public-health intervention — accurate, positive, not disinfo)",
+  "@FitnessDr_/2103535919865184262 (reviewed & skipped 09-27: men's-health engagement-bait listicle, no discrete verifiable SRHR claim)"
+ ]
+}

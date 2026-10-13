@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-10-08T16:30Z",
+  "source": "X bookmark folder ImaarishaSRHR (@vombonya)",
+  "note": "Classified by the daily bookmark sweep. NOT inserted — the service-role key could not be transported to the browser (safety guard) and neither the cloud sandbox nor the device VM can reach Supabase. DEDUPE NOT PERFORMED against existing radar_items. Review, dedupe, then insert (admin hub curation UI, or a browser-console fetch where the key is available). All 4 classified as Radar; none are Ukweli learn/myth items.",
+  "surface": "radar_items",
+  "items": [
+    {
+      "source_name": "@CourtHelicopter",
+      "title": "8-Year-Old Girl Rescued After FGM, Mother Arrested in Dandora",
+      "snippet": "8-Year-Old Girl Rescued After FGM, Mother Arrested in Dandora",
+      "url": "https://x.com/CourtHelicopter/status/2108135345036689898",
+      "platform": "x",
+      "published_at": "2026-10-08T10:00:08.000Z",
+      "srhr_relevance": 8,
+      "harm_score": 2,
+      "sentiment": "alarming",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@NyakundiReport",
+      "title": "Woman alleges officer demanded Sh10,000 bribe before arresting suspect in 14-year-old defilement case",
+      "snippet": "A woman went to report a defilement case involving her 14-year-old sister and a 50-year-old man. At the OB, she claims a female officer demanded Sh10,000 before the suspect could be arrested. When she could not pay, she was told to leave or risk being locked up.",
+      "url": "https://x.com/NyakundiReport/status/2107324409358823646",
+      "platform": "x",
+      "published_at": "2026-10-06T04:17:46.000Z",
+      "srhr_relevance": 7,
+      "harm_score": 3,
+      "sentiment": "alarming",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@ODPP_KE",
+      "title": "DPP charges Lumakanda OCS with defilement of 14-year-old girl",
+      "snippet": "The Director of Public Prosecutions (DPP) has today charged the Officer Commanding Station (OCS) of Lumakanda Police Station with defilement of a 14-year-old girl in Lugari Sub-County, Kakamega County.",
+      "url": "https://x.com/ODPP_KE/status/2105289330864345136",
+      "platform": "x",
+      "published_at": "2026-09-30T13:31:05.000Z",
+      "srhr_relevance": 7,
+      "harm_score": 2,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    },
+    {
+      "source_name": "@_James041",
+      "title": "Lumakanda OCS charged under Sexual Offences Act for defilement of 14-year-old",
+      "snippet": "Lumakanda OCS has been charged with defilement contrary to Section 8(1) as read with Section 8(3) of the Sexual Offences Act No. 3 of 2006. He is also facing an alternative charge of committing an indecent act with a child, a 14 year old, contrary to Section 11(1).",
+      "url": "https://x.com/_James041/status/2105295872724480507",
+      "platform": "x",
+      "published_at": "2026-09-30T13:57:05.000Z",
+      "srhr_relevance": 7,
+      "harm_score": 2,
+      "sentiment": "positive",
+      "typology": "none",
+      "is_disinfo": false,
+      "languages": ["en"]
+    }
+  ]
+}

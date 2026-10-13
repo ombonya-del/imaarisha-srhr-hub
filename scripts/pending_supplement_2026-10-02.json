@@ -1,0 +1,147 @@
+{
+ "generated_at": "2026-10-02T10:30:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-10-02 10:30 UTC",
+ "status": "NOT_INSERTED_credential_guardrail_blocked",
+ "target_table": "public.radar_items",
+ "folder_note": "24 posts in folder, range 2026-09-30 -> 2026-05-21. Self-contained: this file lists ALL outstanding (never-inserted) on-topic candidates, so running ONLY this file inserts everything still pending. insert_supplement.py dedupes by url against the live table, so re-listed carried items that are somehow already present are skipped safely.",
+ "candidates": [
+  {
+   "source_name": "@ODPP_KE",
+   "title": "DPP charges Lumakanda OCS with defilement of a 14-year-old girl",
+   "snippet": "The Office of the Director of Public Prosecutions says it has charged the Officer Commanding Station (OCS) of Lumakanda Police Station with defilement of a 14-year-old girl in Lugari Sub-County, Kakamega County. Official prosecution statement on a child sexual-abuse / defilement case.",
+   "url": "https://x.com/ODPP_KE/status/2105289330864345136",
+   "platform": "x",
+   "published_at": "2026-09-30T13:31:05Z",
+   "srhr_relevance": 7,
+   "harm_score": 2,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NEW this run (Sep 30). Official DPP source. SENSITIVE: concerns a named minor's defilement case and radar_items is public-read (goes LIVE on insert). SAME EVENT as @CopShakurkihara/2104497072799899761 (listed in the 09-28 pending file) and @05BM44 + @_James041 (skipped below). INSERT ONLY ONE source for this case — @ODPP_KE preferred as the official charge. Note the age differs: the official charge states 14, earlier arrest reports said 16."
+  },
+  {
+   "source_name": "@kipkoecheruiyot",
+   "title": "Condoms are free as a public-health intervention against HIV, STIs and unintended pregnancy",
+   "snippet": "Argues condoms are distributed free because they are a public-health intervention against HIV, STIs and unintended pregnancies that benefits both genders, pushing back on framing that pits free condoms against free menstrual pads. Accurate SRHR public-health messaging.",
+   "url": "https://x.com/kipkoecheruiyot/status/2104542094710964719",
+   "platform": "x",
+   "published_at": "2026-09-28T12:01:50Z",
+   "srhr_relevance": 7,
+   "harm_score": 1,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Carried from 09-28 pending (never inserted). On-topic positive SRHR public-health messaging."
+  },
+  {
+   "source_name": "@NationAfrica",
+   "title": "Parliamentary officer sacked over alleged sexual harassment of a Senate intern",
+   "snippet": "Daily Nation reports a senior Parliament officer (a Principal Sergeant-at-Arms) was dismissed by the Parliamentary Service Commission over alleged sexual harassment of a student intern at the Senate. GBV / sexual-harassment accountability news.",
+   "url": "https://x.com/NationAfrica/status/2103054624198434911",
+   "platform": "x",
+   "published_at": "2026-09-24T09:31:09Z",
+   "srhr_relevance": 6,
+   "harm_score": 1,
+   "sentiment": "negative",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Carried from 09-28 pending (never inserted). Legitimate GBV/harassment news from a mainstream outlet."
+  },
+  {
+   "source_name": "@jumaf3",
+   "title": "Sensationalized claim that a High Court ruling allows marrying/having sex with a cousin",
+   "snippet": "Amplifies a story claiming High Court Judge James Makau ruled the Sexual Offences Act does not list cousins among relatives liable for incest, framed as 'you may now marry, kiss & have sex with your cousin'. SRHR-legal content with sensationalized, potentially misleading framing of a reported ruling.",
+   "url": "https://x.com/jumaf3/status/2102451216609317096",
+   "platform": "x",
+   "published_at": "2026-09-22T17:33:26Z",
+   "srhr_relevance": 6,
+   "harm_score": 3,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Carried from 09-25/09-28 pending (never inserted). FLAGGED: unverified reframing of a reported ruling, not a confirmed fabrication — kept is_disinfo=false pending verification."
+  },
+  {
+   "source_name": "@action_activate",
+   "title": "SRHR convening on reproductive-healthcare access in Homa Bay County",
+   "snippet": "Activate Action (with @KELINKenya) promotes a convening bringing together diverse SRHR voices to reflect on the realities young people and women face accessing quality reproductive healthcare in Homa Bay County. Legitimate SRHR advocacy/event.",
+   "url": "https://x.com/action_activate/status/2102117814630772956",
+   "platform": "x",
+   "published_at": "2026-09-21T19:28:37Z",
+   "srhr_relevance": 8,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Carried from 09-25/09-28 pending (never inserted). Clearly on-topic positive SRHR advocacy."
+  },
+  {
+   "source_name": "@NyakundiReport",
+   "title": "Father says child sexual-assault case repeatedly postponed",
+   "snippet": "A father's account, relayed by Nyakundi Report, of a child sexual-assault case he reported over a year ago that he says keeps being postponed (attributed to Justice Ann Karimi). Child sexual-abuse / access-to-justice concern.",
+   "url": "https://x.com/NyakundiReport/status/2101971691534512272",
+   "platform": "x",
+   "published_at": "2026-09-21T09:47:58Z",
+   "srhr_relevance": 6,
+   "harm_score": 1,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Carried from 09-22/09-25/09-28 pending (never inserted). FLAGGED SENSITIVE: single-source, names a sitting judge; radar_items is public-read and goes LIVE on insert — confirm before publishing."
+  }
+ ],
+ "ukweli_candidates": [],
+ "new_this_run_needs_url": [],
+ "skipped_new_this_run": [
+  {
+   "source_name": "@_James041",
+   "url": "https://x.com/_James041/status/2105295872724480507",
+   "reason": "Same Lumakanda OCS defilement case as @ODPP_KE (in candidates) — a quote of the specific charge sections. Skipped to avoid a duplicate LIVE Radar item for one event."
+  },
+  {
+   "source_name": "@CopShakurkihara",
+   "url": "https://x.com/CopShakurkihara/status/2104497072799899761",
+   "reason": "Same Lumakanda OCS case (the earlier arrest report, cited a 16-year-old). SUPERSEDED this run by @ODPP_KE's official charge. It is still listed as a candidate in the 09-28 pending file — insert only ONE source for this case; do NOT run both the 09-28 and 10-02 files or you will get two rows for the same event."
+  },
+  {
+   "source_name": "@05BM44",
+   "url": "https://x.com/05BM44/status/2104261226746225081",
+   "reason": "Same Lumakanda OCS case, duplicate event. Skipped (also skipped 09-28)."
+  }
+ ],
+ "already_handled_prior_runs": [
+  "@FitnessDr_/2103535919865184262 (skipped 09-27: men's-health engagement-bait listicle, no discrete verifiable SRHR claim)",
+  "@Honeyfarsafi/2101234417737859142 (inserted 09-21: Bungoma schoolgirls / teenage pregnancy)",
+  "@NationAfrica/2099853244117966922 (auto-scanner: maternity leave 90d->6mo)",
+  "@sholard_mancity/2099206346197684540 (auto-scanner: age-of-consent / Romeo & Juliet law)",
+  "@ericomondi_/2094450780426178662 (auto-scanner: endometriosis)",
+  "@John63681549/2093913637001777472 (inserted 09-19: forced marriage)",
+  "@Ndonglaw043/2090080007334797705 (inserted 09-19: revenge-porn ruling)",
+  "@FirstDoctor/2080250060097417489 (inserted 09-19: HPV/throat-cancer)",
+  "@IMLU_org/2079851050119344200 (inserted 09-19: Diana Chepng'eno petition)",
+  "@_mpekethu_/2067676771613319312 (manual 09-18: contraception crash course)",
+  "@joshuamalidzo/2059979160857297102 (manual 09-18: adolescent-sex judgment endorsement)",
+  "@joshuamalidzo/2057705531729424812 (manual 09-18: gender-marker ruling)",
+  "@FaithOdhiambo8/2057359809305776499 (manual 09-18: Petition E490/2025)",
+  "@kilundeezy/2095129913581801641 (skipped: vague Sheng insult)",
+  "@alasirimotors/2101324715079909829 (skipped 09-25: VW Arteon car-giveaway)"
+ ]
+}
