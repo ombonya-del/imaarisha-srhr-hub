@@ -55,7 +55,7 @@ export default function Pulse({ go, session }) {
         The Pulse
       </h1>
       <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, margin:'0 0 16px', lineHeight:1.6 }}>
-        {user && <span style={{ color:C.gold, fontWeight:700 }}>Karibu, {(name || '').split(' ')[0]} 👋 · </span>}
+        {user && <span style={{ color:C.gold, fontWeight:700 }}>Karibu, {/^community media trust/i.test((name||'').trim()) ? 'CoMeT' : ((name || '').split(' ')[0])} 👋 · </span>}
         The collective hub for Kenya's disruptive SRHR practitioners — intelligence, coordination, counter-narrative.
       </p>
 
