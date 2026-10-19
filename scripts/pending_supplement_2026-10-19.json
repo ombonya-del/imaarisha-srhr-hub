@@ -1,0 +1,46 @@
+{
+ "generated_at": "2026-10-19T10:44:10Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-10-19 ~13:30 EAT / ~10:30 UTC",
+ "status": "NOT_INSERTED_credential_guardrail_blocked",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 4 posts this sweep. INCREMENTAL file: lists ONLY the 2 posts that are net-new since prior sweeps and not yet in any insert_supplement-consumable pending file. The other 2 posts in the folder (@CourtHelicopter FGM -> pending_supplement_2026-10-10.json; @NyakundiReport defilement-bribe -> pending_supplement_2026-10-07.json) are already queued and were skipped here. insert_supplement.py dedupes by url against the live table, so this is safe to run alongside the older pending files. Browser-side insert was blocked by the auto-mode credential guardrail (same as prior runs); run scripts/insert_supplement.py in your own terminal to flush.",
+ "candidates": [
+  {
+   "source_name": "@NjeriWaMigwi",
+   "title": "Survivor Rose Kimanzi still without an OB after police-station gang rape, despite IPOA/DCI appeals",
+   "snippet": "Njeri Wa Migwi notes that Rose Kimanzi, gang-raped by a policeman inside a police station, still has not been issued an OB (occurrence book entry) despite writing to IPOA and the DCI. GBV / sexual-violence accountability failure.",
+   "url": "https://x.com/NjeriWaMigwi/status/2112099323752178057",
+   "platform": "x",
+   "published_at": "2026-10-19T08:31:34Z",
+   "srhr_relevance": 7,
+   "harm_score": 2,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": ["en"],
+   "review_note": "NEW this run (bookmarked Oct 19). GBV/sexual violence + institutional (police/IPOA/DCI) accountability. Factual advocacy post, not a false SRHR claim -> not-disinfo, typology none (GBV not in enum), sentiment alarming. SENSITIVE: names a survivor and radar_items is PUBLIC-read and goes LIVE on insert. Recommend a human glance before flushing, given the named survivor."
+  },
+  {
+   "source_name": "@Localman254_",
+   "title": "Viral claim: Nairobi woman 'confesses' on camera to infecting 150+ men - HIV-stigma/panic narrative",
+   "snippet": "A sensational viral post claiming a Nairobi woman confessed on camera to knowingly infecting over 150 men who had unprotected sex with her. Unverified, stigmatizing HIV/STI-transmission narrative of the kind that drives fear and sexual-health stigma.",
+   "url": "https://x.com/Localman254_/status/2111386392190161406",
+   "platform": "x",
+   "published_at": "2026-10-17T09:18:38Z",
+   "srhr_relevance": 7,
+   "harm_score": 7,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": true,
+   "languages": ["en"],
+   "review_note": "NEW this run (bookmarked Oct 17). Classic viral HIV/STI-stigma narrative: unverified '150 men', sensational framing, moral-panic tone. Classified is_disinfo true, harm 7 (stigmatizing + unverified), typology none (HIV stigma not in enum). SENSITIVE + goes LIVE on insert. Recommend verifying provenance before flushing."
+  }
+ ],
+ "ukweli_candidates": [],
+ "new_this_run_needs_url": [],
+ "skipped_new_this_run": [],
+ "already_handled_prior_runs": [
+  "@CourtHelicopter/2108135345036689898 (Oct 8 FGM, Dandora) — already queued in pending_supplement_2026-10-10.json.",
+  "@NyakundiReport/2107324409358823646 (Oct 6 defilement bribe) — already queued in pending_supplement_2026-10-07.json (flagged there for human verification)."
+ ]
+}
