@@ -335,3 +335,24 @@
     python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-10.json
     python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-19.json
 - **DURABLE FIX (unchanged, now ~17 blocked runs):** add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with the admin session, so the scheduled run never handles the raw service_role key and can insert directly. Until then the local insert_supplement.py run is the working fallback.
+
+---
+
+## 2026-10-21 — Daily bookmark sweep (fired 2026-10-21 ~10:41 UTC; scheduled DAILY 13:30 EAT)
+
+- Browser reachable: 3 connected. Per the task's "first deviceId" rule, selected **Browser 1** via select_browser (no manual switch); Browser 1 **was** logged into X as @vombonya this run. x.com/i/bookmarks deep-link still redirects to /i/history; opened the folder via the **Bookmarks dropdown → ImaarishaSRHR** (folder id 2057389537417101528).
+- Harvested via JS accumulator (window.__imr) across scroll passes; scrolled to the footer (docH ~6888, scrollY maxed ~6161) and did a slow top-down second descent (10×700px passes). Folder rendered **4 posts** (newest → oldest), virtualized tail did not re-render this run (consistent with prior daily-sweep behavior where only the folder top loads):
+  1. @NjeriWaMigwi 2112099323752178057 (Oct 19, Rose Kimanzi — survivor still without an OB after police-station gang rape)
+  2. @Localman254_ 2111386392190161406 (Oct 17, viral "slayqueen infected 150 men" HIV-stigma claim)
+  3. @CourtHelicopter 2108135345036689898 (Oct 8, FGM 8yo Dandora)
+  4. @NyakundiReport 2107324409358823646 (Oct 6, defilement-report bribe)
+- **Net-new since the 2026-10-19 sweep: 0.** Newest bookmark is still @NjeriWaMigwi (Oct 19) — unchanged since the 10-19 run; nothing bookmarked after Oct 19. All 4 are already queued (grep-confirmed against pending files): @NjeriWaMigwi + @Localman254_ → pending_supplement_2026-10-19.json; @CourtHelicopter → pending_supplement_2026-10-10.json; @NyakundiReport → pending_supplement_2026-10-07.json. Ukweli items: 0.
+- **No new pending file created** (nothing net-new), consistent with the 10-07/10-11/10-12/10-13/10-15/10-16/10-17 precedent.
+- **Inserts: 0 — BLOCKED again (~18th blocked run).** Re-verified both non-browser routes this fire: device_bash curl to the Supabase REST root → **HTTP 000 (rc 56, "403 from proxy after CONNECT"** — host not on the device egress allowlist); cloud sandbox curl → **HTTP 000 (rc 56, "CONNECT tunnel failed, 403"** — blocked by org policy). The only route that reaches Supabase is the logged-in browser, and that requires materialising the **RLS-bypassing service_role key into a browser page context** — declined again (full-DB-admin credential exposure in a third-party/page context on an unattended run; same hard credential guardrail that has blocked every prior run, and nothing net-new to publish this run regardless). scripts/.secrets confirmed populated (SERVICE_KEY present, len 219; SUPABASE_URL = https://uwxtqyqyrhhxqagaqelg.supabase.co), so the local inserter is ready. No live radar_items dedupe possible; dedupe this run via review-log + pending-file history (grep).
+- **Push notification: NOT sent.** Nothing net-new, and the standing insert-blocker + unpublished backlog were already surfaced to the user on 2026-10-19 (2 days ago). Re-pinging today would be noise; a weekly-cadence nudge is the right cadence for the standing blocker. Silent run, per the 10-11/10-12/10-13/10-15/10-17 precedent.
+- **ACTION — clear the backlog on your Mac** (each reads .secrets locally, dedupes by url against the live table, safe to re-run; your Mac's native shell reaches Supabase, the device_bash VM + cloud sandbox do not):
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-02.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-07.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-10.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-19.json
+- **DURABLE FIX (unchanged, now ~18 blocked runs):** add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with the admin session, so the scheduled run never handles the raw service_role key and can insert directly. Until then the local insert_supplement.py run is the working fallback.
