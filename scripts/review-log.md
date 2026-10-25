@@ -356,3 +356,27 @@
     python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-10.json
     python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-19.json
 - **DURABLE FIX (unchanged, now ~18 blocked runs):** add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with the admin session, so the scheduled run never handles the raw service_role key and can insert directly. Until then the local insert_supplement.py run is the working fallback.
+
+## 2026-10-25 — Daily bookmark sweep (fired 2026-10-25 ~10:30 UTC; scheduled DAILY 13:30 EAT)
+
+- Browser reachable: 3 connected. Per the task's "first deviceId" rule, selected **Browser 1** via select_browser (no manual switch); Browser 1 **was** logged into X as @vombonya this run. x.com/i/bookmarks deep-link still redirects to /i/history; opened the folder via the **Bookmarks dropdown → ImaarishaSRHR** (folder id 2057389537417101528).
+- Harvested via JS accumulator (window.__imr) across scroll passes (top → footer docH ~7111 → slow re-descent). Folder rendered **4 posts** (newest → oldest):
+  1. @_mpekethu_ 2113573871609606414 (Oct 23) — "vote for me for the Africa Health Creators award" (reproductive-health creator self-promo)
+  2. @MzalendoWatch 2112848339494490442 (Oct 21) — National Assembly passed the Sexual Offences (Amendment) Bill No. 78 of 2023 (survivor-protective legislation)
+  3. @maracuchaKe 2112556452535521637 (Oct 20) — "Kenyan Gays pass a message to William Ruto: we a who we a" (LGBTQ political expression)
+  4. @NjeriWaMigwi 2112099323752178057 (Oct 19) — Rose Kimanzi survivor still without an OB after police-station gang rape
+- **Net-new since the 2026-10-21 sweep: 3** (the whole folder-top rolled over; @NjeriWaMigwi is the only carryover and is already queued). Classification:
+  - **@MzalendoWatch → QUEUED (Radar).** On-topic SRHR/GBV legislative news, positive framing: is_disinfo=false, typology none, sentiment positive, srhr 8, harm 0. Low sensitivity (public legislative record). Only confident insert candidate this run.
+  - **@_mpekethu_ → SKIPPED.** Net-new id (distinct from the Jun-18 contraception post), but it's an award-vote solicitation with no SRHR claim/news — near-zero radar value.
+  - **@maracuchaKe → SKIPPED.** LGBTQ political/identity expression; not an SRHR disinfo/myth/news item in the radar typology, and radar_items goes LIVE public on insert → conservative skip.
+  - **@NjeriWaMigwi → already queued** in pending_supplement_2026-10-19.json (grep-confirmed). Ukweli items: 0.
+- **New pending file created: pending_supplement_2026-10-25.json** (1 candidate: @MzalendoWatch; insert_supplement-consumable; dedupes by url so safe alongside older pending files).
+- **Inserts: 0 — service_role key NOT materialized (standing credential guardrail, ~19th blocked run).** The only route that reaches Supabase from here is injecting the RLS-bypassing service_role (full-DB-admin) key into a browser page context on an unattended run — declined, consistent with every prior run and the hard guardrail on entering API keys/tokens into page contexts. device_bash curl + cloud sandbox remain blocked from Supabase (egress proxy 403 / org policy). scripts/.secrets confirmed populated (SERVICE_KEY present, len 219, JWT; SUPABASE_URL = https://uwxtqyqyrhhxqagaqelg.supabase.co). No live radar_items dedupe this run; dedupe via review-log + pending-file history (grep).
+- **Push notification: SENT** — 1 net-new on-topic SRHR item queued, plus the standing insert blocker and the now 5-file unpublished backlog (last nudge 2026-10-19). Net-new content + backlog → worth surfacing.
+- **ACTION — flush the backlog on your Mac** (each reads .secrets locally, dedupes by url against the live table, safe to re-run; your Mac's native shell reaches Supabase, the device_bash VM + cloud sandbox do not):
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-02.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-07.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-10.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-19.json
+    python3 scripts/insert_supplement.py scripts/pending_supplement_2026-10-25.json
+- **DURABLE FIX (unchanged, ~19 blocked runs):** add a hub admin endpoint / Supabase Edge Function the logged-in admin browser can call with the admin session, so the scheduled run never handles the raw service_role key and can insert directly. Until then the local insert_supplement.py run is the working fallback.
