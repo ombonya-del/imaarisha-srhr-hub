@@ -1,0 +1,32 @@
+{
+ "generated_at": "2026-10-31T15:30:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-10-31 ~13:30 EAT / ~15:20 UTC (scheduled DAILY 13:30 EAT)",
+ "status": "NOT_INSERTED_credential_guardrail_blocked",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 23 text posts this sweep. Scrolled deeper than prior runs (full descent to Apr 2026; scrollHeight stabilized across repeated bottom-scrolls). INCREMENTAL file: lists ONLY net-new, on-topic SRHR candidates not already queued/handled. Net-new this run: 1 candidate (@OKoggah faith-healing, Apr 6 — never captured before because earlier sweeps stopped higher in the folder, so its id is in no prior pending file) + 1 deliberate skip (@_mpekethu_ Oct 28). The other 21 posts are all already queued in a prior pending_supplement_*.json (32 ids on record) or documented as skips in pending_2026-10-25 (@_mpekethu_ Oct23, @maracuchaKe Oct20). insert_supplement.py dedupes by url against the live table, so this is safe to run alongside the older pending files. Browser-side insert blocked again by the service_role credential guardrail (unattended run); run scripts/insert_supplement.py in your own Mac terminal to flush.",
+ "candidates": [
+  {
+   "source_name": "@OKoggah",
+   "title": "Pro-Owuor post amplifies 'miraculous healing' claims, says DCI report vindicated the prophet",
+   "snippet": "An @OKoggah post revives the David Owuor 'miraculous healings' narrative: it claims critics (@amenya_nelson, @amerix, tv47) tried to discredit the prophet's healings to blackmail him, and that a DCI report is now out vindicating him. Faith-healing amplification that competes with medical/health-seeking.",
+   "url": "https://x.com/OKoggah/status/2041174049523429821",
+   "platform": "x",
+   "published_at": "2026-04-06T15:19:51Z",
+   "srhr_relevance": 4,
+   "harm_score": 6,
+   "sentiment": "alarming",
+   "typology": "faith_healing",
+   "is_disinfo": true,
+   "languages": ["en"],
+   "review_note": "NET-NEW to the queue — surfaced only this run because the folder was scrolled deeper (back to Apr 2026) than prior sweeps reached; id 2041174049523429821 is in no prior pending file. Faith-healing is an explicit radar typology: this amplifies Prophet David Owuor 'miraculous healing' claims and frames a DCI report as vindication. BORDERLINE on SRHR-specificity (no direct contraception/maternal/HIV/abortion content) -> conservative srhr_relevance 4; flagged is_disinfo true / faith_healing / harm 6 because faith-healing narratives steer people away from medical and SRH care. radar_items is PUBLIC-read and goes LIVE on insert — review before flushing and delete the row if you judge it off-scope."
+  }
+ ],
+ "ukweli_candidates": [],
+ "new_this_run_needs_url": [],
+ "skipped_new_this_run": [
+  "@_mpekethu_/2115401017248698686 (Oct 28) — 'P2 does not always work. Lemme tell you about something that works better... vote for me on this link' Africa Health Creators award solicitation from a reproductive-health creator. Net-new id but an award-vote plug with no SRHR narrative/claim/news for the radar; consistent with prior skips of her solicitation posts (Oct 23). Skipped."
+ ],
+ "already_handled_prior_runs": [
+  "21 of the 23 captured posts are already queued in prior pending_supplement_*.json or documented as skips. Queued examples: @MzalendoWatch 2112848339494490442, @NjeriWaMigwi 2112099323752178057, @Localman254_ 2111386392190161406, @CourtHelicopter 2108135345036689898, @NyakundiReport 2107324409358823646 & 2101971691534512272, @ODPP_KE 2105289330864345136, @_James041 2105295872724480507, @CopShakurkihara 2104497072799899761, @05BM44 2104261226746225081, @kipkoecheruiyot 2104542094710964719, @FitnessDr_ 2103535919865184262, @NationAfrica 2103054624198434911, @jumaf3 2102451216609317096, @action_activate 2102117814630772956, @_mpekethu_ 2067676771613319312 (contraception), @joshuamalidzo 2059979160857297102 & 2057705531729424812, @FaithOdhiambo8 2057359809305776499, @alasirimotors 2101324715079909829. Documented skips: @_mpekethu_ 2113573871609606414 (Oct23 vote plug), @maracuchaKe 2112556452535521637 (Oct20 LGBTQ political expression)."
+ ]
+}
