@@ -411,8 +411,8 @@ var CAST=[
  ["Mama Grace","44 · the mother","MG","#8A5A3B","Loves her daughter, defers to her husband and to Beth; uses contraception secretly to space her births."],
  ["Baba Tom","50 · the father","BT","#1E2A4A","Holds household decision authority; believes a big family proves a man; follows #MasculinitySaturday."],
  ["Uncle Silas","39 · the uncle","US","#4A3A55","Kind, devout; forwards every dramatic health 'warning' to the family group."],
- ["Rev. Otieno","55 · the pastor","RO","#3B2A22","His Sunday word shapes what the family believes is right — a risk, and, engaged well, its strongest ally."],
- ["Nurse Wanjiru","34 · clinical officer","NW","#2E6B4F","Runs a youth-friendly corner; the most trusted voice in the story, but overworked and under-heard."],
+ ["Rev. Willis","55 · the pastor","RO","#3B2A22","His Sunday word shapes what the family believes is right — a risk, and, engaged well, its strongest ally."],
+ ["Nurse Charity","34 · clinical officer","NW","#2E6B4F","Runs a youth-friendly corner; the most trusted voice in the story, but overworked and under-heard."],
  ["Kevo","22 · the cousin","KV","#B4472F","A Sheng-speaking TikTok creator with a real following; the bridge to the digital street."],
  ["Brenda","19 · peer advocate","BR","#B9873B","Left school after a pregnancy; now tells her own story as a peer advocate."],
  ["Cucu","the grandmother","CU","#6E4E42","The matriarch in Homa Bay; carries the deepest traditional norms; the apex of intergenerational authority."]
@@ -446,7 +446,7 @@ var MODS=[
   fw:["fw","What actually shifts men",["Frame as <b>provision &amp; protection</b>, not compliance","<b>Shared decisions</b>, not surrendered control","A <b>respected male voice</b> carries it further than an institution"]],
   tool:"Cost her decision, then lower the cost",toolsub:"Grace's choice starts costly. Switch on the supports and watch the cost fall.",render:renderCost},
 
- {k:"Reframing",t:"The audience is not where the sector is",who:"Nurse Wanjiru",
+ {k:"Reframing",t:"The audience is not where the sector is",who:"Nurse Charity",
   scene:"Same facts, rebuilt: to reach Tom, lead with provision; to reach Beth, lead with protecting Agneta — voiced by the nurse they already trust.",
   stats:[["8%","of Kenyans associate SRHR with rights; only 2% with wellbeing"],["71%","trust healthcare workers — the sector's real megaphone"],["5-part","the reframing formula every message runs through"]],
   idea:"The frame beats the fact. Lead with a value people already hold — health, family, provision — and arrive at rights from there. <b>Health is the entry point; rights is the destination.</b>",
@@ -454,7 +454,7 @@ var MODS=[
   tool:"The Reframing Worksheet",toolsub:"Build a reframed message live with the five-part formula — then compare against the sector's usual version.",render:renderReframer},
 
  {k:"What Works",t:"Proof points your strategy can stand on",who:"The whole community",
-  scene:"The corner that changes things: Wanjiru's youth desk, Kevo's Sheng clip, Rev. Otieno turned ally, Brenda's story.",
+  scene:"The corner that changes things: Charity's youth desk, Kevo's Sheng clip, Rev. Willis turned ally, Brenda's story.",
   stats:[["48%","internet penetration (27.4M users) — real, but uneven"],["60/40","male-to-female skew in social-media use"],["radio","the cheapest channel that reaches the unreached"]],
   idea:"Match the <b>channel and messenger to the audience</b>, honestly. Digital reaches youth but not older women; community radio reaches the unreached cheaply; peer and survivor voices carry what no institution can.",
   fw:["fw","An honest look",["Digital has real reach — and real blind spots (older, rural, offline)","Community radio is the highest-value channel per shilling","Peer &amp; survivor testimony carries trust institutions can't buy","Well-funded programmes (e.g. DREAMS) still fell short — design for realistic outcomes"]],
@@ -522,7 +522,7 @@ function buildBody(body,m,i){
 /* ===== interactions ===== */
 function renderMachine(root,idx){
   var f=[["👨🏾","Father / patriarchy","Tom holds the decision. Agneta's future is his to approve — so her health choice is never only hers."],
-    ["⛪","Pulpit / religion","Rev. Otieno's Sunday word sets what's 'right.' Unengaged, it sanctions silence; engaged, it can bless health."],
+    ["⛪","Pulpit / religion","Rev. Willis's Sunday word sets what's 'right.' Unengaged, it sanctions silence; engaged, it can bless health."],
     ["📱","WhatsApp / disinfo","Silas's forwards arrive faster than any clinic. Fear travels; correction lags a day behind."],
     ["🔥","Backlash / norms","#MasculinitySaturday reframes her choice as disloyalty — so speaking up carries a social cost."]];
   root.innerHTML='<div class="machine"><div class="centergirl">At the centre: <b>Agneta, 17</b> — one fear, pressed from four sides at once.</div>'+
@@ -543,7 +543,7 @@ function renderSignals(root,idx){
     if(n>=4){var e=document.createElement('div');e.style.cssText='font-size:13px;font-weight:700;color:var(--green);margin-top:4px';e.textContent='That\'s prebunking. Once people can name the trick, the next forward loses its grip.';wl.appendChild(e);markDone(idx);}});});
 }
 function renderCost(root,idx){
-  var lv=[["A private supply she controls",22],["Beth quietly on her side",26],["Nurse Wanjiru's youth-friendly corner",20],["Tom hearing it as provision, not defiance",32]];
+  var lv=[["A private supply she controls",22],["Beth quietly on her side",26],["Nurse Charity's youth-friendly corner",20],["Tom hearing it as provision, not defiance",32]];
   root.innerHTML='<div class="cost">'+lv.map(function(l,k){return '<div class="lever"><label id="lv'+idx+k+'">'+l[0]+'</label><button class="switch" role="switch" aria-checked="false" aria-labelledby="lv'+idx+k+'" data-w="'+l[1]+'"></button></div>';}).join('')+
     '<div class="meter" style="margin-top:14px"><div class="barwrap"><div class="bar" id="cb'+idx+'"></div></div><div class="lab"><span>Cost of her choice</span><span class="v" id="cv'+idx+'">High</span></div></div>'+
     '<p class="scoreline">Grace didn\'t need a lecture. She needed the cost of choosing to come down.</p></div>';
@@ -565,9 +565,9 @@ function renderRewrite(root,idx){
     out.textContent=picked.length?'“'+picked.join(' ')+'”':'Pick the lines that keep Beth warm but change what she passes on…';if(picked.length>=2)markDone(idx);});});
 }
 function renderReframer(root,idx){
-  var V={provision:["Tom — provision & pride","a father who provides for his family","every child you can truly educate is a child who lifts this family","Nurse Wanjiru","let's plan the family you can give a real future"],
-    protect:["Beth — protecting Agneta","an aunt who protects the girls she loves","the surest way to protect Agneta is to let her finish school","Nurse Wanjiru","walk with her to the clinic once"],
-    faith:["Rev. Otieno's flock — dignity","a community that guards life and dignity","caring for a mother's health honours the life you value","Rev. Otieno","bring it into one Sunday word"],
+  var V={provision:["Tom — provision & pride","a father who provides for his family","every child you can truly educate is a child who lifts this family","Nurse Charity","let's plan the family you can give a real future"],
+    protect:["Beth — protecting Agneta","an aunt who protects the girls she loves","the surest way to protect Agneta is to let her finish school","Nurse Charity","walk with her to the clinic once"],
+    faith:["Rev. Willis's flock — dignity","a community that guards life and dignity","caring for a mother's health honours the life you value","Rev. Willis","bring it into one Sunday word"],
     youth:["Kevo's followers — freedom & future","young people who want to author their own lives","knowing your options is how you stay in charge of your story","Kevo (Sheng)","drop the clinic link in the group"]};
   var LIB=[["Contraception is your reproductive right.","Spacing your children is how a family stays healthy and strong — and it's your choice to make."],
     ["CSE protects children's bodily autonomy.","When young people get accurate answers early, they make safer, more responsible decisions."],
@@ -585,10 +585,10 @@ function renderReframer(root,idx){
 }
 function renderMatrix(root,idx){
   var A={youth:["Youth, 18–24","Short vertical video on TikTok — captioned for the muted feed","Kevo — a Sheng creator they already follow","Youth trust peers and creators far above institutions; Sheng signals belonging."],
-    women:["Women, 25–40","WhatsApp groups + local-language radio","Nurse Wanjiru, in clips they can replay privately","Women act on trusted, private, repeatable information; radio reaches beyond data bundles."],
+    women:["Women, 25–40","WhatsApp groups + local-language radio","Nurse Charity, in clips they can replay privately","Women act on trusted, private, repeatable information; radio reaches beyond data bundles."],
     older:["Older women","Family WhatsApp + community radio + face-to-face dialogue","A champion aunty — a peer, not an expert","Norms shift peer-to-peer; older women are offline more and trust their own generation."],
     men:["Men / fathers","Radio talk, barber-shop & church spaces","A respected male voice + faith ally","Men engage through provision and shared decisions, not lectures about rights."],
-    faith:["Faith communities","One Sunday word + small-group study","Rev. Otieno, framing health as dignity","The pulpit sets 'what's right' — engaged well, it blesses health-seeking."]};
+    faith:["Faith communities","One Sunday word + small-group study","Rev. Willis, framing health as dignity","The pulpit sets 'what's right' — engaged well, it blesses health-seeking."]};
   root.innerHTML='<div class="mx"><div class="opts"><div class="l" style="font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Who do you need to reach?</div>'+
     '<div class="chips" id="mc'+idx+'">'+Object.keys(A).map(function(k,j){return '<button class="chip" data-k="'+k+'"'+(j===0?' aria-pressed="true"':'')+'>'+A[k][0]+'</button>';}).join('')+'</div></div><div class="res" id="mr'+idx+'"></div></div>';
   var res=document.getElementById('mr'+idx);
