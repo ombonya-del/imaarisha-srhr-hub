@@ -102,6 +102,10 @@ main{min-width:0}
 .scene{margin-top:22px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);
   box-shadow:0 18px 40px -30px rgb(var(--shadow)/.5)}
 .scene svg{display:block;width:100%;height:auto}
+.scene-img{display:block;width:100%;height:auto}
+.modscene{margin:2px 0 8px}
+.modscene img{width:100%;border-radius:14px;display:block;border:1px solid var(--line)}
+.pc img.av{object-fit:cover}
 .scene .cap{padding:11px 15px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line2)}
 .scene .cap b{color:var(--ink2);font-weight:800}
 .ph-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
@@ -315,20 +319,8 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
         <h1>One family. <span class="u">Eight ways</span> to change the conversation on SRHR.</h1>
         <p class="lede">A working field guide built around the <b>Achieng family</b> — so every framework arrives inside a scene you can picture, from a person you come to know. Seven strategy modules and a full Mother &amp; Aunty curriculum, each ending in a tool you can use today. Works offline; install it to your home screen.</p>
         <div class="scene">
-          <svg viewBox="0 0 680 300" role="img" aria-label="The Achieng family compound at dusk">
-            <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9C877"/><stop offset=".55" stop-color="#D99A63"/><stop offset="1" stop-color="#B4472F"/></linearGradient></defs>
-            <rect width="680" height="300" fill="url(#sky)"/><circle cx="530" cy="96" r="34" fill="#F6E7B8" opacity=".85"/>
-            <path d="M0 210 Q170 178 340 200 T680 196 V300 H0 Z" fill="#3B2E2A"/><path d="M0 232 Q220 214 430 232 T680 226 V300 H0 Z" fill="#2A2320"/>
-            <rect x="70" y="150" width="150" height="82" fill="#5A4038"/><path d="M60 150 L145 116 L230 150 Z" fill="#6E4E42"/>
-            <rect x="108" y="176" width="30" height="56" fill="#B9873B"/><rect x="160" y="182" width="30" height="26" fill="#E9C877" opacity=".8"/>
-            <ellipse cx="330" cy="250" rx="34" ry="10" fill="#241d1b"/><path d="M312 244 h36 l-5 16 h-26 z" fill="#3a3330"/><path d="M322 244 c4-10 12-10 16 0" fill="none" stroke="#E9C877" stroke-width="3" opacity=".8"/>
-            <circle cx="300" cy="206" r="12" fill="#3B2A22"/><rect x="289" y="216" width="22" height="40" rx="8" fill="#2E6B4F"/>
-            <circle cx="338" cy="210" r="10" fill="#3B2A22"/><rect x="329" y="219" width="18" height="34" rx="7" fill="#B9873B"/>
-            <circle cx="470" cy="212" r="11" fill="#3B2A22"/><rect x="460" y="221" width="20" height="34" rx="7" fill="#1E2A4A"/>
-            <circle cx="512" cy="214" r="11" fill="#3B2A22"/><rect x="502" y="223" width="20" height="32" rx="7" fill="#4A3A55"/><rect x="486" y="232" width="12" height="8" rx="2" fill="#BFE3FF"/>
-            <rect x="150" y="158" width="20" height="24" rx="2" fill="#EFE6D2" stroke="#3B2A22" stroke-width="2"/>
-          </svg>
-          <div class="cap"><b>The recurring world.</b> Dusk at the compound — Aunty Beth at the sufuria, Agneta beside her, Baba Tom and Uncle Silas with a phone between them, Cucu's photo on the wall.<span class="ph-badge">Placeholder art</span></div>
+          <img class="scene-img" src="art/HERO.png" alt="The Achieng family compound at dusk" loading="lazy">
+          <div class="cap"><b>The recurring world.</b> Dusk at the compound — Aunty Beth at the sufuria, Agneta beside her, Baba Tom and Uncle Silas with a phone between them, Cucu's photo on the wall.</div>
         </div>
         <div class="aud">
           <div class="a"><div class="t">🏢 For SRHR orgs</div><p>Train your team: each module carries the evidence, the framework, and a tool your staff run in real campaigns.</p></div>
@@ -386,7 +378,7 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
       </section>
 
       <footer><span class="demo">Prototype · sample content</span>
-        <p>Built for ImaarishaSRHR / Community Media Trust — the Strategic Comms &amp; Reframing toolkit as a living, offline-ready web guide, with a print PDF as its companion. Illustrations are placeholders to be swapped for the final character art. Characters are composites from Phase 1 research, not real individuals.</p>
+        <p>Built for ImaarishaSRHR / Community Media Trust — the Strategic Comms &amp; Reframing toolkit as a living, offline-ready web guide, with a print PDF as its companion. Original illustrations of the Achieng family. Characters are composites from Phase 1 research, not real individuals.</p>
       </footer>
     </div>
   </main>
@@ -417,7 +409,8 @@ var CAST=[
  ["Brenda","19 · peer advocate","BR","#B9873B","Left school after a pregnancy; now tells her own story as a peer advocate."],
  ["Cucu","the grandmother","CU","#6E4E42","The matriarch in Homa Bay; carries the deepest traditional norms; the apex of intergenerational authority."]
 ];
-function avatar(init,color){return '<svg class="av" viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" rx="13" fill="'+color+'"/><circle cx="26" cy="20" r="9" fill="#fff" opacity=".92"/><path d="M11 47c1-9 8-13 15-13s14 4 15 13z" fill="#fff" opacity=".92"/><text x="26" y="30" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="9" font-weight="800" fill="'+color+'">'+init+'</text></svg>';}
+var PORTRAIT={AG:'CHR-AGNETA',AB:'CHR-BETH',BT:'CHR-TOM',US:'CHR-SILAS',RO:'CHR-WILLIS',NW:'CHR-CHARITY',KV:'CHR-KEVO',BR:'CHR-BRENDA',CU:'CHR-CUCU'};
+function avatar(init,color){if(PORTRAIT[init]){return '<img class="av" src="art/'+PORTRAIT[init]+'.png" alt="" loading="lazy">';}return '<svg class="av" viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" rx="13" fill="'+color+'"/><circle cx="26" cy="20" r="9" fill="#fff" opacity=".92"/><path d="M11 47c1-9 8-13 15-13s14 4 15 13z" fill="#fff" opacity=".92"/><text x="26" y="30" text-anchor="middle" font-family="Nunito Sans,sans-serif" font-size="9" font-weight="800" fill="'+color+'">'+init+'</text></svg>';}
 document.getElementById('castgrid').innerHTML=CAST.map(function(c){return '<div class="pc">'+avatar(c[2],c[3])+'<div><div class="n">'+c[0]+'</div><div class="r">'+c[1]+'</div><div class="d">'+c[4]+'</div></div></div>';}).join('');
 
 /* stat + framework helpers */
@@ -513,7 +506,7 @@ function openMod(i){var el=document.getElementById('mod'+i);if(!el)return;var he
   el.scrollIntoView({behavior:'smooth',block:'start'});setRail('railm'+i);}
 
 function buildBody(body,m,i){
-  body.innerHTML='<div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
+  body.innerHTML='<div class="modscene"><img src="art/SCN-M'+(i+1)+'.png" alt="" loading="lazy" onerror="this.parentNode.style.display=&#39;none&#39;"></div><div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
     stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
     '<div class="tool"><div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
   m.render(document.getElementById('tb'+i),i);
