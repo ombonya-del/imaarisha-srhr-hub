@@ -155,7 +155,7 @@ main{min-width:0}
 .tool{margin-top:16px;border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line));border-radius:14px;background:var(--paper2);padding:15px}
 .tool .tl{display:flex;gap:8px;align-items:center;font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .tool h4{font-size:18px;margin:6px 0 2px}.tool .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
-.toolhead{display:flex;gap:12px;align-items:center;margin-bottom:2px}.toolicon{width:64px;height:64px;object-fit:contain;flex:none}.toolhx{min-width:0}.toolhx h4{margin:2px 0 0}
+.toolbanner{margin:-15px -15px 14px;padding:18px 16px;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 15%,var(--paper2)),var(--paper2));border-bottom:1px solid color-mix(in srgb,var(--gold) 32%,var(--line));border-radius:14px 14px 0 0;display:flex;justify-content:center}.toolbanner img{height:128px;max-width:100%;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(20,24,38,.1))}
 
 .btn{font-weight:800;font-size:13.5px;border-radius:10px;border:1px solid var(--green);background:var(--green);color:#fff;padding:10px 15px;cursor:pointer;font-family:var(--body)}
 .btn.ghost{background:transparent;color:var(--green)}.btn.sm{padding:7px 12px;font-size:12.5px}
@@ -222,7 +222,7 @@ main{min-width:0}
 .hab .h{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--card);cursor:pointer;text-align:left;width:100%;color:inherit}
 .hab .h .cbx{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;display:grid;place-items:center;margin-top:1px;font-size:13px;color:#fff}
 .hab .h[aria-pressed="true"] .cbx{background:var(--green);border-color:var(--green)}
-.hab .h .ht{font-weight:800;font-size:14px}.hab .h .hd{font-size:12.5px;color:var(--ink2);margin-top:2px}
+.hab .h .ht{display:block;font-weight:800;font-size:14px}.hab .h .hd{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
 
 /* M&A stepper + flip */
 .step{display:flex;gap:6px;margin-top:4px}
@@ -510,7 +510,7 @@ var TOOLICON={0:'ICN-M1-GEARS',5:'ICN-M6-HABIT',7:'ICN-M8-MF'};
 function buildBody(body,m,i){
   body.innerHTML='<div class="modscene"><img src="art/SCN-M'+(i+1)+'.png" alt="" loading="lazy" onerror="this.parentNode.style.display=&#39;none&#39;"></div><div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
     stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
-    '<div class="tool"><div class="toolhead">'+(TOOLICON[i]?'<img class="toolicon" src="art/'+TOOLICON[i]+'.png" alt="">':'')+'<div class="toolhx"><div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4></div></div><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
+    '<div class="tool">'+(TOOLICON[i]?'<div class="toolbanner"><img src="art/'+TOOLICON[i]+'.png" alt=""></div>':'')+'<div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
   m.render(document.getElementById('tb'+i),i);
 }
 
