@@ -155,6 +155,7 @@ main{min-width:0}
 .tool{margin-top:16px;border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line));border-radius:14px;background:var(--paper2);padding:15px}
 .tool .tl{display:flex;gap:8px;align-items:center;font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .tool h4{font-size:18px;margin:6px 0 2px}.tool .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+.tool{position:relative}.toolicon{position:absolute;top:13px;right:13px;width:50px;height:50px;object-fit:contain;pointer-events:none}
 
 .btn{font-weight:800;font-size:13.5px;border-radius:10px;border:1px solid var(--green);background:var(--green);color:#fff;padding:10px 15px;cursor:pointer;font-family:var(--body)}
 .btn.ghost{background:transparent;color:var(--green)}.btn.sm{padding:7px 12px;font-size:12.5px}
@@ -505,10 +506,11 @@ function openMod(i){var el=document.getElementById('mod'+i);if(!el)return;var he
     if(!body.dataset.built){buildBody(body,MODS[i],i);body.dataset.built="1";}}
   el.scrollIntoView({behavior:'smooth',block:'start'});setRail('railm'+i);}
 
+var TOOLICON={0:'ICN-M1-GEARS',5:'ICN-M6-HABIT',7:'ICN-M8-MF'};
 function buildBody(body,m,i){
   body.innerHTML='<div class="modscene"><img src="art/SCN-M'+(i+1)+'.png" alt="" loading="lazy" onerror="this.parentNode.style.display=&#39;none&#39;"></div><div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
     stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
-    '<div class="tool"><div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
+    '<div class="tool">'+(TOOLICON[i]?'<img class="toolicon" src="art/'+TOOLICON[i]+'.png" alt="">':'')+'<div class="tl">🛠 Tool</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
   m.render(document.getElementById('tb'+i),i);
 }
 
