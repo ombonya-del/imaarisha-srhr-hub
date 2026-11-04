@@ -506,7 +506,7 @@ function openMod(i){var el=document.getElementById('mod'+i);if(!el)return;var he
     if(!body.dataset.built){buildBody(body,MODS[i],i);body.dataset.built="1";}}
   el.scrollIntoView({behavior:'smooth',block:'start'});setRail('railm'+i);}
 
-var TOOLICON={0:'ICN-M1-GEARS',5:'ICN-M6-HABIT',7:'ICN-M8-MF'};
+var TOOLICON={0:'ICN-M1-GEARS',1:'ICN-M2',2:'ICN-M3',3:'ICN-M4',4:'ICN-M5',5:'ICN-M6-HABIT',7:'ICN-M8-MF'};
 function buildBody(body,m,i){
   body.innerHTML='<div class="modscene"><img src="art/SCN-M'+(i+1)+'.png" alt="" loading="lazy" onerror="this.parentNode.style.display=&#39;none&#39;"></div><div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+
     stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
