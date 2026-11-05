@@ -1,5 +1,5 @@
 /* ImaarishaSRHR Field Guide — service worker (offline-first) */
-const CACHE = 'imaarisha-fieldguide-v2';
+const CACHE = 'imaarisha-fieldguide-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS).then(function(){
+    // best-effort: cache illustration art so the guide shows pictures offline
+    return fetch('art/manifest.json').then(function(r){return r.ok?r.json():[];}).catch(function(){return [];}).then(function(list){
+      return Promise.all((list||[]).map(function(u){return c.add('art/'+u).catch(function(){});}));
+    });
+  })).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
