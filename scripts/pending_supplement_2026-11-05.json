@@ -1,0 +1,35 @@
+{
+ "generated_at": "2026-11-05T10:43:01Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-05 ~13:30 EAT (scheduled DAILY 13:30 EAT)",
+ "status": "NOT_PUBLISHED_push_supplement_py_missing",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 39 posts with status ids this sweep (full descent + fine-grained up/down re-pass to catch virtualization gaps; scrollTop/scrollHeight and count all stabilized at the footer). Live dedupe run against radar_items (29 X items live) plus all status ids on record across prior pending_supplement_*.json. Net-new this run: 1 candidate (@NjeriWaMigwi 2118032710249656529, posted 2026-11-04 17:28 UTC — AFTER the Nov 4 sweep which fired ~10:30 UTC, so not captured before; in no prior file and not live). 3 other folder ids not in the live set are all DOCUMENTED skips from prior runs (@maracuchaKe/2112556452535521637 Oct20 LGBTQ political expression; @_mpekethu_/2113573871609606414 Oct23 and /2115401017248698686 Oct28 Africa Health Creators award-vote plugs) — re-listed under skipped_new_this_run for the record. PUBLISH BLOCKED: scripts/push_supplement.py still does not exist on disk — the GitHub-Actions publish setup is NOT applied yet, so this file was written to disk but NOT published. Only scripts/insert_supplement.py (the old browser/service_role path, deliberately not used in unattended runs) is present. BACKLOG (on-topic candidates queued in prior files but still not inserted because no publish path has ever existed): @Stats_Kenya/2117647271978250385 (TFR 3.1 stat, in pending_supplement_2026-11-04.json) and @OKoggah/2041174049523429821 (faith_healing, in pending_supplement_2026-10-31.json). Including today's, 3 on-topic candidates now await a working publish path.",
+ "candidates": [
+  {
+   "source_name": "@NjeriWaMigwi",
+   "title": "SRHR activist debunks harmful vaginal-tightening myth: do NOT insert cetirizine (antihistamine) — it dries the vagina, causing painful sex and HIV risk",
+   "snippet": "Njeri Wa Migwi (@NjeriWaMigwi), Kenyan gender/SRHR activist: 'Please DO NOT insert Cetrizinw [cetirizine] in your vagina. It doesn't tighten your vagina it dries it out. Friction will cause painful sex and risk of HIV. Thank you for coming to my TED Talk.'",
+   "url": "https://x.com/NjeriWaMigwi/status/2118032710249656529",
+   "platform": "x",
+   "published_at": "2026-11-04T17:28:43Z",
+   "srhr_relevance": 8,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NET-NEW to the queue (id in no prior pending file and not in the live radar_items X set). This is a CORRECTIVE / counter-disinformation post from a well-known Kenyan GBV/SRHR activist, pushing back on the harmful vaginal-'tightening' practice of inserting cetirizine (an antihistamine) — she states it dries the mucosa, causing painful sex and raised HIV risk, which is medically accurate. So the post itself is NOT disinfo: is_disinfo=false, harm_score=0, sentiment=positive (helpful public-health correction), srhr_relevance=8 (sexual health practice + HIV risk). typology=none (the underlying myth is a vaginal-tightening practice, not one of the contraceptive_myth/fertility_abortion/anti_cse/faith_healing buckets). NOT sensitive — no minor, no named/identifiable victim, no unproven allegation against a named person — safe to insert LIVE once a publish path exists. radar_items is PUBLIC-read."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  "@maracuchaKe/2112556452535521637 (Oct 20) — LGBTQ political expression, not an SRHR disinfo/narrative item. Already documented as a skip in pending_supplement_2026-10-25.json; re-listed. Skipped.",
+  "@_mpekethu_/2113573871609606414 (Oct 23) — Africa Health Creators award-vote plug. Already documented as a skip in pending_supplement_2026-10-25.json; re-listed. Skipped.",
+  "@_mpekethu_/2115401017248698686 (Oct 28) — 'P2 does not always work... vote for me' Africa Health Creators award-vote plug. Already documented as a skip in pending_supplement_2026-10-31.json; re-listed. Skipped."
+ ],
+ "already_handled_prior_runs": [
+  "35 of the 39 captured ids are already live in radar_items or queued in prior pending_supplement_*.json. The @Stats_Kenya TFR candidate (2117647271978250385, pending_supplement_2026-11-04.json) and the @OKoggah faith_healing candidate (2041174049523429821, pending_supplement_2026-10-31.json) remain queued awaiting a working publish path."
+ ]
+}

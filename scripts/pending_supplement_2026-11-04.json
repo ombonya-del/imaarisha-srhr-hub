@@ -1,0 +1,33 @@
+{
+ "generated_at": "2026-11-04T10:40:49Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-04 ~13:30 EAT (scheduled DAILY 13:30 EAT)",
+ "status": "NOT_PUBLISHED_push_supplement_py_missing",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 23 text posts this sweep (full descent to Apr 2026; scrollHeight stabilized across repeated bottom-scrolls, footer reached). Live dedupe run against radar_items (29 X items live) plus 33 ids on record in prior pending_supplement_*.json. Net-new this run: 1 candidate (@Stats_Kenya TFR statistic, Nov 3 — never captured before). 3 other ids not in the live/queued id-sets are all already DOCUMENTED skips from prior runs (@_mpekethu_ Oct28 & Oct23 award-vote plugs, @maracuchaKe Oct20 LGBTQ political expression) and are re-listed under skipped_new_this_run for the record. The @OKoggah faith_healing id (2041174049523429821) is already queued in pending_supplement_2026-10-31.json. PUBLISH BLOCKED: scripts/push_supplement.py does not exist on disk — the GitHub-Actions publish setup is not applied yet, so this file was written to disk but NOT published. Only scripts/insert_supplement.py (the old browser/service_role path, deliberately not used in unattended runs) is present.",
+ "candidates": [
+  {
+   "source_name": "@Stats_Kenya",
+   "title": "Kenya's Total Fertility Rate falls to 3.1 children per woman (2025/26 Mini DHS, down from 3.4 in 2022)",
+   "snippet": "Kenya Data & Stats (@Stats_Kenya): 'Kenya now has a Total Fertility Rate (TFR) of 3.1 children per woman, down from 3.4 children in 2022. This is based on the Kenya Mini Demographic and Health Survey conducted in 2025 and 2026.'",
+   "url": "https://x.com/Stats_Kenya/status/2117647271978250385",
+   "platform": "x",
+   "published_at": "2026-11-03T15:57:08Z",
+   "srhr_relevance": 7,
+   "harm_score": 0,
+   "sentiment": "neutral",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": ["en"],
+   "review_note": "NET-NEW to the queue (id in no prior pending file and not in the live radar_items X set). Factual fertility statistic sourced to the Kenya Mini Demographic & Health Survey 2025/26 — core SRHR (fertility/family-planning) baseline data, accurate and non-misleading, so is_disinfo=false, harm_score=0, sentiment=neutral, typology=none, srhr_relevance=7. NOT sensitive (no minor, no named/identifiable victim, no unproven allegation) — safe to insert LIVE once a publish path exists. radar_items is PUBLIC-read; this is a neutral narrative-landscape data point."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  "@_mpekethu_/2115401017248698686 (Oct 28) — 'P2 does not always work. Lemme tell you about something that works better... vote for me' Africa Health Creators award-vote plug. Already documented as a skip in pending_supplement_2026-10-31.json; re-listed. No SRHR narrative/claim/news for the radar. Skipped.",
+  "@_mpekethu_/2113573871609606414 (Oct 23) — Africa Health Creators award-vote plug. Already documented as a skip in pending_supplement_2026-10-25.json; re-listed. Skipped.",
+  "@maracuchaKe/2112556452535521637 (Oct 20) — LGBTQ political expression, not an SRHR disinfo/narrative item. Already documented as a skip in pending_supplement_2026-10-25.json; re-listed. Skipped."
+ ],
+ "already_handled_prior_runs": [
+  "19 of the 23 captured posts are already queued in prior pending_supplement_*.json or live in radar_items. The @OKoggah faith_healing candidate (2041174049523429821) remains queued in pending_supplement_2026-10-31.json awaiting a working publish path."
+ ]
+}
