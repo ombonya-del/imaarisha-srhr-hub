@@ -48,3 +48,4 @@ scripts/.secrets
 next-env.d.ts
 supabase/.temp/
 scripts/.secrets.bak
+_field-guide-art-source/
