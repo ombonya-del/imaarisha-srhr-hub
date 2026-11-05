@@ -155,7 +155,7 @@ main{min-width:0}
 .tool{margin-top:16px;border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line));border-radius:14px;background:var(--paper2);padding:15px}
 .tool .tl{display:flex;gap:8px;align-items:center;font-weight:800;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .tool h4{font-size:18px;margin:6px 0 2px}.tool .sub{font-size:13px;color:var(--muted);margin-bottom:12px}
-.toolbanner{margin:-15px -15px 14px;padding:0;border-bottom:1px solid color-mix(in srgb,var(--gold) 32%,var(--line));border-radius:14px 14px 0 0;overflow:hidden}.toolbanner img{display:block;width:100%;height:auto}
+.rf .derived{background:var(--card);border:1px dashed color-mix(in srgb,var(--gold) 40%,var(--line));border-radius:10px;padding:9px 11px;font-size:13px;color:var(--ink2);margin:0 0 6px}.rf .derived .g{color:var(--green);font-style:italic}.toolbanner{margin:-15px -15px 14px;padding:0;border-bottom:1px solid color-mix(in srgb,var(--gold) 32%,var(--line));border-radius:14px 14px 0 0;overflow:hidden}.toolbanner img{display:block;width:100%;height:auto}
 
 .btn{font-weight:800;font-size:13.5px;border-radius:10px;border:1px solid var(--green);background:var(--green);color:#fff;padding:10px 15px;cursor:pointer;font-family:var(--body)}
 .btn.ghost{background:transparent;color:var(--green)}.btn.sm{padding:7px 12px;font-size:12.5px}
@@ -569,13 +569,13 @@ function renderReframer(root,idx){
     ["Abortion access is a human right.","Every woman deserves safe, accurate, non-judgmental care — whatever her situation."],
     ["Men must stop controlling women's bodies.","When partners decide together, the whole family is stronger — shared decisions, shared future."]];
   root.innerHTML='<div class="rf"><label class="fl" for="ra'+idx+'">1 · Whose value am I leading with?</label>'+
-    '<select id="ra'+idx+'">'+Object.keys(V).map(function(k){return '<option value="'+k+'">'+V[k][0]+'</option>';}).join('')+'</select>'+
+    '<select id="ra'+idx+'">'+Object.keys(V).map(function(k){return '<option value="'+k+'">'+V[k][0]+'</option>';}).join('')+'</select>'+'<label class="fl">2 · Bridge <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)">— set from your value</span></label><div class="derived" id="rb'+idx+'"></div>'+
     '<label class="fl" for="rfa'+idx+'">3 · The plain fact (say it once, no jargon)</label><input id="rfa'+idx+'" value="Spacing births safely is normal, legal health care."/>'+
-    '<label class="fl" for="rk'+idx+'">5 · The low-cost ask</label><input id="rk'+idx+'" placeholder="one small, safe next step"/>'+
+    '<label class="fl">4 · Messenger <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)">— the trusted voice for this value</span></label><div class="derived" id="rm'+idx+'"></div>'+'<label class="fl" for="rk'+idx+'">5 · The low-cost ask</label><input id="rk'+idx+'" placeholder="one small, safe next step"/>'+
     '<div class="out"><div class="oh">📣 Your reframed message</div><div class="ob" id="rout'+idx+'"></div><div class="parts"><span class="pp">1 · Value</span><span class="pp">2 · Bridge</span><span class="pp">3 · Fact</span><span class="pp">4 · Messenger</span><span class="pp">5 · Ask</span></div></div>'+
     '<div class="fl" style="margin-top:16px;color:var(--muted)">The sector\'s version → the reframe</div><div class="lib">'+LIB.map(function(l){return '<div class="p"><div class="s"><b>✗</b> "'+l[0]+'"</div><div class="r"><b>The reframe</b>"'+l[1]+'"</div></div>';}).join('')+'</div></div>';
-  var a=document.getElementById('ra'+idx),f=document.getElementById('rfa'+idx),k=document.getElementById('rk'+idx),out=document.getElementById('rout'+idx);
-  function build(){var v=V[a.value];var ask=k.value.trim()||v[4];out.innerHTML='Because you are <b>'+v[1]+'</b>, <span class="g">'+v[2]+'. </span>'+(f.value.trim()||'…')+' Coming from <b>'+v[3]+'</b>, the ask is simple: <span class="g">'+ask+'.</span>';markDone(idx);}
+  var a=document.getElementById('ra'+idx),f=document.getElementById('rfa'+idx),k=document.getElementById('rk'+idx),out=document.getElementById('rout'+idx),rb=document.getElementById('rb'+idx),rm=document.getElementById('rm'+idx);
+  function build(){var v=V[a.value];rb.innerHTML='<span class="g">'+v[2]+'</span>';rm.textContent=v[3];var ask=k.value.trim()||v[4];out.innerHTML='Because you are <b>'+v[1]+'</b>, <span class="g">'+v[2]+'. </span>'+(f.value.trim()||'…')+' Coming from <b>'+v[3]+'</b>, the ask is simple: <span class="g">'+ask+'.</span>';markDone(idx);}
   a.addEventListener('change',build);f.addEventListener('input',build);k.addEventListener('input',build);build();
 }
 function renderMatrix(root,idx){
