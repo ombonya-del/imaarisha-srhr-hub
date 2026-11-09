@@ -1,0 +1,75 @@
+name: Insert bookmark supplement
+
+# Inserts curated X-bookmark candidates (scripts/pending_supplement_*.json)
+# into public.radar_items. The daily scheduled sweep pushes the batch file;
+# this job does the insert with the service-role key held as a repo secret,
+# so the key never passes through the sweep, the browser or a sandbox.
+#
+# One-time setup: repo Settings -> Secrets and variables -> Actions ->
+# New repository secret: SUPABASE_SERVICE_ROLE_KEY
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/pending_supplement_*.json'
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Batch to insert, e.g. scripts/pending_supplement_2026-10-10.json'
+        required: true
+
+concurrency:
+  group: insert-supplement
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_URL: https://uwxtqyqyrhhxqagaqelg.supabase.co
+
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pick batch files
+        id: pick
+        env:
+          BEFORE: ${{ github.event.before }}
+          INPUT_FILE: ${{ github.event.inputs.file }}
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FILES="$INPUT_FILE"
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            FILES=$(git diff-tree --no-commit-id --name-only --diff-filter=AM -r HEAD -- 'scripts/pending_supplement_*.json')
+          else
+            FILES=$(git diff --name-only --diff-filter=AM "$BEFORE" HEAD -- 'scripts/pending_supplement_*.json')
+          fi
+          FILES=$(echo "$FILES" | grep -E '^scripts/pending_supplement_[0-9-]+\.json$' | sort || true)
+          echo "Batches: ${FILES:-none}"
+          { echo 'files<<EOF'; echo "$FILES"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+
+      - name: Insert into radar_items
+        if: steps.pick.outputs.files != ''
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FILES: ${{ steps.pick.outputs.files }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::Repo secret SUPABASE_SERVICE_ROLE_KEY is not set."
+            exit 1
+          fi
+          STATUS=0
+          for f in $FILES; do
+            [ -f "$f" ] || { echo "::error::$f not found"; STATUS=1; continue; }
+            echo "::group::$f"
+            python3 scripts/insert_supplement.py "$f" || STATUS=1
+            echo "::endgroup::"
+          done
+          exit $STATUS
