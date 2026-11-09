@@ -59,7 +59,7 @@ def req(method, url, key, body=None):
 def is_held(c):
     if c.get("approved") is True:
         return False
-    return c.get("hold") is True or "SENSITIVE" in str(c.get("review_note", "")).upper()
+    return c.get("hold") is True or "SENSITIVE:" in str(c.get("review_note", ""))
 
 def write_step_summary(name, inserted, skipped, held, failed):
     path = os.environ.get("GITHUB_STEP_SUMMARY")
