@@ -1,0 +1,73 @@
+{
+ "generated_at": "2026-11-11T10:43:35Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-11 ~13:30 EAT (scheduled DAILY 13:30 EAT). Browser 2 of 4 connected Chrome profiles was the one logged in as @vombonya.",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 42 posts this sweep (full descent, then two fine-grained re-passes at 400px/300px steps to defeat virtualization gaps; footer '© 2026 X Corp.' visible, scrollTop stabilized, count settled at 42 across the last two passes). Up from 40 on the Nov 6 sweep. Live dedupe run against radar_items via the public anon key: 33 X-platform items live (content-range 0-32/33, exact). 10 of the 42 captured ids are NOT in the live X set; the other 32 are already live. SETUP NOW APPLIED: scripts/push_supplement.py now exists (created 2026-11-09) — the GitHub-Actions publish path that was missing on the Nov 6 run is in place, and the 4 previously-stranded backlog candidates (@ppbkenya/2118242198177116191, @NjeriWaMigwi/2118032710249656529, @Stats_Kenya/2117647271978250385, @OKoggah/2041174049523429821) are ALL now live in radar_items — backlog cleared. Net-new on-theme this run: 1 candidate — @NyakundiReport/2120345164283511098, an NCAJ report on sexual offences in Kenya. The other 9 net-new ids are off-theme or previously-documented skips (see skipped_new_this_run).",
+ "candidates": [
+  {
+   "source_name": "@NyakundiReport",
+   "title": "Kenya NCAJ report: ~31% of convicted prisoners are serving sentences for sexual offences; CJ Koome urges prevention, rehabilitation and reforms on tech-facilitated sexual abuse",
+   "snippet": "Nyakundi Report (@NyakundiReport): A new National Council on the Administration of Justice (NCAJ) report shows 11,108 of approximately 37,000 convicted prisoners in Kenya are serving sentences for sexual offences — about 31% of the convicted prison population. The report flags the growing number of sexual-offence cases and gaps in rehabilitation. Chief Justice Martha Koome has called for stronger prevention, improved rehabilitation and legal reforms to address emerging tech-facilitated offences including cyberstalking, sextortion and deepfake pornography.",
+   "url": "https://x.com/NyakundiReport/status/2120345164283511098",
+   "platform": "x",
+   "published_at": "2026-11-11T02:37:35Z",
+   "srhr_relevance": 6,
+   "harm_score": 0,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NET-NEW to the live radar_items X set and in no prior pending file. Accurate relay of an official NCAJ report + Chief Justice remarks on sexual offences and tech-facilitated sexual abuse (sextortion, deepfake pornography) in Kenya — squarely within the sexual-violence / SRH-rights landscape the radar tracks. NOT disinformation (is_disinfo=false, harm_score=0): it is factual, authoritative public-interest reporting. sentiment=alarming (31% sexual-offence share + growing caseload). typology=none (sexual-violence/justice data, not one of the contraceptive_myth/fertility_abortion/anti_cse/faith_healing buckets). srhr_relevance=6. NOT sensitive: names only CJ Martha Koome in her official reform-calling capacity (no allegation against her), no minor is identified, no named/identifiable victim, no unproven allegation against a named person — safe to insert LIVE. Full tweet text read from the status page (no truncation; no attached image)."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  {
+   "url": "https://x.com/Ivy1__/status/2119421522074911230",
+   "handle": "@Ivy1__",
+   "reason": "Homophobic banter ('don't get these lesbians pregnant so they stop bothering us') — not an SRHR health claim or disinformation item; off-theme, consistent with prior LGBTQ-expression skips."
+  },
+  {
+   "url": "https://x.com/_mpekethu_/status/2115401017248698686",
+   "handle": "@_mpekethu_",
+   "reason": "Africa Health Creators award-vote plug (previously documented skip). Opens with an unverifiable 'P2 does not always work, something works better' hook whose substance is only in an attached video — not confidently classifiable, so skipped per the conservative bar."
+  },
+  {
+   "url": "https://x.com/_mpekethu_/status/2113573871609606414",
+   "handle": "@_mpekethu_",
+   "reason": "Africa Health Creators award-vote plug (previously documented skip)."
+  },
+  {
+   "url": "https://x.com/maracuchaKe/status/2112556452535521637",
+   "handle": "@maracuchaKe",
+   "reason": "LGBTQ political expression ('Kenyan Gays pass a message to William Ruto') — previously documented skip; off-theme (not an SRHR health/disinfo claim)."
+  },
+  {
+   "url": "https://x.com/NomadicDothraki/status/2078119616912498887",
+   "handle": "@NomadicDothraki",
+   "reason": "Personal-hygiene banter (men not changing boxers) — off-theme."
+  },
+  {
+   "url": "https://x.com/adhiiiambo/status/2073815272473915638",
+   "handle": "@adhiiiambo",
+   "reason": "Social commentary on community and finances — off-theme, no SRHR content."
+  },
+  {
+   "url": "https://x.com/Iam_KendiH/status/2073744899090924001",
+   "handle": "@Iam_KendiH",
+   "reason": "Gossip banter about Christian influencers being pregnant/unmarried — off-theme, not an SRHR health/disinfo item."
+  },
+  {
+   "url": "https://x.com/alasirimotors/status/2101324715079909829",
+   "handle": "@alasirimotors",
+   "reason": "Car-giveaway spam ('Gift this lady a VW Arteon') — off-theme."
+  },
+  {
+   "url": "https://x.com/kilundeezy/status/2095129913581801641",
+   "handle": "@kilundeezy",
+   "reason": "Insult banter — off-theme."
+  }
+ ]
+}
