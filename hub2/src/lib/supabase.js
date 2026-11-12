@@ -91,7 +91,7 @@ export function useSession() {
       const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('org-' + user.id.slice(0, 8))
       sb.from('organizations').select('id').ilike('name', orgName).limit(1).then(({ data }) => {
         if (!data || data.length === 0) {
-          sb.from('organizations').insert({ name: orgName, short_name: orgName, slug, submitted_by: user.id, approved: false }).then(() => {})
+          sb.from('organizations').insert({ name: orgName, short_name: orgName, slug, submitted_by: user.id, contact_email: user.email || null, approved: false }).then(() => {})
         }
       })
     }
