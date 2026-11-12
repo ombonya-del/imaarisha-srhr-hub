@@ -30,3 +30,9 @@ jobs:
           echo "radar-scanner -> HTTP $CODE"
           echo "$BODY"
           [ "$CODE" = "200" ] || exit 1
+          # The function reports its own failures inside a 200 response, so check
+          # the body too; otherwise a broken feed shows as a green run.
+          if [ "$(echo "$BODY" | jq -r '.success // false' 2>/dev/null)" != "true" ]; then
+            echo "::error::radar-scanner reported a failure: $BODY"
+            exit 1
+          fi

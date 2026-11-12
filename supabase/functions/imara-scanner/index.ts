@@ -1,5 +1,6 @@
 // Imara TV -> Ukweli Learn auto-feed.
-// Pulls the latest videos from Imara TV's public YouTube channel RSS every few
+// Pulls the latest videos from Imara TV's public YouTube channel (RSS, with a
+// YouTube Data API fallback) every few
 // hours and upserts the SRHR-relevant ones into public.ukweli_learn as embedded
 // video cards (media_type 'embed'), credited to Imara TV. We only EMBED the
 // public YouTube player — nothing is downloaded or rehosted. A title keyword
@@ -11,7 +12,69 @@ const SUPABASE_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const supabase         = createClient(SUPABASE_URL, SUPABASE_SERVICE)
 
 const CHANNEL_ID = 'UCF59RXwMCGxqH-aEMOseJhg'   // Imara TV
-const FEED = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`
+const UPLOADS_PLAYLIST = 'UU' + CHANNEL_ID.slice(2)  // the channel's "uploads" playlist
+// YouTube's RSS endpoint often answers 404/500 to cloud IPs, so we try both RSS
+// forms a few times, then fall back to the YouTube Data API if a key is set
+// (supabase secrets set YOUTUBE_API_KEY=...). playlistItems.list costs 1 quota unit.
+const FEEDS = [
+  `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`,
+  `https://www.youtube.com/feeds/videos.xml?playlist_id=${UPLOADS_PLAYLIST}`,
+]
+const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY') || ''
+const RSS_ATTEMPTS = 3
+
+type Video = { id: string, title: string }
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+async function fromRSS(errors: string[]): Promise<Video[] | null> {
+  for (let attempt = 1; attempt <= RSS_ATTEMPTS; attempt++) {
+    for (const url of FEEDS) {
+      try {
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+            'Accept': 'application/atom+xml, application/xml, text/xml',
+          },
+        })
+        if (!res.ok) { errors.push(`rss ${url.includes('playlist_id') ? 'playlist' : 'channel'} HTTP ${res.status}`); continue }
+        const xml = await res.text()
+        const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(m => m[1])
+        if (!entries.length) { errors.push('rss: no entries'); continue }
+        return entries.map(e => ({
+          id: e.match(/<yt:videoId>([\w-]+)<\/yt:videoId>/)?.[1] || '',
+          title: decode(e.match(/<title>([\s\S]*?)<\/title>/)?.[1] || ''),
+        }))
+      } catch (e) {
+        errors.push(`rss: ${String((e as any)?.message || e)}`)
+      }
+    }
+    if (attempt < RSS_ATTEMPTS) await sleep(1500 * attempt)
+  }
+  return null
+}
+
+async function fromDataAPI(errors: string[]): Promise<Video[] | null> {
+  if (!YOUTUBE_API_KEY) { errors.push('api: YOUTUBE_API_KEY not set'); return null }
+  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=25` +
+    `&playlistId=${UPLOADS_PLAYLIST}&key=${encodeURIComponent(YOUTUBE_API_KEY)}`
+  try {
+    const res = await fetch(url)
+    if (!res.ok) {
+      const body = await res.text()
+      errors.push(`api HTTP ${res.status}: ${body.slice(0, 160)}`)
+      return null
+    }
+    const data = await res.json()
+    return (data.items || []).map((it: any) => ({
+      id: it?.snippet?.resourceId?.videoId || '',
+      title: it?.snippet?.title || '',
+    })).filter((v: Video) => v.title !== 'Private video' && v.title !== 'Deleted video')
+  } catch (e) {
+    errors.push(`api: ${String((e as any)?.message || e)}`)
+    return null
+  }
+}
 
 // Only auto-add uploads whose title signals SRHR relevance. Curated highlights
 // (added by hand in SQL) are unaffected — this filter is just the auto gate.
@@ -49,19 +112,16 @@ function decode(s: string): string {
 
 Deno.serve(async (_req: Request) => {
   try {
-    const res = await fetch(FEED, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ImaarishaBot/1.0)', 'Accept': 'application/atom+xml, application/xml, text/xml' },
-    })
-    if (!res.ok) return json({ ok: false, error: `feed HTTP ${res.status}` }, 200)
-    const xml = await res.text()
+    const errors: string[] = []
+    let source = 'rss'
+    let videos = await fromRSS(errors)
+    if (!videos) { source = 'api'; videos = await fromDataAPI(errors) }
+    if (!videos) return json({ ok: false, error: 'all sources failed', errors }, 200)
 
-    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(m => m[1])
     const rows: any[] = []
     let seen = 0, kept = 0
-    for (const e of entries) {
+    for (const { id, title } of videos) {
       seen++
-      const id = e.match(/<yt:videoId>([\w-]+)<\/yt:videoId>/)?.[1]
-      const title = decode(e.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
       if (!id || !title) continue
       if (!isSRHR(title)) continue
       kept++
@@ -90,7 +150,7 @@ Deno.serve(async (_req: Request) => {
       if (error) return json({ ok: false, error: error.message }, 200)
       upserted = count ?? rows.length
     }
-    return json({ ok: true, seen, srhr_matched: kept, upserted }, 200)
+    return json({ ok: true, source, seen, srhr_matched: kept, upserted, retried: errors }, 200)
   } catch (e) {
     return json({ ok: false, error: String((e as any)?.message || e) }, 200)
   }
