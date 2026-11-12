@@ -110,11 +110,14 @@ function decode(s: string): string {
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'").trim()
 }
 
-Deno.serve(async (_req: Request) => {
+Deno.serve(async (req: Request) => {
   try {
+    // POST {"source":"api"} skips RSS, to check the YouTube key works.
+    const body = await req.json().catch(() => ({}))
+    const forceApi = body?.source === 'api'
     const errors: string[] = []
     let source = 'rss'
-    let videos = await fromRSS(errors)
+    let videos = forceApi ? null : await fromRSS(errors)
     if (!videos) { source = 'api'; videos = await fromDataAPI(errors) }
     if (!videos) return json({ ok: false, error: 'all sources failed', errors }, 200)
 

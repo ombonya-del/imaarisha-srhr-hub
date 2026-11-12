@@ -3,7 +3,11 @@
 Publish a curated batch to GitHub so the "Insert bookmark supplement"
 workflow inserts it into radar_items. Used by the daily scheduled sweep.
 
-    python3 scripts/push_supplement.py scripts/pending_supplement_<date>.json [--wait]
+    python3 scripts/push_supplement.py scripts/outbox/pending_supplement_<date>.json [--wait]
+
+Write new batches to scripts/outbox/ (git-ignored). The file is published as
+scripts/<same name> on GitHub, so keeping the local copy out of scripts/
+means `git pull` never trips over it afterwards.
 
 Writes the file straight to main through the GitHub contents API, so it works
 even when the local clone is behind or a stale .git/*.lock blocks git.

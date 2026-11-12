@@ -49,3 +49,6 @@ next-env.d.ts
 supabase/.temp/
 scripts/.secrets.bak
 _field-guide-art-source/
+
+# local drafts of bookmark batches; published to scripts/ via push_supplement.py
+scripts/outbox/
