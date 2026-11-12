@@ -4,8 +4,10 @@ import { Btn } from './components'
 
 // ── Relevance scoring ────────────────────────────────────────────────────────
 // Match an item (opportunity / resource / event) to partner organisations by the
-// overlap between the item's text/tags and each org's focus area + tags. Kept
-// deliberately transparent: the admin sees the score and can override it.
+// SRHR topics they share (item text/tags vs each org's focus area + tags). Only a
+// shared topic counts: plain word overlap ("health", "women", "kenya") matched
+// almost every partner, so it is no longer scored. Kept deliberately transparent:
+// the admin sees the shared topics and can tick or untick anyone.
 
 const TOPICS = [
   'contraception','family planning','abortion','post-abortion','hiv','aids','sti','prep','arv',
@@ -14,9 +16,7 @@ const TOPICS = [
   'faith','religion','disinformation','misinformation','advocacy','policy','research','data',
   'menstrual','menstruation','wash','nutrition','mental health','counselling','clinical','service delivery',
 ]
-const STOP = new Set(['the','and','for','with','from','that','this','are','our','you','your','who','can','all','new','out','into','not','a','to','of','in','on','is','an','by','or','at','be','it'])
 const norm = (s) => String(s || '').toLowerCase()
-const words = (s) => norm(s).replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 3 && !STOP.has(w))
 
 function itemText(item) {
   return [item.title, item.description, item.org, item.source_org, (item.focus_tags || []).join(' ')].filter(Boolean).join(' ')
@@ -25,19 +25,17 @@ function orgText(o) {
   return [o.focus_area, (o.focus_tags || []).join(' '), o.short_name, o.name, o.description].filter(Boolean).join(' ')
 }
 
+// Whole-word test (plurals allowed), so 'men' doesn't match 'women' or 'mental'
+// and 'sti' doesn't match 'institute'. Topics are plain words, so no escaping needed.
+const hasTopic = (text, t) => new RegExp('(^|[^a-z])' + t + '(s|es)?([^a-z]|$)').test(text)
+
 export function scorePartners(item, orgs) {
   const it = norm(itemText(item))
-  const itWords = new Set(words(itemText(item)))
-  const itTopics = TOPICS.filter(t => it.includes(t))
+  const itTopics = TOPICS.filter(t => hasTopic(it, t))
   return orgs.map(o => {
     const ot = norm(orgText(o))
-    const oWords = words(orgText(o))
-    // topic overlap is worth the most (shared SRHR theme), then word overlap
-    const sharedTopics = itTopics.filter(t => ot.includes(t))
-    const sharedWords = [...new Set(oWords)].filter(w => itWords.has(w))
-    const score = sharedTopics.length * 3 + sharedWords.length
-    const why = [...new Set([...sharedTopics, ...sharedWords])].slice(0, 4)
-    return { org: o, score, why }
+    const sharedTopics = itTopics.filter(t => hasTopic(ot, t))
+    return { org: o, score: sharedTopics.length, why: sharedTopics.slice(0, 4) }
   }).sort((a, b) => b.score - a.score)
 }
 
@@ -61,7 +59,8 @@ export function MatchNotifyModal({ item, itemType, onClose }) {
   const [loading, setLoading] = useState(true)
   const [picked, setPicked] = useState({})       // org_id -> bool
   const [email, setEmail] = useState(true)
-  const [push, setPush] = useState(true)
+  // Members already get a push when the item is approved, so this is off by default.
+  const [push, setPush] = useState(false)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [showAll, setShowAll] = useState(false)
@@ -145,7 +144,7 @@ export function MatchNotifyModal({ item, itemType, onClose }) {
             <input type="checkbox" checked={email} onChange={e=>setEmail(e.target.checked)}/> ✉️ Email partners
           </label>
           <label style={{ display:'flex', gap:6, alignItems:'center', fontFamily:C.sans, fontSize:12, color:C.txt, cursor:'pointer' }}>
-            <input type="checkbox" checked={push} onChange={e=>setPush(e.target.checked)}/> 🔔 Push to members
+            <input type="checkbox" checked={push} onChange={e=>setPush(e.target.checked)}/> 🔔 Push to members again (already sent on approval)
           </label>
         </div>
 

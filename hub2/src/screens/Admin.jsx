@@ -1545,8 +1545,7 @@ function ResourceDesk({ onChange }) {
   const [opps, setOpps] = useState([])
   const [showHiddenOpps, setShowHiddenOpps] = useState(false)
   const [evs, setEvs] = useState([])
-  const [unhosted, setUnhosted] = useState([])
-  const [autoPub, setAutoPub] = useState([])   // recently auto-published resources (spot-check lane)
+  const [autoPub, setAutoPub] = useState([])   // recent member uploads (they publish instantly) — spot-check lane
   const [busy, setBusy] = useState(null)
   const [openSec, setOpenSec] = usePersisted('resources.openSec', 'resources')   // accordion: one section open at a time
   const [notify, setNotify] = useState(null)            // { item, itemType } → match & notify modal after approval
@@ -1557,7 +1556,7 @@ function ResourceDesk({ onChange }) {
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
-    sb.from('resources').select('*').eq('status','approved').eq('auto_approved',true).order('created_at',{ascending:false}).limit(50)
+    sb.from('resources').select('*').eq('status','approved').not('submitted_by','is',null).order('created_at',{ascending:false}).limit(50)
       .then(({data}) => setAutoPub(data || []))
     sb.from('resource_requests').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => setReqs(data || []))
@@ -1568,12 +1567,6 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setRejectedKeys(new Set((data||[]).flatMap(o => [oppKey(o.title), (o.link||'').trim().toLowerCase()].filter(Boolean)))))
     sb.from('events').select('*').eq('status','pending').order('event_date',{ascending:true})
       .then(({data}) => setEvs(data || []))
-    // Approved document resources still stored as external links (not hosted as
-    // watermarked files) — usually because the source site blocks auto-download.
-    sb.from('resources').select('id,title,type,file_url,source_org')
-      .eq('status','approved').is('file_path',null).not('file_url','is',null)
-      .in('type',['report','policy','research','guide','toolkit','data']).order('title')
-      .then(({data}) => setUnhosted(data || []))
   }
   useEffect(() => { load() }, [])
   // Deep-link from the Pulse activity feed: the hash carries the submission title
@@ -1647,19 +1640,20 @@ function ResourceDesk({ onChange }) {
     else {
       toast('✓ Published to the Exchange','green'); load()
       setNotify({ item:{ ...r, status:'approved' }, itemType:'resource' })
-      // Auto-host document links as private, watermarked files (fire-and-forget;
-      // skips videos/web pages that have no PDF). No manual conversion needed.
-      if (r.file_url && !r.file_path) sb.functions.invoke('ingest-resource', { body:{ resource_id: r.id } }).catch(()=>{})
       // Ping members who opted into notifications — new resource on the Pulse.
       notifyMembers({ title:'📚 New resource', body:r.title, url:'/#exchange', tag:'res-'+r.id })
     }
     setBusy(null)
   }
   const reject = async (r) => {
-    if (!confirm(`Reject "${r.title}"? This deletes the submission.`)) return
+    if (!confirm(`Remove "${r.title}"? This deletes it and its file.`)) return
     setBusy(r.id)
     const { error } = await sb.from('resources').delete().eq('id', r.id)
-    if (error) toast(error.message,'red'); else { toast('Rejected','gold'); load() }
+    if (error) toast(error.message,'red')
+    else {
+      if (r.file_path) sb.storage.from('resources').remove([r.file_path]).catch(()=>{})   // drop the stored file too
+      toast('Removed','gold'); load()
+    }
     setBusy(null)
   }
   // ── Opportunity queue triage: hide off-region / expired / off-topic pending
@@ -1745,19 +1739,6 @@ function ResourceDesk({ onChange }) {
     const s = `${r.title||''} ${r.source_org||''} ${r.type||''} ${r.description||''}`.toLowerCase()
     return { subject: RES_SUBJECT(s), geography: REGION_OF(s), currency: RES_CURRENCY(s, r.created_at),
       relevant: OPP_CORE.some(k => s.includes(k)) }
-  }
-  // Manual host: admin picks the downloaded PDF, we store it in the resources bucket
-  // and set file_path — the doc drops out of the "needs upload" queue, now hosted.
-  const uploadDoc = async (r, file) => {
-    if (!file) return
-    setBusy(r.id)
-    const ext = (file.name.split('.').pop() || 'pdf').toLowerCase()
-    const path = `manual/${r.id}.${ext}`
-    const { error: upErr } = await sb.storage.from('resources').upload(path, file, { contentType: file.type || 'application/pdf', upsert: true })
-    if (upErr) { toast(upErr.message, 'red'); setBusy(null); return }
-    const { error } = await sb.from('resources').update({ file_path: path }).eq('id', r.id)
-    if (error) toast(error.message, 'red'); else { toast('✓ Uploaded & hosted', 'green'); load() }
-    setBusy(null)
   }
   // Admin edits the structured fields on the review card, then Save persists them.
   const startOppEdit = (o) => setOppEdit({ id:o.id, kind:o.kind||'', org:o.org||'', deadline:o.deadline||'',
@@ -1851,11 +1832,11 @@ function ResourceDesk({ onChange }) {
         ))}
       </Section>
 
-      <Section id="autopub" color={C.mint} icon="🤖" label="Auto-published — spot-check" count={autoPub.length} {...secProps}>
+      <Section id="autopub" color={C.mint} icon="📤" label="Member uploads — spot-check" count={autoPub.length} {...secProps}>
         <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px', lineHeight:1.5 }}>
-          These cleared the relevance score and came from a trusted source, so they published automatically. Skim them — tap <strong>Pull back</strong> to return anything to the manual queue.
+          Members' uploads publish straight away (max 10 per member per week). Skim the latest — <strong>Remove</strong> deletes one, <strong>Pull back</strong> hides it in the review queue.
         </p>
-        {autoPub.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Nothing auto-published recently.</p>}
+        {autoPub.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>No member uploads yet.</p>}
         {autoPub.map(r => (
           <div key={r.id} style={cardS(C.mint)}>
             <p style={ttlS}>{r.title}{r.is_restricted ? ' · 🔐' : ''}</p>
@@ -1865,7 +1846,8 @@ function ResourceDesk({ onChange }) {
               chips={[{k:'Type',v:r.type||'Document',c:C.sky},{k:'Source',v:r.source_org,c:C.lilac},{k:'Score',v:typeof r.auto_score==='number'?String(r.auto_score):null,c:C.mint}]}
               url={r.file_path ? null : r.file_url} urlLabel="Open source"/>
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
-              <Btn small ghost color={C.coral} onClick={()=>unpublish(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '↩ Pull back for review'}</Btn>
+              <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>🗑 Remove</Btn>
+              <Btn small ghost color={C.gold} onClick={()=>unpublish(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '↩ Pull back for review'}</Btn>
             </div>
           </div>
         ))}
@@ -1988,42 +1970,6 @@ function ResourceDesk({ onChange }) {
         ))}
       </Section>
 
-      <Section id="unhosted" color={C.gold} icon="📥" label="Documents needing manual upload" count={unhosted.length} {...secProps}>
-        <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'0 0 10px', lineHeight:1.5 }}>
-          These are document links the hub couldn’t auto-host as watermarked files — usually because the source site blocks automated downloads (e.g. IPPF, some govt/NGO portals).
-          To fix: open the source, download the PDF, then re-add it via <strong>＋ Add resource → Upload file</strong> and delete the old link. (Try the ✏️ Edit → 📥 Host button first — cooperative sites will just work.)
-        </p>
-        {unhosted.map(r => {
-          const f = resFacts(r)
-          const rows = [
-            ['Subject', f.subject],
-            ['Geography', f.geography],
-            ['Currency', f.currency],
-            ['Relevance', f.relevant ? 'SRHR-relevant' : 'Verify relevance'],
-          ].filter(([, v]) => v)
-          return (
-            <div key={r.id} style={cardS(C.gold)}>
-              <p style={ttlS}>{r.title}</p>
-              <p style={metaS}>{r.type || 'document'}{r.source_org ? ` · ${r.source_org}` : ''} · {timeAgo(r.created_at)}</p>
-              <div style={{ marginTop:6, padding:'10px 12px', background:`${C.gold}12`, border:`1px solid ${C.line}`,
-                borderRadius:8, fontFamily:C.sans, fontSize:12, lineHeight:1.6, color:C.txt }}>
-                {rows.map(([k, v], i) => (
-                  <div key={k} style={{ marginTop: i === 0 ? 0 : 3 }}><b style={{ fontWeight:800 }}>{k}:</b> {v}</div>
-                ))}
-              </div>
-              <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginTop:10 }}>
-                {r.file_url && <LinkPreview url={r.file_url} color={C.gold} label="Open source ↗"/>}
-                <label style={{ fontFamily:C.sans, fontSize:11.5, fontWeight:800, color:'#fff', background:C.mint,
-                  borderRadius:8, padding:'7px 13px', cursor: busy===r.id ? 'default' : 'pointer', opacity: busy===r.id ? .6 : 1 }}>
-                  {busy===r.id ? 'Uploading…' : '📤 Upload the PDF'}
-                  <input type="file" accept="application/pdf,.pdf,.doc,.docx" hidden disabled={busy===r.id}
-                    onChange={e => uploadDoc(r, e.target.files && e.target.files[0])}/>
-                </label>
-              </div>
-            </div>
-          )
-        })}
-      </Section>
 
       {notify && <MatchNotifyModal item={notify.item} itemType={notify.itemType} onClose={() => setNotify(null)} />}
     </div>

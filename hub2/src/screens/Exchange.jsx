@@ -123,7 +123,7 @@ export default function Exchange({ session }) {
       <ScreenTitle kicker="Exchange" title="Resources, offers & the network"
         sub="Open it, share it, build with it. Every open and share is counted — evidence of a living commons."/>
 
-      {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)}/>}
+      {addOpen && <AddResourceModal session={session} onClose={()=>setAddOpen(false)} onPublished={(row)=>setResources(l=>[row, ...l])}/>}
       {reqFor && <RequestAccessModal session={session} resource={reqFor} isAdmin={isAdmin} onClose={()=>setReqFor(null)} onDone={loadMyReq}
         onGranted={(res)=>{ trackOpen(res); res.file_path ? downloadStored(res) : window.open(res.file_url, '_blank', 'noopener,noreferrer') }}/>}
       {editRes && <EditResourceModal resource={editRes} onClose={()=>setEditRes(null)}
@@ -351,60 +351,73 @@ function EditResourceModal({ resource, onClose, onSaved }) {
   )
 }
 
-// ── Add resource: file upload OR link; stays pending until an admin approves ──
-function AddResourceModal({ session, onClose }) {
+// ── Add resource: members upload a PDF or Word file; it publishes straight away.
+// No admin queue. A database trigger caps each member at 10 uploads per 7 days
+// (admins are exempt), and admins can remove anything from the Exchange.
+const UPLOAD_EXT = ['pdf', 'doc', 'docx']
+const UPLOAD_TYPES = RES_TYPES.filter(t => t !== 'video' && t !== 'link')
+const WEEKLY_LIMIT = 10
+
+function AddResourceModal({ session, onClose, onPublished }) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('report')
   const [desc, setDesc] = useState('')
   const [org, setOrg] = useState('')
-  const [mode, setMode] = useState('file')   // 'file' | 'link'
-  const [url, setUrl] = useState('')
   const [file, setFile] = useState(null)
   const [restricted, setRestricted] = useState(false)
   const [tags, setTags] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [left, setLeft] = useState(null)   // uploads left this week (null = unknown / admin)
+
+  useEffect(() => {
+    if (session.isAdmin || !session.user?.id) return
+    const since = new Date(Date.now() - 7 * 86400000).toISOString()
+    sb.from('resources').select('id', { count: 'exact', head: true })
+      .eq('submitted_by', session.user.id).gte('created_at', since)
+      .then(({ count }) => { if (typeof count === 'number') setLeft(Math.max(0, WEEKLY_LIMIT - count)) })
+  }, [])
 
   const humanSize = (b) => b < 1048576 ? Math.max(1, Math.round(b/1024)) + ' KB' : (b/1048576).toFixed(1) + ' MB'
+  const extOf = (f) => (f?.name.split('.').pop() || '').toLowerCase()
+
+  const pickFile = (f) => {
+    setMsg('')
+    if (f && !UPLOAD_EXT.includes(extOf(f))) { setFile(null); setMsg('Only PDF or Word (.doc, .docx) files can be uploaded.'); return }
+    setFile(f || null)
+  }
 
   const submit = async () => {
     if (!title.trim()) { setMsg('Title is required.'); return }
+    if (!file) { setMsg('Choose a PDF or Word file to upload.'); return }
+    if (!UPLOAD_EXT.includes(extOf(file))) { setMsg('Only PDF or Word (.doc, .docx) files can be uploaded.'); return }
+    if (file.size > 50 * 1048576) { setMsg('File is over 50 MB. Please compress it and try again.'); return }
+    if (left === 0) { setMsg(`You've reached the limit of ${WEEKLY_LIMIT} uploads this week. Try again in a few days.`); return }
     setBusy(true); setMsg('')
-    let file_url = url.trim() || null, file_path = null, file_type = null, file_size = null
-    if (mode === 'file') {
-      if (!file) { setMsg('Choose a file to upload.'); setBusy(false); return }
-      if (file.size > 50 * 1048576) { setMsg('File is over 50 MB — please share a link instead.'); setBusy(false); return }
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-      const path = `${session.user?.id || 'anon'}/${Date.now()}-${safe}`
-      const { error: upErr } = await sb.storage.from('resources').upload(path, file, { upsert: false })
-      if (upErr) { setMsg('Upload failed: ' + upErr.message); setBusy(false); return }
-      // private bucket: store the storage key, not a public URL (downloads go
-      // through a short-lived signed URL so the file can't be shared out)
-      file_path = path
-      file_url  = null
-      file_type = (file.name.split('.').pop() || '').toUpperCase()
-      file_size = humanSize(file.size)
-    } else if (!file_url) {
-      setMsg('Add a link, or switch to Upload file.'); setBusy(false); return
-    }
-    const { error } = await insertRow('resources', {
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const path = `${session.user?.id || 'anon'}/${Date.now()}-${safe}`
+    const { error: upErr } = await sb.storage.from('resources').upload(path, file, { upsert: false })
+    if (upErr) { setMsg('Upload failed: ' + upErr.message); setBusy(false); return }
+    // private bucket: store the storage key, not a public URL (downloads go
+    // through a short-lived signed URL so the file can't be shared out)
+    const { data, error } = await insertRow('resources', {
       title: title.trim(), type, description: desc.trim() || null,
-      source_org: org.trim() || null, file_url, file_path, file_type, file_size,
+      source_org: org.trim() || null, file_url: null, file_path: path,
+      file_type: extOf(file).toUpperCase(), file_size: humanSize(file.size),
       is_restricted: restricted, focus_tags: tags.trim() ? tags.split(',').map(x=>x.trim()).filter(Boolean) : null,
-      status: 'pending', submitted_by: session.user?.id, submitter_name: session.name || null,
-    })
+      status: 'approved', submitted_by: session.user?.id, submitter_name: session.name || null,
+    }, { select: '*' })
     setBusy(false)
-    if (error) { setMsg(error.message); return }
-    logActivity('resource_upload', `📤 ${session.name || 'A member'} submitted a resource for review: ${title.trim()}`, title.trim(), 'gold')
-    toast('✓ Submitted — an admin reviews it before it goes live', 'green')
+    if (error) {
+      sb.storage.from('resources').remove([path]).catch(()=>{})   // don't leave an orphaned file
+      setMsg(/weekly limit/i.test(error.message || '') ? `You've reached the limit of ${WEEKLY_LIMIT} uploads this week. Try again in a few days.` : error.message)
+      return
+    }
+    logActivity('resource_upload', `📤 ${session.name || 'A member'} uploaded a resource: ${title.trim()}`, title.trim(), 'gold')
+    toast('✓ Published to the Exchange', 'green')
+    if (data && data[0]) onPublished?.(data[0])
     onClose()
   }
-
-  const tabBtn = (k, l) => (
-    <button onClick={()=>{ setMode(k); setMsg('') }}
-      style={{ flex:1, fontFamily:C.sans, fontSize:11, fontWeight:800, padding:'8px 0', borderRadius:8,
-        border:'none', cursor:'pointer', background: mode===k?C.gold:C.card, color: mode===k?'#171204':C.mut }}>{l}</button>
-  )
 
   return (
     <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:50,
@@ -413,29 +426,22 @@ function AddResourceModal({ session, onClose }) {
         borderRadius:16, padding:22, width:'100%', maxWidth:420, maxHeight:'90vh', overflowY:'auto' }}>
         <p style={{ fontFamily:C.serif, fontSize:20, fontWeight:700, color:C.txt, margin:'0 0 2px' }}>Add a resource</p>
         <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.mut, margin:'0 0 14px', lineHeight:1.5 }}>
-          Upload a file or share a link. An admin reviews it before it appears publicly.
+          Upload a PDF or Word document. It appears in the Exchange straight away.
+          {left !== null && <> You have <strong>{left}</strong> of {WEEKLY_LIMIT} uploads left this week.</>}
         </p>
         <input style={inputStyle} placeholder="Title *" value={title} onChange={e=>setTitle(e.target.value)}/>
         <select style={inputStyle} value={type} onChange={e=>setType(e.target.value)}>
-          {RES_TYPES.map(t => <option key={t} value={t}>{(TYPE_ICONS[t]||'📄')} {t}</option>)}
+          {UPLOAD_TYPES.map(t => <option key={t} value={t}>{(TYPE_ICONS[t]||'📄')} {t}</option>)}
         </select>
 
-        <div style={{ display:'flex', gap:6, margin:'2px 0 10px' }}>
-          {tabBtn('file','⬆ Upload file')}
-          {tabBtn('link','🔗 Paste link')}
+        <div style={{ marginBottom:10 }}>
+          <input type="file"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={e=>pickFile(e.target.files?.[0] || null)}
+            style={{ fontFamily:C.sans, fontSize:12, color:C.txt, width:'100%' }}/>
+          {file && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'6px 0 0' }}>{file.name} · {humanSize(file.size)}</p>}
+          <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'6px 0 0', lineHeight:1.4 }}>PDF or Word (.doc, .docx) · up to 50 MB.</p>
         </div>
-        {mode === 'file' ? (
-          <div style={{ marginBottom:10 }}>
-            <input type="file"
-              accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt"
-              onChange={e=>setFile(e.target.files?.[0] || null)}
-              style={{ fontFamily:C.sans, fontSize:12, color:C.txt, width:'100%' }}/>
-            {file && <p style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut, margin:'6px 0 0' }}>{file.name} · {humanSize(file.size)}</p>}
-            <p style={{ fontFamily:C.sans, fontSize:10, color:C.mut, margin:'6px 0 0', lineHeight:1.4 }}>Images, video, PDF, Word, PowerPoint, Excel, CSV · up to 50 MB.</p>
-          </div>
-        ) : (
-          <input style={inputStyle} placeholder="Link (https://…)" value={url} onChange={e=>setUrl(e.target.value)}/>
-        )}
 
         <input style={inputStyle} placeholder="Source organization" value={org} onChange={e=>setOrg(e.target.value)}/>
         <input style={inputStyle} placeholder="Focus tags, comma-separated (optional)" value={tags} onChange={e=>setTags(e.target.value)}/>
@@ -445,8 +451,8 @@ function AddResourceModal({ session, onClose }) {
           🔐 Restricted — members must request access before downloading
         </label>
         {msg && <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, margin:'0 0 10px' }}>{msg}</p>}
-        <Btn full onClick={submit} disabled={busy || !title.trim() || (mode==='file' ? !file : !url.trim())}>
-          {busy ? (mode==='file' ? 'Uploading…' : 'Submitting…') : 'Submit for review'}
+        <Btn full onClick={submit} disabled={busy || !title.trim() || !file || left === 0}>
+          {busy ? 'Uploading…' : 'Publish'}
         </Btn>
       </div>
     </div>
