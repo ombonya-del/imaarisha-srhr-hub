@@ -1,0 +1,37 @@
+{
+ "generated_at": "2026-11-12T14:40:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-12 ~17:35 EAT (scheduled DAILY 13:30 EAT). Browser 1 of 4 connected Chrome profiles was the one logged in as @vombonya.",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 43 posts this sweep. Method: full descent at 750px steps (settled prematurely at 29 due to virtualization gaps), then two fine-grained re-passes from the top at 400px then 300px steps to defeat the gaps — count climbed 29 -> 43 on the 400px pass and added 0 on the 300px pass (stable). scrollTop stabilized and scrollHeight settled at 23200 across the final pass; main-column list exhausted. Up from 42 on the Nov 11 sweep (+1). Live dedupe run against radar_items via the public anon key (platform=eq.x): 34 X-platform items live (content-range 0-33, exact; the Nov 11 @NyakundiReport/NCAJ candidate is now live). 10 of the 43 captured ids are NOT in the live X set; the other 33 are already live. Net-new ON-THEME this run: 1 candidate — @NationAfrica/2120023014699831331, a Daily Nation report on a parliamentary push for a nationwide LGBTQ crackdown defying the 2023 Supreme Court ruling. The other 9 net-new ids are all previously-documented off-theme skips (LGBTQ banter/memes/expression, award-vote plugs, spam — see skipped_new_this_run).",
+ "candidates": [
+  {
+   "source_name": "@NationAfrica",
+   "title": "Kenya parliamentary committee pushes Interior Ministry for nationwide LGBTQ crackdown, defying 2023 Supreme Court ruling (Daily Nation)",
+   "snippet": "Daily Nation (@NationAfrica): A parliamentary committee wants the Ministry of Interior to enforce a strict nationwide crackdown on lesbian, bisexual, transgender and queer Kenyans — framed as a decisive blow to their rights that potentially dares the 2023 Supreme Court landmark ruling. Links to the Nation report 'MPs push for LGBTQ crackdown despite Supreme Court ruling' (nation.africa/kenya/news/mps-push-for-lgbtq-crackdown-despite-supreme-court-ruling-5664618).",
+   "url": "https://x.com/NationAfrica/status/2120023014699831331",
+   "platform": "x",
+   "published_at": "2026-11-10T05:17:29Z",
+   "srhr_relevance": 6,
+   "harm_score": 0,
+   "sentiment": "alarming",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "NET-NEW to the live radar_items X set and in no prior pending file. Factual report from a major Kenyan outlet (Daily Nation / Nation Africa) on a parliamentary committee pushing the Ministry of Interior for a nationwide LGBTQ crackdown that challenges the 2023 Supreme Court ruling — squarely within the sexual-rights ('R' in SRHR) landscape the radar tracks, on the same basis as the Nov 11 NCAJ sexual-offences item (factual, non-disinfo, typology=none). NOT disinformation (is_disinfo=false, harm_score=0): accurate public-interest journalism linking to the Nation article. sentiment=alarming (a crackdown / blow to rights). typology=none (not contraceptive_myth/fertility_abortion/anti_cse/faith_healing). srhr_relevance=6. NOT sensitive: names only institutions (a parliamentary committee, the Ministry of Interior) and the Supreme Court — no minor, no named/identifiable victim, no unproven allegation against a named individual — safe to insert LIVE. Distinct from the 9 off-theme LGBTQ-banter/meme skips: this is credible rights journalism, not banter. Full tweet text read from the status page (no truncation)."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  {"url":"https://x.com/Ivy1__/status/2119421522074911230","handle":"@Ivy1__","reason":"Homophobic banter ('don't get these lesbians pregnant so they stop bothering us') — not an SRHR health claim or disinformation item; off-theme, consistent with prior LGBTQ-expression skips."},
+  {"url":"https://x.com/_mpekethu_/status/2115401017248698686","handle":"@_mpekethu_","reason":"Africa Health Creators award-vote plug (previously documented skip). Opens with an unverifiable 'P2 does not always work, something works better' hook whose substance is only in an attached video — not confidently classifiable, so skipped per the conservative bar."},
+  {"url":"https://x.com/_mpekethu_/status/2113573871609606414","handle":"@_mpekethu_","reason":"Africa Health Creators award-vote plug (previously documented skip)."},
+  {"url":"https://x.com/maracuchaKe/status/2112556452535521637","handle":"@maracuchaKe","reason":"LGBTQ political expression ('Kenyan Gays pass a message to William Ruto') — previously documented skip; off-theme (not an SRHR health/disinfo claim)."},
+  {"url":"https://x.com/NomadicDothraki/status/2078119616912498887","handle":"@NomadicDothraki","reason":"Personal-hygiene banter (men not changing boxers) — off-theme."},
+  {"url":"https://x.com/adhiiiambo/status/2073815272473915638","handle":"@adhiiiambo","reason":"Social commentary on community and finances — off-theme, no SRHR content."},
+  {"url":"https://x.com/Iam_KendiH/status/2073744899090924001","handle":"@Iam_KendiH","reason":"Gossip banter about Christian influencers being pregnant/unmarried — off-theme, not an SRHR health/disinfo item."},
+  {"url":"https://x.com/alasirimotors/status/2101324715079909829","handle":"@alasirimotors","reason":"Car-giveaway spam ('Gift this lady a VW Arteon') — off-theme."},
+  {"url":"https://x.com/kilundeezy/status/2095129913581801641","handle":"@kilundeezy","reason":"Insult banter — off-theme."}
+ ]
+}
