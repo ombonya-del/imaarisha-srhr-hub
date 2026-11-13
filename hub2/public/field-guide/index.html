@@ -519,6 +519,7 @@ function applyMisc(lang){var swm=(lang!=='en');var M=lang==='sheng'?MISC_SH:MISC
   setText('.aud .a[data-mode=com] p', swm?M.card_com_p:'The scenes and tools for sessions, WhatsApp groups and clinic corners — <b>without</b> the facilitator activities.');
   var instb=document.querySelector('#instbar .t'); if(instb) instb.innerHTML=swm?M.install_t:'<b>Install the guide.</b><br>Add it to your home screen — it opens full-screen and works offline.';
   var ib=document.getElementById('installbtn'); if(ib) ib.textContent=swm?M.install_btn:'Install';
+  if(typeof refreshInstall==='function')refreshInstall();
   var rp=document.getElementById('resetprog'); if(rp) rp.textContent=swm?M.reset:'Reset';
   var bn={home:['\uD83C\uDFE0','Home',M.nav_home],modules:['\uD83D\uDCD8','Modules',M.nav_modules],facilitator:['\uD83C\uDF93','Facilitate',M.nav_facilitate],cast:['\uD83D\uDC6A','Cast',M.nav_cast],progress:['\uD83D\uDCC8','Progress',lang==='sheng'?'Progress':swm?'Maendeleo':'Progress']};
   document.querySelectorAll('.botnav button[data-jump]').forEach(function(b){var k=b.getAttribute('data-jump');if(bn[k])b.innerHTML='<span class="ic">'+bn[k][0]+'</span>'+(swm?bn[k][2]:bn[k][1]);});
@@ -776,9 +777,18 @@ document.getElementById('resetprog').addEventListener('click',function(){done={}
 
 /* install prompt */
 var deferred=null;
-window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;var b=document.getElementById('instbar');if(b)b.hidden=false;});
-document.getElementById('installbtn').addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;document.getElementById('instbar').hidden=true;});});
+var IS_STANDALONE=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+var IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function refreshInstall(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');if(!bar)return;
+  if(IS_STANDALONE){bar.hidden=true;return;}
+  if(IS_IOS){var sv='<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" style=\"vertical-align:-3px\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 3v12M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7\"/></svg>';var t=bar.querySelector('.t');
+    if(t)t.innerHTML=TT('<b>Install the guide.</b><br>Tap Share '+sv+' in the toolbar, then <b>\u201cAdd to Home Screen.\u201d</b>','<b>Sakinisha mwongozo.</b><br>Gusa Share '+sv+' kwenye upau, kisha <b>\u201cAdd to Home Screen.\u201d</b>','<b>Install mwongozo.</b><br>Gusa Share '+sv+' kwa toolbar, halafu <b>\u201cAdd to Home Screen.\u201d</b>');
+    if(btn)btn.hidden=true;bar.hidden=false;return;}
+  if(btn)btn.hidden=false;}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;var b=document.getElementById('instbar');if(b)b.hidden=false;var btn=document.getElementById('installbtn');if(btn)btn.hidden=false;});
+var _ib=document.getElementById('installbtn');if(_ib)_ib.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;document.getElementById('instbar').hidden=true;});});
 window.addEventListener('appinstalled',function(){var b=document.getElementById('instbar');if(b)b.hidden=true;});
+refreshInstall();
 
 /* offline toast */
 function offlineToast(){if(!navigator.onLine){var t=document.createElement('div');t.className='offline';t.textContent='● Offline — the guide still works';document.body.appendChild(t);setTimeout(function(){t.remove();},3200);}}

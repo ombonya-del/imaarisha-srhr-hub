@@ -1,5 +1,5 @@
 /* ImaarishaSRHR Field Guide — service worker (offline-first) */
-const CACHE = 'imaarisha-fieldguide-v11';
+const CACHE = 'imaarisha-fieldguide-v12';
 const ASSETS = [
   './',
   './index.html',
