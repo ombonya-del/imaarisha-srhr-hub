@@ -470,6 +470,26 @@ const LATEST = {
 }
 for (const l of Object.keys(LATEST)) Object.assign(STRINGS[l], LATEST[l])
 
+// Optional county question (feeds the anonymous usage report).
+const COUNTY_ASK = {
+  en: {
+    county_q: 'Where are you? (optional)',
+    county_why: 'Pick your county so we know where Ukweli is reaching young people. Nothing else about you is saved.',
+    county_pick: 'Choose your county', county_outside: 'Outside Kenya', county_save: 'Save', county_skip: 'Skip',
+  },
+  sw: {
+    county_q: 'Uko wapi? (si lazima)',
+    county_why: 'Chagua kaunti yako ili tujue Ukweli unawafikia vijana wapi. Hakuna taarifa nyingine kukuhusu inayohifadhiwa.',
+    county_pick: 'Chagua kaunti yako', county_outside: 'Nje ya Kenya', county_save: 'Hifadhi', county_skip: 'Ruka',
+  },
+  sheng: {
+    county_q: 'Uko area gani? (si lazima)',
+    county_why: 'Chagua county yako tujue Ukweli inafikia mayouth wapi. Hakuna kitu ingine kukuhusu tuna-save.',
+    county_pick: 'Chagua county yako', county_outside: 'Nje ya Kenya', county_save: 'Save', county_skip: 'Skip',
+  },
+}
+for (const l of Object.keys(COUNTY_ASK)) Object.assign(STRINGS[l], COUNTY_ASK[l])
+
 let current = (() => { try { return localStorage.getItem('imaarisha_lang') || 'en' } catch { return 'en' } })()
 const listeners = new Set()
 

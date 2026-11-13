@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, toast, notifyMembers, cleanText } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 import { MatchNotifyModal } from '../lib/matchNotify'
+import { UkweliUsage } from '../lib/ukweliUsage'
 import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
@@ -53,7 +54,7 @@ export default function Admin({ session, bottomTabs }) {
       ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'] ] },
+      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['usage','📈 Usage report'] ] },
   ]
   const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
   const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
@@ -96,6 +97,7 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'learn'     && <LearnDesk/>}
       {view === 'latest'    && <LatestDesk/>}
       {view === 'community' && <CommunityDesk/>}
+      {view === 'usage'     && <UkweliUsage/>}
 
       {/* Fixed bottom tab bar for the standalone Admin PWA (four sections). */}
       {bottomTabs && (

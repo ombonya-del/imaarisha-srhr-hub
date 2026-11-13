@@ -7,6 +7,7 @@ import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES } from 
 import { cleanPhoto, uploadPhoto, speechSupported, startDictation } from './lib/photo'
 import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
 import KenyaMap from './KenyaMap'
+import { startTracking, track, getCounty, setCounty as saveCounty } from './lib/track'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -74,6 +75,15 @@ export default function App() {
   const tab = route.tab
   const setTab = (id) => { go(id); window.scrollTo(0, 0) }
   const itemProps = { item: route.item, setItem: (it) => go(tab, it, { replace: true }) }
+
+  // Anonymous usage analytics (see lib/track.js): a 'view' when the tab changes,
+  // an 'open' when an item (myth card, topic, county…) is opened.
+  useEffect(() => { startTracking() }, [])
+  const lastTab = useRef(null)
+  useEffect(() => {
+    if (route.tab !== lastTab.current) { lastTab.current = route.tab; track('view', { tab: route.tab }) }
+    if (route.item) track('open', { tab: route.tab, item: route.item })
+  }, [route.tab, route.item])
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900)
 
   useEffect(() => {
@@ -176,6 +186,7 @@ export default function App() {
           lineHeight:1.6, fontWeight:500, maxWidth:560 }}>
           {tr('tagline')}
         </p>
+        <CountyAsk tr={tr}/>
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
@@ -208,6 +219,38 @@ export default function App() {
           })}
         </nav>
       )}
+    </div>
+  )
+}
+
+// ── Optional "where are you?" — one tap, asked once, skippable ──────────────
+// Only the county is kept (on this device, and attached to anonymous usage
+// counts); it powers the "where" in the partners' usage report.
+function CountyAsk({ tr }) {
+  const [state, setState] = useState(() => getCounty())   // null = not asked yet
+  const [pick, setPick] = useState('')
+  if (state) return null
+  const done = (c) => { saveCounty(c); setState(c) }
+  return (
+    <div className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.gold}`,
+      borderRadius:14, padding:'12px 14px', margin:'0 0 20px', maxWidth:560 }}>
+      <p style={{ fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt, margin:0 }}>📍 {tr('county_q')}</p>
+      <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'4px 0 10px', lineHeight:1.5 }}>{tr('county_why')}</p>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+        <select value={pick} onChange={e=>setPick(e.target.value)} aria-label={tr('county_pick')}
+          style={{ flex:'1 1 170px', fontFamily:Y.sans, fontSize:13.5, padding:'9px 10px', borderRadius:10,
+            border:`1px solid ${Y.line}`, background:Y.bg, color:Y.txt }}>
+          <option value="">{tr('county_pick')}</option>
+          {KENYA_COUNTIES.map(c => <option key={c} value={c}>{c}</option>)}
+          <option value="Outside Kenya">{tr('county_outside')}</option>
+        </select>
+        <button onClick={()=>pick && done(pick)} disabled={!pick} className="uk-press"
+          style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'9px 16px', borderRadius:10, border:'none',
+            cursor: pick ? 'pointer' : 'default', background: pick ? Y.green : Y.card2, color: pick ? '#06241C' : Y.mut }}>
+          {tr('county_save')}
+        </button>
+        <button onClick={()=>done('skip')} className="uk-press" style={{ ...ghostBtn, padding:'9px 12px' }}>{tr('county_skip')}</button>
+      </div>
     </div>
   )
 }
@@ -282,6 +325,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
     resetTurnstile(); setTsToken('')
     if (error) { setErr(error.message && !/verification/i.test(error.message) ? error.message : tr('ask_error')); return }
     if (remember) setSavedCount(saveCode(code).length)
+    track('ask', { tab: 'ask' })
     setSentCode(code); setQ(''); dropPhoto()
   }
   // Pressing Ask before the (invisible) security check finishes queues the send.
@@ -587,6 +631,7 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
     const { error } = await tsInsert(sb, 'ukweli_submissions', { caption:caption.trim(), media_url:subMedia?.url || null, media_type:subMedia?.type || null, language:lang }, subToken)
     setSubBusy(false)
     if (error) { resetTurnstile(); setSubToken(''); return }
+    track('share', { tab: 'myths' })
     setSent(true); setCaption(''); setSubMedia(null); setShareOpen(false)
   }
 
@@ -1351,6 +1396,7 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
     }, tsToken)
     setBusy(false)
     if (error) { setMsg(error.message); resetTurnstile(); setTsToken(''); return }
+    track('fika_suggest', { tab: 'fika', item: cnty })
     setSent(true)
   }
 
@@ -1472,6 +1518,7 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
     }, tsToken)
     setBusy(false)
     if (error) { setMsg(error.message); resetTurnstile(); setTsToken(''); return }
+    track('fika_review', { tab: 'fika', item: county })
     onDone?.(); onClose()
   }
 
