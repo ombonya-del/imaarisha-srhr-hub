@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, logActivity, toast } from '../lib/supabase'
 import { SectionLabel, Btn, inputStyle } from '../lib/components'
 
+const UKWELI_URL = 'https://ukweli.imaarishasrhr.org'
+
 // Pulse — live home: index headline, weekly digest signup, activity feed.
 // Route an activity row to the admin desk that handles it, so admins jump
 // straight to the queue instead of hunting.
@@ -74,18 +76,24 @@ export default function Pulse({ go, session }) {
           </div>
         </button>
 
-        {/* Ukweli card */}
-        <div style={{ background:`linear-gradient(135deg, ${C.card}, #E9F4EA)`,
+        {/* Ukweli card — open for the partner test run */}
+        <a href={UKWELI_URL} target="_blank" rel="noopener noreferrer"
+          title="Open UkweliSRHR in a new tab"
+          style={{ display:'block', textDecoration:'none', cursor:'pointer',
+          background:`linear-gradient(135deg, ${C.card}, #E9F4EA)`,
           border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.mint}`, borderRadius:14, padding:16 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
             <p style={{ fontFamily:C.sans, fontSize:12.5, fontWeight:800, color:C.txt, margin:0 }}>✦ UkweliSRHR — Fresh & Friendly</p>
             <span style={{ fontFamily:C.sans, fontSize:8.5, fontWeight:800, letterSpacing:'.1em',
-              background:C.mint, color:'#fff', borderRadius:10, padding:'2px 8px' }}>LAUNCHING SOON</span>
+              background:C.mint, color:'#fff', borderRadius:10, padding:'2px 8px' }}>NOW OPEN · TEST RUN</span>
           </div>
           <p style={{ fontFamily:C.sans, fontSize:11, color:C.mut, margin:'4px 0 0', lineHeight:1.5 }}>
-            for young people: anonymous Q&A, myth-busters, real talk →
+            for young people: anonymous Q&A, myth-busters, real talk
           </p>
-        </div>
+          <p style={{ fontFamily:C.sans, fontSize:11, fontWeight:800, color:C.mint, margin:'6px 0 0' }}>
+            Open UkweliSRHR ↗
+          </p>
+        </a>
       </div>
 
       {/* Member organizations — the network, up front */}
