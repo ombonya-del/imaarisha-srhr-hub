@@ -1,5 +1,5 @@
 /* ImaarishaSRHR Field Guide — service worker (offline-first) */
-const CACHE = 'imaarisha-fieldguide-v12';
+const CACHE = 'imaarisha-fieldguide-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -34,6 +34,17 @@ self.addEventListener('fetch', (e) => {
 
   // App shell + same-origin: cache-first, fall back to network, then cache the fresh copy.
   if (url.origin === self.location.origin) {
+    if (req.mode === 'navigate') {
+      // network-first for the page: pick up updates immediately when online, fall back to cache offline
+      e.respondWith(
+        fetch(req).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          return res;
+        }).catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
+      );
+      return;
+    }
     e.respondWith(
       caches.match(req).then((hit) => hit || fetch(req).then((res) => {
         const copy = res.clone();

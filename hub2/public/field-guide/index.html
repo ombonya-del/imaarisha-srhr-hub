@@ -264,7 +264,7 @@ main{min-width:0}
 .prog h3{font-size:19px}.prog .track{height:12px;border-radius:8px;background:var(--line);overflow:hidden;margin:12px 0 8px}
 .prog .track .b{height:100%;width:0;background:var(--green);transition:width .4s}.prog .pl{font-size:13px;color:var(--muted)}
 
-.instbar{margin-top:20px;border:1px solid var(--green);border-radius:14px;background:color-mix(in srgb,var(--green) 8%,transparent);padding:14px 15px;display:flex;gap:12px;align-items:center}
+.instbar{margin-top:20px;border:1px solid var(--green);border-radius:14px;background:color-mix(in srgb,var(--green) 8%,transparent);padding:14px 15px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .instbar .t{flex:1;font-size:13.5px}.instbar .t b{font-size:14.5px}
 .offline{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;z-index:60;background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;box-shadow:0 8px 20px -8px rgb(var(--shadow)/.6)}
 @media(min-width:900px){.offline{bottom:20px}}
@@ -775,19 +775,27 @@ function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme
 ['themebtn','themebtn2'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',toggleTheme);});
 document.getElementById('resetprog').addEventListener('click',function(){done={};store.set('imaarisha_tk_done','{}');paint();});
 
-/* install prompt */
+/* install prompt — always-visible, platform-aware */
 var deferred=null;
 var IS_STANDALONE=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
 var IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+var IS_ANDROID=/Android/.test(navigator.userAgent||'');
+var SHARE_SVG='<svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-3px" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>';
+function installTip(){
+  if(IS_IOS)return TT('Tap Share '+SHARE_SVG+' in the toolbar, then <b>\u201cAdd to Home Screen.\u201d</b>','Gusa Share '+SHARE_SVG+' kwenye upau, kisha <b>\u201cAdd to Home Screen.\u201d</b>','Gusa Share '+SHARE_SVG+' kwa toolbar, halafu <b>\u201cAdd to Home Screen.\u201d</b>');
+  if(IS_ANDROID)return TT('Open the browser menu (\u22ee), then <b>\u201cInstall app\u201d</b> or <b>\u201cAdd to Home screen.\u201d</b>','Fungua menyu ya kivinjari (\u22ee), kisha <b>\u201cInstall app\u201d</b> au <b>\u201cAdd to Home screen.\u201d</b>','Fungua menu ya browser (\u22ee), halafu <b>\u201cInstall app\u201d</b> ama <b>\u201cAdd to Home screen.\u201d</b>');
+  return TT('Use the install icon in your browser\u2019s address bar, or its menu \u2192 <b>\u201cInstall.\u201d</b>','Tumia aikoni ya kusakinisha kwenye upau wa anwani, au menyu \u2192 <b>\u201cInstall.\u201d</b>','Tumia install icon kwa address bar, ama menu \u2192 <b>\u201cInstall.\u201d</b>');
+}
 function refreshInstall(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');if(!bar)return;
   if(IS_STANDALONE){bar.hidden=true;return;}
-  if(IS_IOS){var sv='<svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" style=\"vertical-align:-3px\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 3v12M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7\"/></svg>';var t=bar.querySelector('.t');
-    if(t)t.innerHTML=TT('<b>Install the guide.</b><br>Tap Share '+sv+' in the toolbar, then <b>\u201cAdd to Home Screen.\u201d</b>','<b>Sakinisha mwongozo.</b><br>Gusa Share '+sv+' kwenye upau, kisha <b>\u201cAdd to Home Screen.\u201d</b>','<b>Install mwongozo.</b><br>Gusa Share '+sv+' kwa toolbar, halafu <b>\u201cAdd to Home Screen.\u201d</b>');
-    if(btn)btn.hidden=true;bar.hidden=false;return;}
-  if(btn)btn.hidden=false;}
-window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;var b=document.getElementById('instbar');if(b)b.hidden=false;var btn=document.getElementById('installbtn');if(btn)btn.hidden=false;});
-var _ib=document.getElementById('installbtn');if(_ib)_ib.addEventListener('click',function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;document.getElementById('instbar').hidden=true;});});
+  bar.hidden=false;if(btn)btn.hidden=false;
+  var tip=document.getElementById('insttip');if(tip&&tip.hidden===false)tip.innerHTML=installTip();}
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;refreshInstall();});
 window.addEventListener('appinstalled',function(){var b=document.getElementById('instbar');if(b)b.hidden=true;});
+(function(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');if(!bar||!btn)return;
+  var tip=document.createElement('div');tip.id='insttip';tip.hidden=true;tip.style.cssText='flex-basis:100%;margin-top:2px;font-size:13px;line-height:1.5;color:var(--ink2)';bar.appendChild(tip);
+  btn.addEventListener('click',function(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;});return;}tip.hidden=!tip.hidden;if(!tip.hidden)tip.innerHTML=installTip();});
+})();
 refreshInstall();
 
 /* offline toast */
@@ -795,7 +803,7 @@ function offlineToast(){if(!navigator.onLine){var t=document.createElement('div'
 window.addEventListener('offline',offlineToast);
 
 /* service worker */
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+if('serviceWorker' in navigator){var _hadCtrl=!!navigator.serviceWorker.controller,_swReloaded=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(!_hadCtrl||_swReloaded)return;_swReloaded=true;location.reload();});window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').then(function(reg){if(reg&&reg.update){try{reg.update();}catch(e){}}}).catch(function(){});});}
 
 /* deep links: #m<n> opens module n (for print QR codes) */
 function openFromHash(){var mm=(location.hash||'').match(/^#m(\d+)$/);if(mm){var n=+mm[1];if(n>=0&&n<MODS.length)setTimeout(function(){openMod(n);},60);}}
