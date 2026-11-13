@@ -104,7 +104,7 @@ main{min-width:0}
 .scene svg{display:block;width:100%;height:auto}
 .scene-img{display:block;width:100%;height:auto}
 .modscene{margin:2px 0 8px}
-.modscene img{width:100%;border-radius:14px;display:block;border:1px solid var(--line)}
+.modscene img{width:100%;border-radius:14px;display:block;border:1px solid var(--line)}.arcstrip{margin:16px 0 2px;display:block}.arcstrip img{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line)}.arcstrip figcaption{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;text-align:center}
 .pc img.av{object-fit:cover}
 .scene .cap{padding:11px 15px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line2)}
 .scene .cap b{color:var(--ink2);font-weight:800}
@@ -609,7 +609,7 @@ function renderMythBuilder(root){
 function buildBody(body,m,i){
   body.innerHTML='<div class="modscene"><img src="art/SCN-M'+(i+1)+'.png" alt="" loading="lazy" onerror="this.parentNode.style.display=&#39;none&#39;"></div><div class="scene-line"><span class="who">'+m.who+'</span><span>“'+m.scene+'”</span></div>'+(LOOPFIG[i]?'<div class="loopfig '+LOOPFIG[i].cls+'"><div class="fr"><img src="art/'+LOOPFIG[i].f+'.png" alt="" loading="lazy"></div><div class="cap">'+LOOPFIG[i].cap+'</div></div>':'')+
     stats(m.stats)+'<p class="idea">'+m.idea+'</p>'+fw(m.fw[1],m.fw[2])+
-    '<div class="tool">'+(TOOLICON[i]?'<div class="toolbanner"><img src="art/'+TOOLICON[i]+'.png" alt=""></div>':'')+'<div class="tl">'+L('tool_kicker')+'</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>';
+    '<div class="tool">'+(TOOLICON[i]?'<div class="toolbanner"><img src="art/'+TOOLICON[i]+'.png" alt=""></div>':'')+'<div class="tl">'+L('tool_kicker')+'</div><h4>'+m.tool+'</h4><div class="sub">'+m.toolsub+'</div><div id="tb'+i+'"></div></div>'+(i===7?'<figure class="arcstrip"><img src="art/SCN-M8-ARC.png" alt="" loading="lazy" onerror="this.closest(&#39;.arcstrip&#39;).style.display=&#39;none&#39;"><figcaption>'+TT("Beth\u2019s arc \u2014 gatekeeper to champion, across the five sessions.","Safari ya Beth \u2014 kutoka mlinzi hadi shujaa, katika vipindi vitano.","Journey ya Beth \u2014 kutoka mlinzi hadi shujaa, kwa session tano.")+'</figcaption></figure>':'')+'';
   m.render(document.getElementById('tb'+i),i);
   renderActivity(body,i);
 }
