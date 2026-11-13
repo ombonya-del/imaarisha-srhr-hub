@@ -8,6 +8,10 @@
 <meta name="theme-color" content="#2E6B4F">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Field Guide">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap">
@@ -394,7 +398,7 @@ footer .demo{display:inline-block;font-weight:800;font-size:10.5px;letter-spacin
   <button data-jump="modules"><span class="ic">📘</span>Modules</button>
   <button data-jump="facilitator"><span class="ic">🎓</span>Facilitate</button>
   <button data-jump="cast"><span class="ic">👪</span>Cast</button>
-  <button data-jump="progress"><span class="ic">📈</span>Progress</button>
+  <button data-jump="progress"><span class="ic">📈</span>Progress</button><button id="navinstall"><span class="ic">⬇️</span><span class="nl">Install</span></button>
 </div></nav>
 
 <script>
@@ -786,7 +790,9 @@ function installTip(){
   if(IS_ANDROID)return TT('Open the browser menu (\u22ee), then <b>\u201cInstall app\u201d</b> or <b>\u201cAdd to Home screen.\u201d</b>','Fungua menyu ya kivinjari (\u22ee), kisha <b>\u201cInstall app\u201d</b> au <b>\u201cAdd to Home screen.\u201d</b>','Fungua menu ya browser (\u22ee), halafu <b>\u201cInstall app\u201d</b> ama <b>\u201cAdd to Home screen.\u201d</b>');
   return TT('Use the install icon in your browser\u2019s address bar, or its menu \u2192 <b>\u201cInstall.\u201d</b>','Tumia aikoni ya kusakinisha kwenye upau wa anwani, au menyu \u2192 <b>\u201cInstall.\u201d</b>','Tumia install icon kwa address bar, ama menu \u2192 <b>\u201cInstall.\u201d</b>');
 }
-function refreshInstall(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');if(!bar)return;
+function refreshInstall(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');
+  var ni=document.getElementById('navinstall');if(ni){if(IS_STANDALONE){ni.style.display='none';}else{ni.style.display='';var nl=ni.querySelector('.nl');if(nl)nl.textContent=TT('Install','Sakinisha','Install');}}
+  if(!bar)return;
   if(IS_STANDALONE){bar.hidden=true;return;}
   bar.hidden=false;if(btn)btn.hidden=false;
   var tip=document.getElementById('insttip');if(tip&&tip.hidden===false)tip.innerHTML=installTip();}
@@ -794,7 +800,9 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();def
 window.addEventListener('appinstalled',function(){var b=document.getElementById('instbar');if(b)b.hidden=true;});
 (function(){var bar=document.getElementById('instbar'),btn=document.getElementById('installbtn');if(!bar||!btn)return;
   var tip=document.createElement('div');tip.id='insttip';tip.hidden=true;tip.style.cssText='flex-basis:100%;margin-top:2px;font-size:13px;line-height:1.5;color:var(--ink2)';bar.appendChild(tip);
-  btn.addEventListener('click',function(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;});return;}tip.hidden=!tip.hidden;if(!tip.hidden)tip.innerHTML=installTip();});
+  function doInstall(){if(deferred){deferred.prompt();deferred.userChoice.finally(function(){deferred=null;});return true;}return false;}
+  btn.addEventListener('click',function(){if(doInstall())return;tip.hidden=!tip.hidden;if(!tip.hidden)tip.innerHTML=installTip();});
+  var ni=document.getElementById('navinstall');if(ni)ni.addEventListener('click',function(){if(doInstall())return;bar.hidden=false;tip.hidden=false;tip.innerHTML=installTip();bar.scrollIntoView({behavior:'smooth',block:'center'});});
 })();
 refreshInstall();
 
