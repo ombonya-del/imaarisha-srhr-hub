@@ -1,0 +1,44 @@
+{
+ "generated_at": "2026-11-15T11:45:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-15 ~14:40 EAT (scheduled DAILY 13:30 EAT). Browser 1 of 4 connected Chrome profiles was the one logged in as @vombonya.",
+ "target_table": "public.radar_items",
+ "folder_note": "Folder held 48 posts this sweep (up from 43 on the Nov 12 sweep, +5 ids). Method: full descent at 750px steps settled prematurely at 29 (virtualization gaps), then a fine-grained re-pass from the top at 400px steps climbed 29 -> 48, and a final 300px pass from the top added 0 (stable); spinner gone, scrollHeight settled at 23038, main-column list exhausted. Live dedupe run against radar_items via the public anon key (platform=eq.x): 35 X-platform items live (content-range 0-34/35; the Nov 12 @NationAfrica LGBTQ-crackdown candidate is now live). Handled set = 35 live X ids + 9 prior skip-only ids = 44; 43 of the 48 captured ids are already handled. Net-new this run: 5 ids -> 2 candidates (BOTH HELD as SENSITIVE because they centrally involve minors) and 3 skips (see skipped_new_this_run). ZERO auto-insert (non-sensitive) candidates this run.",
+ "candidates": [
+  {
+   "source_name": "@sholard_mancity",
+   "title": "Kenyan advocacy for close-in-age 'Romeo & Juliet' laws: reform defilement sentencing so near-peer teen relationships aren't punished like predatory cases",
+   "snippet": "Sholla Ard (@sholard_mancity): A public appeal to Parliament to amend Kenyan law or introduce 'Romeo & Juliet laws'. Argues that a young person can currently face 20+ years in prison for a relationship with someone just 1-3 years younger (e.g. an 18-19-year-old with a 16-17-year-old who are peers, sometimes classmates), treated the same as actual predatory cases, and that many jurisdictions handle small age-gap cases differently (e.g. community service) because not every case is exploitative.",
+   "url": "https://x.com/sholard_mancity/status/2044012333068910822",
+   "platform": "x",
+   "published_at": "2026-04-14T08:43:17Z",
+   "srhr_relevance": 7,
+   "harm_score": 0,
+   "sentiment": "neutral",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": ["en"],
+   "review_note": "SENSITIVE: involves minors. Net-new to the live radar_items X set and in no prior pending file. Substantive SRHR / sexual-rights legal-reform advocacy from @sholard_mancity (high engagement, 100K+ thread views) calling on Parliament to introduce close-in-age 'Romeo & Juliet' exemptions to Kenya's defilement / age-of-consent sentencing. On-theme for the sexual-rights ('R' in SRHR) landscape the radar tracks, on the same basis as prior NCAJ sexual-offences and Sexual Offences (Amendment) Bill items. NOT disinformation (is_disinfo=false, harm_score=0): a reasoned public-interest policy argument, not a false health or legal claim. sentiment=neutral (constructive reform argument). typology=none. srhr_relevance=7. HELD per rule because the post centrally discusses minors (16-17-year-olds) in the context of sexual relationships and age-of-consent law; there is no named or identifiable victim and no unproven allegation against a named person, but the minor involvement triggers the hold. Full tweet text read from the status page (no truncation). Add \"approved\": true to insert."
+  },
+  {
+   "source_name": "@usikimye",
+   "title": "Usikimye child-safeguarding message: teaching children to seek a trusted adult or police officer when afraid or in danger",
+   "snippet": "Usikimye (@usikimye), a Kenyan anti-sexual-and-gender-based-violence organisation: a child-safeguarding message. Teaches children where to go when afraid - find a police officer if lost, find an adult if something happens, tell someone if they need help - on the premise that adults are meant to be children's safety net. Reads as the opening of a child-protection/safeguarding thread.",
+   "url": "https://x.com/usikimye/status/2112097700443230698",
+   "platform": "x",
+   "published_at": "2026-10-19T08:25:07Z",
+   "srhr_relevance": 5,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": ["en"],
+   "review_note": "SENSITIVE: involves minors. Net-new to the live radar_items X set and in no prior pending file. Child-safeguarding awareness message from @usikimye, a prominent Kenyan anti-SGBV organisation, deliberately curated into the ImaarishaSRHR folder - teaching children to seek a trusted adult or police officer when afraid or in danger. On-theme for the protection side of the SRHR / SGBV landscape. NOT disinformation (is_disinfo=false, harm_score=0); positive, protective content. sentiment=positive. typology=none. srhr_relevance=5. HELD per rule because the post centrally concerns minors (child safety / safeguarding); it is a generic educational message with no named or identifiable minor and no allegation against a named person, but the minor focus triggers the hold. Full tweet text read from the status page (no truncation). Add \"approved\": true to insert."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  {"url":"https://x.com/MzalendoWatch/status/2112847144470348122","handle":"@MzalendoWatch","reason":"Same-event duplicate: a Mzalendo tweet moving the Sexual Offences (Amendment) Bill (NA Bill No. 78 of 2023) for its third reading on Oct 21, quote-tweeting the Committee-of-the-Whole tweet - the same bill / same-day legislative proceeding already represented by the live MzalendoWatch item 2112848339494490442. Factual and on-theme, but duplicative of an event already in the radar."},
+  {"url":"https://x.com/Casandrafaith25/status/2104504796904316954","handle":"@Casandrafaith25","reason":"A 3-word reaction ('Actually, This is a very brilliant idea') quote-tweeting another post; the SRHR-adjacent substance (a free-pads-vs-free-condoms debate) lives in the quoted content and thread banter, not in the bookmarked tweet - not confidently classifiable standalone, skipped per the conservative bar (consistent with prior quote-tweet / attached-substance skips)."},
+  {"url":"https://x.com/micchequepod/status/2073469418923774413","handle":"@micchequepod","reason":"Off-theme: a Mic Cheque Podcast promo for Episode 373 (#BanterTime) asking whether social connections are genuine or just networking - no SRHR content. Captured under the /i/status/ path; real author is @micchequepod."}
+ ]
+}
