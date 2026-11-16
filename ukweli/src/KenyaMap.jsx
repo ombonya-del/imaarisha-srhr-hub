@@ -15,14 +15,14 @@ const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '')
 const CANON = Object.fromEntries(KENYA_COUNTIES.map(c => [norm(c), c]))
 
 const TIERS = [
-  { min: 5, color: '#3FE0A0' },
-  { min: 3, color: '#2F9E74' },
-  { min: 1, color: '#1F6B4F' },
-  { min: 0, color: '#15352B' },
+  { min: 5, color: 'var(--uk-map3)' },
+  { min: 3, color: 'var(--uk-map2)' },
+  { min: 1, color: 'var(--uk-map1)' },
+  { min: 0, color: 'var(--uk-map0)' },
 ]
 const colorFor = (n) => (TIERS.find(t => n >= t.min) || TIERS[TIERS.length - 1]).color
 
-export default function KenyaMap({ facilities = [], selected, onSelect, accent = '#F2C75C', mut = '#88AE9D', txt = '#F1F5EE' }) {
+export default function KenyaMap({ facilities = [], selected, onSelect, accent = 'var(--uk-gold)', mut = 'var(--uk-mut)', txt = 'var(--uk-txt)' }) {
   const [geo, setGeo] = useState(null)
   const [failed, setFailed] = useState(false)
 
@@ -82,8 +82,8 @@ export default function KenyaMap({ facilities = [], selected, onSelect, accent =
           const on = selected && s.canon === selected
           return (
             <path key={s.id} d={s.d} onClick={()=>onSelect?.(s.canon)}
-              fill={colorFor(s.count)} stroke={on ? accent : '#0A2620'} strokeWidth={on ? 2.4 : 0.7}
-              style={{ cursor:'pointer', transition:'fill .15s' }}>
+              strokeWidth={on ? 2.4 : 0.7}
+              style={{ fill: colorFor(s.count), stroke: on ? accent : 'var(--uk-map-edge)', cursor:'pointer', transition:'fill .15s' }}>
               <title>{s.canon}: {s.count} {s.count === 1 ? 'service' : 'services'}</title>
             </path>
           )
@@ -95,13 +95,13 @@ export default function KenyaMap({ facilities = [], selected, onSelect, accent =
 }
 
 function Legend({ mut, txt }) {
-  const items = [['0', '#15352B'], ['1–2', '#1F6B4F'], ['3–4', '#2F9E74'], ['5+', '#3FE0A0']]
+  const items = [['0', 'var(--uk-map0)'], ['1–2', 'var(--uk-map1)'], ['3–4', 'var(--uk-map2)'], ['5+', 'var(--uk-map3)']]
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginTop:8, justifyContent:'center' }}>
       <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10.5, color:mut, fontWeight:700 }}>Services listed:</span>
       {items.map(([l, c]) => (
         <span key={l} style={{ display:'inline-flex', alignItems:'center', gap:5 }}>
-          <span style={{ width:13, height:13, borderRadius:3, background:c, border:'1px solid rgba(255,255,255,0.15)' }}/>
+          <span style={{ width:13, height:13, borderRadius:3, background:c, border:'1px solid var(--uk-line)' }}/>
           <span style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:10.5, color:txt, opacity:.8 }}>{l}</span>
         </span>
       ))}
@@ -118,10 +118,10 @@ function SchematicGrid({ counts, selected, onSelect, accent, mut }) {
           const n = counts[c] || 0, on = c === selected
           return (
             <button key={c} onClick={()=>onSelect?.(c)}
-              style={{ cursor:'pointer', textAlign:'left', border:`1px solid ${on?accent:'rgba(255,255,255,0.1)'}`,
+              style={{ cursor:'pointer', textAlign:'left', border:`1px solid ${on?accent:'var(--uk-line)'}`,
                 background:colorFor(n), borderRadius:8, padding:'7px 8px' }}>
-              <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9.5, fontWeight:700, color:'#F1F5EE', lineHeight:1.15 }}>{c}</div>
-              <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, color:'#F1F5EE', opacity:.7 }}>{n}</div>
+              <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9.5, fontWeight:700, color: n >= 5 ? 'var(--uk-map-ink-hi)' : 'var(--uk-map-ink)', lineHeight:1.15 }}>{c}</div>
+              <div style={{ fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:9, color: n >= 5 ? 'var(--uk-map-ink-hi)' : 'var(--uk-map-ink)', opacity:.75 }}>{n}</div>
             </button>
           )
         })}

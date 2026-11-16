@@ -14,19 +14,87 @@ import { startTracking, track, getCounty, setCounty as saveCounty, feedbackConte
 // figure-ground contrast; spring-green signals youth/growth; coral & gold add
 // energy. Mobile-first (bottom nav) with a responsive desktop top nav.
 const Y = {
-  bg:    '#0A2620',   // deep evergreen
-  card:  '#0F3329',   // elevated surface
-  card2: '#17463A',   // lighter surface
-  line:  'rgba(214,243,230,0.12)',
-  green: '#3FE0A0',   // spring green — primary, youthful
-  teal:  '#2FD0C4',
-  coral: '#FF6F61',
-  gold:  '#F2C75C',
-  rose:  '#FF5C8A',   // alert accent — the Trending / disinfo tab
-  txt:   '#F1F5EE',
-  mut:   '#88AE9D',
+  // Colours are CSS variables so the light/dark toggle can swap them; the
+  // values for each theme live in THEME_CSS below.
+  bg:    'var(--uk-bg)',     // deep evergreen / soft mint paper
+  card:  'var(--uk-card)',   // elevated surface
+  card2: 'var(--uk-card2)',  // lighter surface
+  line:  'var(--uk-line)',
+  green: 'var(--uk-green)',  // spring green — primary, youthful
+  teal:  'var(--uk-teal)',
+  coral: 'var(--uk-coral)',
+  gold:  'var(--uk-gold)',
+  rose:  'var(--uk-rose)',   // alert accent — the Trending / disinfo tab
+  txt:   'var(--uk-txt)',
+  mut:   'var(--uk-mut)',
+  on:    'var(--uk-on)',     // text on a filled accent button
+  glass: 'var(--uk-glass)',  // translucent header / bottom nav
+  glass2:'var(--uk-glass2)',
+  tint:  'var(--uk-tint)',   // faint fill (chips, segmented controls)
+  dim:   'var(--uk-dim)',    // unlit stars
   disp:  "'Space Grotesk', system-ui, sans-serif",
   sans:  "'Plus Jakarta Sans', system-ui, sans-serif",
+}
+
+
+// ── Light / dark themes ───────────────────────────────────────────────────────
+// Dark is the original evergreen look. Light uses deeper accents so text and
+// icons keep at least 4.5:1 contrast on the pale background.
+const THEME_CSS = `
+  :root, [data-uk-theme="dark"] {
+    --uk-bg:#0A2620; --uk-card:#0F3329; --uk-card2:#17463A; --uk-line:rgba(214,243,230,0.12);
+    --uk-green:#3FE0A0; --uk-teal:#2FD0C4; --uk-coral:#FF6F61; --uk-gold:#F2C75C; --uk-rose:#FF5C8A;
+    --uk-txt:#F1F5EE; --uk-mut:#88AE9D; --uk-on:#06241C;
+    --uk-glass:rgba(10,38,32,0.82); --uk-glass2:rgba(10,38,32,0.95);
+    --uk-tint:rgba(255,255,255,0.06); --uk-dim:rgba(255,255,255,0.2); --uk-scroll:#1d4a3c;
+    --uk-glow1:rgba(47,208,196,0.18); --uk-glow2:rgba(63,224,160,0.14); --uk-glow3:rgba(255,111,97,0.12);
+    --uk-map0:#15352B; --uk-map1:#1F6B4F; --uk-map2:#2F9E74; --uk-map3:#3FE0A0; --uk-map-edge:#0A2620;
+    --uk-map-ink:#F1F5EE; --uk-map-ink-hi:#06241C;
+    color-scheme: dark;
+  }
+  [data-uk-theme="light"] {
+    --uk-bg:#F3F8F4; --uk-card:#FFFFFF; --uk-card2:#E6F0E9; --uk-line:rgba(10,38,32,0.13);
+    --uk-green:#0B8459; --uk-teal:#0A7A73; --uk-coral:#C23B2A; --uk-gold:#8F6200; --uk-rose:#BF2A5E;
+    --uk-txt:#10261F; --uk-mut:#4A675B; --uk-on:#FFFFFF;
+    --uk-glass:rgba(243,248,244,0.86); --uk-glass2:rgba(255,255,255,0.96);
+    --uk-tint:rgba(10,38,32,0.05); --uk-dim:rgba(10,38,32,0.18); --uk-scroll:#B7CEC0;
+    --uk-glow1:rgba(10,122,115,0.09); --uk-glow2:rgba(11,132,89,0.08); --uk-glow3:rgba(194,59,42,0.06);
+    --uk-map0:#DDE9E1; --uk-map1:#A6D4BD; --uk-map2:#4FB088; --uk-map3:#0B8459; --uk-map-edge:#FFFFFF;
+    --uk-map-ink:#10261F; --uk-map-ink-hi:#FFFFFF;
+    color-scheme: light;
+  }
+`
+
+// Saved choice wins; otherwise follow the phone's own light/dark setting.
+function useTheme() {
+  const saved = () => { try { return localStorage.getItem('ukweli_theme') } catch { return null } }
+  const system = () => (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+  const [theme, setThemeState] = useState(() => saved() || system())
+  useEffect(() => {
+    document.documentElement.setAttribute('data-uk-theme', theme)
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#F3F8F4' : '#0A2620')
+  }, [theme])
+  useEffect(() => {
+    if (saved() || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const on = () => { if (!saved()) setThemeState(mq.matches ? 'light' : 'dark') }
+    mq.addEventListener?.('change', on)
+    return () => mq.removeEventListener?.('change', on)
+  }, [])
+  const toggle = () => setThemeState(t => {
+    const n = t === 'light' ? 'dark' : 'light'
+    try { localStorage.setItem('ukweli_theme', n) } catch {}
+    return n
+  })
+  return [theme, toggle]
+}
+
+function ThemeIcon({ theme, size = 16 }) {
+  // shows what you'll switch TO: a moon in light mode, a sun in dark mode
+  return theme === 'light'
+    ? <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+    : <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
 }
 
 // Lightning "asterisk" — the spark that differentiates Ukweli from the calm hub mark
@@ -34,7 +102,7 @@ function Bolt({ size = 12, color = '#F2C75C' }) {
   return (
     <svg width={size} height={size * 1.5} viewBox="0 0 12 18" fill="none"
       style={{ marginLeft:2, marginTop:-1 }} aria-hidden="true">
-      <path d="M7 0 L1 9.5 H5 L4 18 L11 7 H6.5 Z" fill={color}/>
+      <path d="M7 0 L1 9.5 H5 L4 18 L11 7 H6.5 Z" style={{ fill: color }}/>
     </svg>
   )
 }
@@ -70,6 +138,9 @@ const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fik
 
 export default function App() {
   const { tr, lang, setLang } = useLang()
+  const [theme, toggleTheme] = useTheme()
+  const [fbOpen, setFbOpen] = useState(false)
+  const [fbSent, setFbSent] = useState(false)
   // Tab + open item live in the URL hash so the reader keeps their place.
   const [route, go] = useHashRoute()
   const tab = route.tab
@@ -102,21 +173,30 @@ export default function App() {
 
   return (
     <div style={{ background:Y.bg, minHeight:'100vh', fontFamily:Y.sans, color:Y.txt, position:'relative', overflowX:'hidden' }}>
-      <style>{`
+      <style>{THEME_CSS + `
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         body { margin:0; background:${Y.bg};
           background-image:
-            radial-gradient(640px 440px at 108% -6%, rgba(47,208,196,0.18), transparent 60%),
-            radial-gradient(520px 380px at -8% 2%, rgba(63,224,160,0.14), transparent 62%),
-            radial-gradient(620px 460px at 50% 118%, rgba(255,111,97,0.12), transparent 60%);
-          background-attachment: fixed; }
-        ::-webkit-scrollbar { width:8px } ::-webkit-scrollbar-thumb { background:#1d4a3c; border-radius:4px }
+            radial-gradient(640px 440px at 108% -6%, var(--uk-glow1), transparent 60%),
+            radial-gradient(520px 380px at -8% 2%, var(--uk-glow2), transparent 62%),
+            radial-gradient(620px 460px at 50% 118%, var(--uk-glow3), transparent 60%);
+          background-attachment: fixed; transition: background-color .2s ease; }
+        ::-webkit-scrollbar { width:8px } ::-webkit-scrollbar-thumb { background:var(--uk-scroll); border-radius:4px }
         @keyframes pop { from { transform: translateY(4px); opacity:0 } to { transform:none; opacity:1 } }
         .uk-card { animation: pop .2s ease; }
         @media (prefers-reduced-motion: reduce) { .uk-card { animation: none } .uk-press { transition: none } }
         .uk-press { transition: transform .12s ease, box-shadow .15s ease, background .15s ease; }
         .uk-press:active { transform: scale(.985); }
         .uk-navlink { transition: color .15s ease, border-color .15s ease; }
+        /* small phones: tighten the header so the theme button fits beside the wordmark */
+        @media (max-width: 400px) {
+          .uk-word { font-size: 16px !important; }
+          .uk-logo { height: 26px !important; width: auto; }
+          .uk-langs button { padding: 3px 5px !important; }
+          .uk-exit { padding: 5px 7px !important; }
+          .uk-hdr-r { gap: 4px !important; }
+        }
+        @media (max-width: 340px) { .uk-logo { display: none !important; } }
       `}</style>
 
       {/* identity stripe */}
@@ -124,15 +204,15 @@ export default function App() {
         background:`linear-gradient(90deg, ${Y.green} 0%, ${Y.teal} 50%, ${Y.coral} 100%)` }}/>
 
       {/* Top bar */}
-      <header style={{ position:'sticky', top:3, zIndex:10, background:'rgba(10,38,32,0.82)',
+      <header style={{ position:'sticky', top:3, zIndex:10, background:Y.glass,
         backdropFilter:'blur(14px)', borderBottom:`1px solid ${Y.line}` }}>
         <div style={{ maxWidth:maxW, margin:'0 auto', padding: isDesktop?'12px 16px':'10px 12px',
           display:'flex', alignItems:'center', justifyContent:'space-between', gap: isDesktop?12:8 }}>
           <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink: isDesktop?0:1 }}>
-            <img src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:30}
+            <img className="uk-logo" src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:30}
               style={{ display:'block', flexShrink:0, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
             <div style={{ display:'flex', flexDirection:'column', lineHeight:1, minWidth:0 }}>
-              <span style={{ fontFamily:Y.disp, fontSize: isDesktop?21:18, fontWeight:600, letterSpacing:'-.02em',
+              <span className="uk-word" style={{ fontFamily:Y.disp, fontSize: isDesktop?21:18, fontWeight:600, letterSpacing:'-.02em',
                 display:'inline-flex', alignItems:'flex-start', whiteSpace:'nowrap' }}>
                 Ukweli<span style={{ color:Y.green }}>SRHR</span>
                 <Bolt size={isDesktop?11:9} color={Y.gold}/>
@@ -152,7 +232,7 @@ export default function App() {
                   <button key={id} onClick={()=>setTab(id)} className="uk-navlink uk-press"
                     style={{ fontFamily:Y.disp, fontSize:14.5, fontWeight:600, padding:'9px 14px', borderRadius:12,
                       border:'none', cursor:'pointer', letterSpacing:'.01em', whiteSpace:'nowrap',
-                      background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
+                      background: on ? acc : 'transparent', color: on ? Y.on : Y.mut,
                       boxShadow:'none' }}>
                     <Icon name={icon} size={16} style={{ marginRight:7 }}/>{navLabel(tr, id)}
                   </button>
@@ -161,8 +241,14 @@ export default function App() {
             </nav>
           )}
 
-          <div style={{ display:'flex', alignItems:'center', gap: isDesktop?8:6, flexShrink:0 }}>
-            <div style={{ display:'flex', gap:2, background:'rgba(255,255,255,0.06)', borderRadius:20,
+          <div className="uk-hdr-r" style={{ display:'flex', alignItems:'center', gap: isDesktop?8:6, flexShrink:0 }}>
+            <button onClick={toggleTheme} className="uk-press"
+              aria-label={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')} title={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')}
+              style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width: isDesktop?32:28, height: isDesktop?32:28,
+                borderRadius:'50%', border:`1px solid ${Y.line}`, background:Y.tint, color:Y.txt, cursor:'pointer', flexShrink:0, padding:0 }}>
+              <ThemeIcon theme={theme} size={isDesktop?16:14}/>
+            </button>
+            <div className="uk-langs" style={{ display:'flex', gap:2, background:Y.tint, borderRadius:20,
               padding: isDesktop?3:2, border:`1px solid ${Y.line}` }}>
               {LANGS.map(([code,label]) => (
                 <button key={code} onClick={()=>setLang(code)}
@@ -171,7 +257,7 @@ export default function App() {
                     cursor:'pointer', background: lang===code?Y.txt:'transparent', color: lang===code?Y.bg:Y.mut }}>{label}</button>
               ))}
             </div>
-            <button onClick={quickExit} title="Leave this site instantly" className="uk-press"
+            <button onClick={quickExit} title="Leave this site instantly" className="uk-press uk-exit"
               style={{ fontFamily:Y.disp, fontSize: isDesktop?11:10, fontWeight:600,
                 padding: isDesktop?'6px 12px':'5px 9px', borderRadius:16, flexShrink:0,
                 border:`1px solid ${Y.coral}`, background:'rgba(255,111,97,0.12)', color:Y.coral, cursor:'pointer', whiteSpace:'nowrap' }}>
@@ -187,12 +273,14 @@ export default function App() {
           {tr('tagline')}
         </p>
         <CountyAsk tr={tr}/>
+        <FeedbackStrip tr={tr} sent={fbSent} onOpen={()=>setFbOpen(true)}/>
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
-        <FeedbackPrompt tr={tr} tab={tab}/>
+        <FeedbackPrompt tr={tr} sent={fbSent} onOpen={()=>setFbOpen(true)}/>
+        {fbOpen && <FeedbackModal tr={tr} tab={tab} onClose={()=>setFbOpen(false)} onSent={()=>setFbSent(true)}/>}
         <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
             style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, textDecoration:'none' }}>{tr('privacy')}</a>
@@ -202,7 +290,7 @@ export default function App() {
       {/* Mobile bottom nav — chunky, each tab lights up in its own colour */}
       {!isDesktop && (
         <nav style={{ position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)', width:'100%', maxWidth:480,
-          background:'rgba(10,38,32,0.95)', backdropFilter:'blur(14px)', borderTop:`1px solid ${Y.line}`,
+          background:Y.glass2, backdropFilter:'blur(14px)', borderTop:`1px solid ${Y.line}`,
           display:'flex', justifyContent:'space-around', gap:5,
           padding:'8px 8px calc(8px + env(safe-area-inset-bottom))', zIndex:20 }}>
           {TABS.map(([id,icon]) => {
@@ -211,7 +299,7 @@ export default function App() {
               <button key={id} onClick={()=>setTab(id)} className="uk-press"
                 style={{ flex:1, minWidth:0, cursor:'pointer', border:'none', borderRadius:14,
                   display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4, padding:'8px 2px',
-                  background: on ? acc : 'transparent', color: on ? '#06241C' : Y.mut,
+                  background: on ? acc : 'transparent', color: on ? Y.on : Y.mut,
                   boxShadow:'none' }}>
                 <Icon name={icon} size={20}/>
                 <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:600, whiteSpace:'nowrap', letterSpacing:'-.01em' }}>{navLabel(tr, id)}</span>
@@ -247,7 +335,7 @@ function CountyAsk({ tr }) {
         </select>
         <button onClick={()=>pick && done(pick)} disabled={!pick} className="uk-press"
           style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'9px 16px', borderRadius:10, border:'none',
-            cursor: pick ? 'pointer' : 'default', background: pick ? Y.green : Y.card2, color: pick ? '#06241C' : Y.mut }}>
+            cursor: pick ? 'pointer' : 'default', background: pick ? Y.green : Y.card2, color: pick ? Y.on : Y.mut }}>
           {tr('county_save')}
         </button>
         <button onClick={()=>done('skip')} className="uk-press" style={{ ...ghostBtn, padding:'9px 12px' }}>{tr('county_skip')}</button>
@@ -262,25 +350,35 @@ function CountyAsk({ tr }) {
 // ukweli_feedback_submit() with the same context as the usage counts.
 const FACES = ['😞', '🙁', '😐', '🙂', '😍']
 
-function FeedbackPrompt({ tr, tab }) {
-  const [open, setOpen] = useState(false)
-  const [done, setDone] = useState(false)
+// Slim reminder at the top of every section, so feedback is one tap away
+// without scrolling to the bottom.
+function FeedbackStrip({ tr, sent, onOpen }) {
+  if (sent) return null
   return (
-    <>
-      <div className="uk-card" style={{ marginTop:28, background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.teal}`,
-        borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', maxWidth:560 }}>
-        <div style={{ flex:'1 1 200px' }}>
-          <p style={{ fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt, margin:0 }}>
-            {done ? tr('fb_thanks_short') : tr('fb_title')}
-          </p>
-          {!done && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'3px 0 0', lineHeight:1.5 }}>{tr('fb_sub')}</p>}
-        </div>
-        {!done && <button onClick={()=>setOpen(true)} className="uk-press"
-          style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'9px 16px', borderRadius:10, border:'none',
-            cursor:'pointer', background:Y.teal, color:'#06241C' }}>💬 {tr('fb_button')}</button>}
+    <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', margin:'0 0 18px', padding:'8px 10px 8px 14px',
+      maxWidth:560, borderRadius:12, background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.teal}` }}>
+      <span style={{ flex:'1 1 160px', fontFamily:Y.sans, fontSize:12.5, color:Y.txt, fontWeight:600 }}>🧪 {tr('fb_strip')}</span>
+      <button onClick={onOpen} className="uk-press"
+        style={{ fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'6px 12px', borderRadius:9, border:'none',
+          cursor:'pointer', background:Y.teal, color:Y.on, whiteSpace:'nowrap' }}>💬 {tr('fb_button')}</button>
+    </div>
+  )
+}
+
+function FeedbackPrompt({ tr, sent, onOpen }) {
+  return (
+    <div className="uk-card" style={{ marginTop:28, background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.teal}`,
+      borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', maxWidth:560 }}>
+      <div style={{ flex:'1 1 200px' }}>
+        <p style={{ fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt, margin:0 }}>
+          {sent ? tr('fb_thanks_short') : tr('fb_title')}
+        </p>
+        {!sent && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'3px 0 0', lineHeight:1.5 }}>{tr('fb_sub')}</p>}
       </div>
-      {open && <FeedbackModal tr={tr} tab={tab} onClose={()=>setOpen(false)} onSent={()=>setDone(true)}/>}
-    </>
+      {!sent && <button onClick={onOpen} className="uk-press"
+        style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'9px 16px', borderRadius:10, border:'none',
+          cursor:'pointer', background:Y.teal, color:Y.on }}>💬 {tr('fb_button')}</button>}
+    </div>
   )
 }
 
@@ -351,7 +449,7 @@ function FeedbackModal({ tr, tab, onClose, onSent }) {
             <button onClick={onClose} className="uk-press" style={{ ...ghostBtn }}>{tr('fb_cancel')}</button>
             <button onClick={submit} disabled={busy} className="uk-press"
               style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'10px 18px', borderRadius:10, border:'none',
-                cursor: busy ? 'default' : 'pointer', background:Y.teal, color:'#06241C', opacity: busy ? .6 : 1 }}>
+                cursor: busy ? 'default' : 'pointer', background:Y.teal, color:Y.on, opacity: busy ? .6 : 1 }}>
               {busy ? '…' : tr('fb_send')}
             </button>
           </div>
@@ -445,11 +543,11 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
   useEffect(() => { if (queued && tsToken) doSubmit() }, [queued, tsToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const seg = (on) => ({ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'10px 0', borderRadius:12,
-    border:'none', cursor:'pointer', background: on ? Y.green : 'transparent', color: on ? '#06241C' : Y.mut })
+    border:'none', cursor:'pointer', background: on ? Y.green : 'transparent', color: on ? Y.on : Y.mut })
 
   return (
     <div>
-      <div role="tablist" style={{ display:'flex', gap:4, padding:4, background:'rgba(255,255,255,0.05)',
+      <div role="tablist" style={{ display:'flex', gap:4, padding:4, background:Y.tint,
         border:`1px solid ${Y.line}`, borderRadius:15, marginBottom:14 }}>
         <button role="tab" aria-selected={view==='ask'} onClick={()=>setItem(null)} className="uk-press" style={seg(view==='ask')}><Icon name="ask" size={16} style={{ marginRight:6 }}/>{tr('ask_tab')}</button>
         <button role="tab" aria-selected={view==='mine'} onClick={()=>setItem('mine')} className="uk-press" style={seg(view==='mine')}>
@@ -472,7 +570,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             </p>
             <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
               <button onClick={()=>{ setSentCode(''); setItem('mine') }} className="uk-press" style={{ background:Y.green,
-                border:'none', color:'#06241C', fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
+                border:'none', color:Y.on, fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
                 borderRadius:12, cursor:'pointer' }}>{tr('myq_title')}</button>
               <button onClick={()=>setSentCode('')} className="uk-press" style={{ background:Y.card2,
                 border:`1px solid ${Y.line}`, color:Y.green, fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
@@ -541,7 +639,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             <TurnstileWidget onVerify={setTsToken} appearance="interaction-only" />
             <button onClick={submit} disabled={busy} className="uk-press"
               style={{ marginTop:6, width:'100%', fontFamily:Y.disp, fontSize:15.5, fontWeight:600, padding:'14px 0',
-                borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:'#06241C',
+                borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:Y.on,
                 background:Y.green, opacity: tooShort ? 0.6 : 1 }}>
               {busy ? tr('ask_sending') : tr('ask_send')}
             </button>
@@ -556,26 +654,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
         )}
       </div>
 
-      <SectionLabel color={Y.green}>{tr('public_label')}</SectionLabel>
-      <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'-6px 0 13px', lineHeight:1.5 }}>{tr('public_sub')}</p>
-      {answered.length === 0 && (
-        <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('no_answers')}</p>
-      )}
-      <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:11 }}>
-        {answered.map(a => (
-          <div key={a.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${Y.line}`, borderRadius:16,
-            padding:16, boxShadow:'none' }}>
-            <p style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color:Y.mut, margin:'0 0 6px' }}>
-              {tr('asked_anon')}
-            </p>
-            <p style={{ fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, margin:'0 0 7px', lineHeight:1.3 }}>{a.question}</p>
-            <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.85, whiteSpace:'pre-line' }}>{a.answer}</p>
-            <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
-              ✓ {a.answered_by || tr('verified_pro')} · {timeAgo(a.answered_at)}
-            </p>
-          </div>
-        ))}
-      </div>
+      <AnsweredList tr={tr} answered={answered} isDesktop={isDesktop}/>
       </>
       )}
     </div>
@@ -600,6 +679,71 @@ function CodeCard({ code, tr }) {
       </div>
       <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, margin:'8px 0 0', lineHeight:1.55 }}>{tr('code_body')}</p>
     </div>
+  )
+}
+
+// Answered questions, kept short: the section can be hidden (remembered on this
+// device), each card shows just the question until tapped, and only the first
+// few are listed until "Show more", so the rest of the page is a short scroll away.
+const QS_STEP = 5
+function AnsweredList({ tr, answered, isDesktop }) {
+  const [hidden, setHidden] = useState(() => { try { return localStorage.getItem('ukweli_qs_hidden') === '1' } catch { return false } })
+  const [shown, setShown] = useState(QS_STEP)
+  const [openId, setOpenId] = useState(null)
+  const toggleHidden = () => setHidden(h => {
+    try { localStorage.setItem('ukweli_qs_hidden', h ? '0' : '1') } catch {}
+    return !h
+  })
+  const rest = Math.max(0, answered.length - shown)
+  return (
+    <>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
+        <SectionLabel color={Y.green}>{tr('public_label')}{answered.length ? ` (${answered.length})` : ''}</SectionLabel>
+        {answered.length > 0 && (
+          <button onClick={toggleHidden} aria-expanded={!hidden} className="uk-press"
+            style={{ ...ghostBtn, padding:'5px 11px', fontSize:12, marginBottom:10, flexShrink:0 }}>
+            {hidden ? tr('qs_show') : tr('qs_hide')} <span aria-hidden="true">{hidden ? '▾' : '▴'}</span>
+          </button>
+        )}
+      </div>
+      {!hidden && <>
+        <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'-6px 0 13px', lineHeight:1.5 }}>{tr('public_sub')}</p>
+        {answered.length === 0 && (
+          <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.mut, fontStyle:'italic' }}>{tr('no_answers')}</p>
+        )}
+        <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:9, alignItems:'start' }}>
+          {answered.slice(0, shown).map(a => {
+            const open = openId === a.id
+            return (
+              <div key={a.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${open ? Y.green : Y.line}`, borderRadius:14 }}>
+                <button onClick={()=>setOpenId(open ? null : a.id)} aria-expanded={open}
+                  style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between', width:'100%', textAlign:'left',
+                    background:'none', border:'none', cursor:'pointer', padding:'13px 14px', color:Y.txt }}>
+                  <span style={{ fontFamily:Y.disp, fontSize:15.5, fontWeight:600, lineHeight:1.3 }}>{a.question}</span>
+                  <span aria-hidden="true" style={{ color:Y.green, fontSize:18, lineHeight:1, flexShrink:0, transform: open ? 'rotate(45deg)' : 'none', transition:'transform .15s' }}>+</span>
+                </button>
+                {open ? (
+                  <div style={{ padding:'0 14px 13px' }}>
+                    <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.85, whiteSpace:'pre-line' }}>{a.answer}</p>
+                    <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
+                      ✓ {a.answered_by || tr('verified_pro')} · {timeAgo(a.answered_at)}
+                    </p>
+                  </div>
+                ) : (
+                  <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.green, margin:'-6px 14px 12px', fontWeight:700 }}>{tr('qs_answer')} ▾</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        {rest > 0 && (
+          <button onClick={()=>setShown(n => n + QS_STEP * 2)} className="uk-press"
+            style={{ ...ghostBtn, marginTop:12, width:'100%', justifyContent:'center' }}>
+            {tr('qs_more').replace('{n}', Math.min(rest, QS_STEP * 2))} ▾
+          </button>
+        )}
+      </>}
+    </>
   )
 }
 
@@ -651,7 +795,7 @@ function MyQuestions({ tr, onCount, remember }) {
             style={{ flex:1, minWidth:0, background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'11px 12px',
               color:Y.txt, fontFamily:"ui-monospace, Menlo, monospace", fontSize:15, letterSpacing:'.06em', outline:'none' }}/>
           <button onClick={check} disabled={busy} className="uk-press" style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600,
-            padding:'0 16px', borderRadius:12, border:'none', background:Y.gold, color:'#06241C', cursor:'pointer' }}>{tr('myq_check')}</button>
+            padding:'0 16px', borderRadius:12, border:'none', background:Y.gold, color:Y.on, cursor:'pointer' }}>{tr('myq_check')}</button>
         </div>
         {msg && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', fontWeight:600 }}>{msg}</p>}
       </div>
@@ -779,7 +923,7 @@ function Myths({ tr, lang, isDesktop, item, setItem }) {
             <TurnstileWidget onVerify={setSubToken}/>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={submitShare} disabled={subBusy || caption.trim().length<4 || !subToken} className="uk-press"
-                style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+                style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'11px 0', borderRadius:12, border:'none', color:Y.on, cursor:'pointer',
                   background:Y.coral, opacity:(caption.trim().length<4||!subToken)?0.5:1 }}>
                 {subBusy ? tr('ask_sending') : tr('share_cta')}
               </button>
@@ -955,7 +1099,7 @@ function Disinfo({ tr, lang, isDesktop, item, setItem }) {
   const chip = (on, color) => ({
     fontFamily:Y.disp, fontSize:12.5, fontWeight:600, padding:'7px 13px', borderRadius:20,
     cursor:'pointer', whiteSpace:'nowrap', border:'none',
-    background: on ? color : 'rgba(255,255,255,0.06)', color: on ? '#06241C' : Y.mut,
+    background: on ? color : Y.tint, color: on ? Y.on : Y.mut,
     boxShadow:'none',
   })
 
@@ -1002,7 +1146,7 @@ function Disinfo({ tr, lang, isDesktop, item, setItem }) {
               boxShadow:'none', overflowWrap:'anywhere' }}>
               {canEmbedItem(it) && <div style={{ marginBottom:11 }}><SocialEmbed url={it.url} platform={it.platform} tr={tr} accent={acc} typoColor={acc} /></div>}
               <div style={{ display:'flex', flexWrap:'wrap', gap:7, alignItems:'center', marginBottom:9 }}>
-                <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color:'#06241C',
+                <span style={{ fontFamily:Y.disp, fontSize:10.5, fontWeight:700, letterSpacing:'.02em', color:Y.on,
                   background:acc, borderRadius:8, padding:'2px 9px' }}>
                   <span aria-hidden style={{ marginRight:4 }}>{pl.icon}</span>{pl.label}
                 </span>
@@ -1092,7 +1236,7 @@ function CatchTheLatest({ tr, lang, isDesktop, item, setItem }) {
           {['all', ...kinds].map(k => (
             <button key={k} onClick={()=>setKind(k)} className="uk-press" style={{ fontFamily:Y.disp, fontSize:12.5, fontWeight:600,
               padding:'6px 12px', borderRadius:20, border:`1px solid ${kind===k ? Y.green : Y.line}`, cursor:'pointer', whiteSpace:'nowrap',
-              background: kind===k ? Y.green : 'transparent', color: kind===k ? '#06241C' : Y.mut }}>
+              background: kind===k ? Y.green : 'transparent', color: kind===k ? Y.on : Y.mut }}>
               {k === 'all' ? tr('disinfo_all') : tr('kind_' + k)}
             </button>
           ))}
@@ -1111,7 +1255,7 @@ function CatchTheLatest({ tr, lang, isDesktop, item, setItem }) {
                 style={{ all:'unset', cursor:'pointer', display:'block', width:'100%' }}>
                 <span style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:7 }}>
                   <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase',
-                    color:'#06241C', background:col, borderRadius:7, padding:'2px 8px' }}>{tr('kind_' + g.kind)}</span>
+                    color:Y.on, background:col, borderRadius:7, padding:'2px 8px' }}>{tr('kind_' + g.kind)}</span>
                   {g.date_label && <span style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut }}>{g.date_label}</span>}
                 </span>
                 <span style={{ display:'block', fontFamily:Y.disp, fontSize:16.5, fontWeight:600, color:Y.txt, lineHeight:1.3 }}>{g.title}</span>
@@ -1126,7 +1270,7 @@ function CatchTheLatest({ tr, lang, isDesktop, item, setItem }) {
                   <Block label={tr('latest_means')} text={g.what_it_means} color={Y.green}/>
                   <Block label={tr('latest_status')} text={g.status_note} color={Y.teal}/>
                   {g.care_note && (
-                    <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, background:'rgba(255,111,97,0.10)', border:`1px solid ${Y.coral}55`,
+                    <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, background:'rgba(255,111,97,0.10)', border:`1px solid color-mix(in srgb, ${Y.coral} 33%, transparent)`,
                       borderRadius:10, padding:'9px 11px', margin:'0 0 12px', lineHeight:1.55 }}>{g.care_note}</p>
                   )}
                   {srcs.length > 0 && (
@@ -1184,7 +1328,7 @@ function Block({ label, text, color }) {
   return (
     <div style={{ marginBottom:12 }}>
       <span style={{ display:'inline-block', fontFamily:Y.disp, fontSize:10.5, fontWeight:600, letterSpacing:'.04em',
-        textTransform:'uppercase', color:'#06241C', background:color, padding:'2px 9px', borderRadius:8, marginBottom:6 }}>{label}</span>
+        textTransform:'uppercase', color:Y.on, background:color, padding:'2px 9px', borderRadius:8, marginBottom:6 }}>{label}</span>
       <p style={{ fontFamily:Y.sans, fontSize:14, color:Y.txt, lineHeight:1.65, margin:0, opacity:.85 }}>{text}</p>
     </div>
   )
@@ -1374,7 +1518,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
         </select>
         <button onClick={()=>setSubmitOpen(true)} className="uk-press"
           style={{ fontFamily:Y.disp, fontSize:13, fontWeight:600, padding:'10px 16px', borderRadius:12, border:'none',
-            cursor:'pointer', color:'#06241C', background:Y.gold }}>
+            cursor:'pointer', color:Y.on, background:Y.gold }}>
           {tr('fika_share')}
         </button>
       </div>
@@ -1420,7 +1564,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
                   background:ft.color+'22', border:`1px solid ${ft.color}55`, borderRadius:10, padding:'2px 9px' }}>{tr('ft_' + (FACILITY_TYPES[f.kind] ? f.kind : 'public'))}</span>
                 {(f.services||[]).map((s,j) => (
                   <span key={j} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:600, color:Y.txt, opacity:.8,
-                    background:'rgba(255,255,255,0.06)', border:`1px solid ${Y.line}`, borderRadius:10, padding:'2px 9px' }}>{s}</span>
+                    background:Y.tint, border:`1px solid ${Y.line}`, borderRadius:10, padding:'2px 9px' }}>{s}</span>
                 ))}
               </div>
 
@@ -1433,7 +1577,7 @@ function Fika({ tr, lang, isDesktop, item, setItem }) {
                   <span style={{ display:'inline-flex', flexWrap:'wrap', gap:5, marginTop:5 }}>
                     {f.praised.map(a => (
                       <span key={a} style={{ fontFamily:Y.sans, fontSize:10.5, fontWeight:700, color:Y.green,
-                        background:'rgba(63,224,160,0.12)', border:`1px solid ${Y.green}44`, borderRadius:10, padding:'2px 9px' }}>
+                        background:'rgba(63,224,160,0.12)', border:`1px solid color-mix(in srgb, ${Y.green} 27%, transparent)`, borderRadius:10, padding:'2px 9px' }}>
                         {tr('attr_' + a)}
                       </span>
                     ))}
@@ -1518,7 +1662,7 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
           <>
             <p style={{ fontFamily:Y.sans, fontSize:14, color:Y.txt, lineHeight:1.6, fontWeight:500, margin:'0 0 14px' }}>{tr('fika_suggest_sent')}</p>
             <button onClick={onClose} className="uk-press" style={{ width:'100%', fontFamily:Y.disp, fontSize:14, fontWeight:600,
-              padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+              padding:'12px 0', borderRadius:12, border:'none', color:Y.on, cursor:'pointer',
               background:Y.green }}>{tr('close_card')}</button>
           </>
         ) : (
@@ -1539,7 +1683,7 @@ function FikaSuggest({ tr, lang, county, canWrite, onClose }) {
                 {tr('close_card')}
               </button>
               <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
-                padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+                padding:'12px 0', borderRadius:12, border:'none', color:Y.on, cursor:'pointer',
                 background:Y.gold, opacity:(canWrite && !tsToken)?0.5:1 }}>
                 {busy ? tr('ask_sending') : tr('fika_suggest_title')}
               </button>
@@ -1578,14 +1722,14 @@ function FacilityFacts({ f, tr }) {
 }
 
 const fikaInput = {
-  width:'100%', boxSizing:'border-box', fontFamily:'inherit', fontSize:13.5, color:'#F1F5EE',
-  background:'#0A2620', border:'1px solid rgba(214,243,230,0.12)', borderRadius:12, padding:'11px 12px',
+  width:'100%', boxSizing:'border-box', fontFamily:'inherit', fontSize:13.5, color:Y.txt,
+  background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'11px 12px',
   outline:'none', marginBottom:10,
 }
 
 function MiniStat({ v, l, color }) {
   return (
-    <div style={{ background:'rgba(255,255,255,0.05)', border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 11px' }}>
+    <div style={{ background:Y.tint, border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 11px' }}>
       <div style={{ fontFamily:Y.disp, fontSize:21, fontWeight:600, color, lineHeight:1 }}>{v}</div>
       <div style={{ fontFamily:Y.sans, fontSize:9.5, color:Y.mut, marginTop:3, lineHeight:1.3 }}>{l}</div>
     </div>
@@ -1597,7 +1741,7 @@ function Stars({ value }) {
   return (
     <span style={{ fontSize:14, letterSpacing:'1px', lineHeight:1 }} aria-label={`${v.toFixed(1)} of 5`}>
       {[1,2,3,4,5].map(n => (
-        <span key={n} style={{ color: n <= Math.round(v) ? Y.gold : 'rgba(255,255,255,0.18)' }}>★</span>
+        <span key={n} style={{ color: n <= Math.round(v) ? Y.gold : Y.dim }}>★</span>
       ))}
     </span>
   )
@@ -1647,7 +1791,7 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
           {[1,2,3,4,5].map(n => (
             <button key={n} onClick={()=>setRating(n)} className="uk-press"
               style={{ fontSize:26, lineHeight:1, background:'none', border:'none', cursor:'pointer',
-                color: n <= rating ? Y.gold : 'rgba(255,255,255,0.2)' }}>★</button>
+                color: n <= rating ? Y.gold : Y.dim }}>★</button>
           ))}
         </div>
 
@@ -1676,7 +1820,7 @@ function FikaSubmit({ tr, lang, county, facilities, canWrite, onClose, onDone })
             {tr('close_card')}
           </button>
           <button onClick={submit} disabled={busy || (canWrite && !tsToken)} className="uk-press" style={{ flex:1, fontFamily:Y.disp, fontSize:14, fontWeight:600,
-            padding:'12px 0', borderRadius:12, border:'none', color:'#06241C', cursor:'pointer',
+            padding:'12px 0', borderRadius:12, border:'none', color:Y.on, cursor:'pointer',
             background:Y.gold, opacity:(canWrite && !tsToken)?0.5:1 }}>
             {busy ? tr('ask_sending') : tr('fika_share')}
           </button>

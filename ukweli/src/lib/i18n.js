@@ -493,6 +493,7 @@ for (const l of Object.keys(COUNTY_ASK)) Object.assign(STRINGS[l], COUNTY_ASK[l]
 // In-app feedback ("Tell us what you think").
 const FEEDBACK = {
   en: {
+    fb_strip: 'We’re testing UkweliSRHR — tell us what you think.', theme_to_light: 'Switch to light mode', theme_to_dark: 'Switch to dark mode', qs_show: 'Show questions', qs_hide: 'Hide questions', qs_more: 'Show {n} more', qs_answer: 'Read answer', qs_close: 'Hide answer',
     fb_title: 'Tell us what you think', fb_sub: 'We’re testing UkweliSRHR. Your honest feedback helps us make it better.',
     fb_button: 'Give feedback', fb_privacy: 'Anonymous. Please don’t include your name, phone number or other personal details.',
     fb_rate: 'How do you like UkweliSRHR so far?', fb_liked: 'What did you like?', fb_confusing: 'What was confusing or didn’t work?',
@@ -502,6 +503,7 @@ const FEEDBACK = {
     fb_thanks_sub: 'It goes straight to the team building UkweliSRHR.', fb_thanks_short: 'Asante! Your feedback was sent 💚',
   },
   sw: {
+    fb_strip: 'Tunajaribu UkweliSRHR — tuambie maoni yako.', theme_to_light: 'Badili kwa mwanga', theme_to_dark: 'Badili kwa giza', qs_show: 'Onyesha maswali', qs_hide: 'Ficha maswali', qs_more: 'Onyesha {n} zaidi', qs_answer: 'Soma jibu', qs_close: 'Ficha jibu',
     fb_title: 'Tuambie maoni yako', fb_sub: 'Tunajaribu UkweliSRHR. Maoni yako ya kweli yanatusaidia kuiboresha.',
     fb_button: 'Toa maoni', fb_privacy: 'Bila jina. Tafadhali usiandike jina lako, nambari ya simu au taarifa nyingine binafsi.',
     fb_rate: 'Unaonaje UkweliSRHR kufikia sasa?', fb_liked: 'Ulipenda nini?', fb_confusing: 'Nini kilikuchanganya au hakikufanya kazi?',
@@ -511,6 +513,7 @@ const FEEDBACK = {
     fb_thanks_sub: 'Yanaenda moja kwa moja kwa timu inayojenga UkweliSRHR.', fb_thanks_short: 'Asante! Maoni yako yametumwa 💚',
   },
   sheng: {
+    fb_strip: 'Tunatest UkweliSRHR — tuambie unaonaje.', theme_to_light: 'Weka light mode', theme_to_dark: 'Weka dark mode', qs_show: 'Onyesha maswali', qs_hide: 'Ficha maswali', qs_more: 'Onyesha {n} zingine', qs_answer: 'Soma jibu', qs_close: 'Ficha jibu',
     fb_title: 'Tuambie unaonaje', fb_sub: 'Tunatest UkweliSRHR. Maoni yako ya ukweli inatusaidia kuiimprove.',
     fb_button: 'Toa maoni', fb_privacy: 'Ni anonymous. Usiandike jina, namba ya simu ama details zako zingine.',
     fb_rate: 'UkweliSRHR iko aje kwako so far?', fb_liked: 'Ulipenda nini?', fb_confusing: 'Ni nini ilikuconfuse ama haikuwork?',
