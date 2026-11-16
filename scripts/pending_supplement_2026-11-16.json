@@ -1,0 +1,44 @@
+{
+ "generated_at": "2026-11-16T12:45:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-16 ~15:43 EAT (scheduled DAILY 13:30 EAT). Browser 1 of 4 connected Chrome profiles was the one logged in as @vombonya.",
+ "target_table": "public.radar_items",
+ "folder_note": "Sweep captured 43 posts (stable across ~6 scroll strategies: large-step descent settled at 20 due to virtualization gaps, then fine 400px/300px/180px top-to-bottom and bottom-to-top re-passes all plateaued at 43; spinner gone, scrollHeight settled at 23038, bottom reached at scrollY 22312). NOTE: the Nov 15 sweep reported 48 captured ids at the same scrollHeight (23038); this run's renderable set is firmly 43 despite repeated aggressive passes — likely virtualization dropping ~5 off-screen items that no scroll pattern re-rendered, so 5 Nov-15 ids were not re-seen this run (none of them net-new; all were already handled). Live dedupe run against radar_items via the public anon key: platform=eq.x returns 35 live X items, all with status ids. Handled set = 35 live X ids + 47 ids drawn from all prior pending_supplement files (scripts/ + outbox/) = 82 unique. Of the 43 captured ids, 41 are already handled and 2 are net-new. Both net-new are July 2026 medico-legal / reproductive-rights court-case posts, present in neither radar_items nor any prior pending file. BOTH are HELD as SENSITIVE (each centres on a named/identifiable victim; one is a deceased minor). ZERO auto-insert (non-sensitive) candidates this run. ZERO new skips.",
+ "candidates": [
+  {
+   "source_name": "@IMLU_org",
+   "title": "IMLU & KELIN High Court case on the right to emergency medical treatment: minor Diana Chepn'geno died after delayed treatment and referral",
+   "snippet": "IMLU (@IMLU_org) and @KELINKenya litigated a High Court case over the death of a minor, Diana Chepn'geno, who died following delayed treatment and referral. They argue denial of emergency treatment violates the rights to life, dignity, the highest attainable standard of health, and freedom from cruel, inhuman and degrading treatment, and that Article 43(2) of the Constitution guarantees no one shall be denied emergency treatment. The case summary is published; the matter is now before the Court of Appeal.",
+   "url": "https://x.com/IMLU_org/status/2079851050119344200",
+   "platform": "x",
+   "published_at": "2026-07-22T08:48:26Z",
+   "srhr_relevance": 5,
+   "harm_score": 0,
+   "sentiment": "negative",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "SENSITIVE: involves a minor AND a named, identifiable deceased victim (Diana Chepn'geno). Net-new to the live radar_items X set and in no prior pending file. Health-rights / medical-accountability advocacy from IMLU (Independent Medico-Legal Unit) and KELIN Kenya on the constitutional right to emergency medical treatment (Art. 43(2)). On-theme for the right-to-health side of the SRHR landscape the folder curates, though the sexual/reproductive angle is indirect — hence a conservative srhr_relevance=5. NOT disinformation (is_disinfo=false, harm_score=0): accurate reporting of a real, court-litigated case with a published summary, not a false health/legal claim. sentiment=negative (reports a child's death; accountability framing). typology=none. HELD per rule because the post centrally concerns a minor and names an identifiable deceased victim. Full tweet text read from the status page (no truncation). Add \"approved\": true to insert."
+  },
+  {
+   "source_name": "@wambuijoan2024",
+   "title": "Kenyan landmark medical-negligence ruling: cervix removed without consent during a 2006 hysterectomy caused a vesico-vaginal fistula; Ksh 157M awarded",
+   "snippet": "Reported by @wambuijoan2024: a Kenyan court delivered a landmark ruling in a nearly two-decade medical-negligence case. Naila Qureshi sued Dr Raffique Parker and two others over a 2006 hysterectomy, saying the doctor removed her cervix without her consent and botched the operation, causing a vesico-vaginal fistula that cost her her job and livelihood; her husband joined citing loss of conjugal life. Justice Alexander Muasya Muteti found the 1st and 3rd defendants grossly negligent and faulted the hospital for letting a doctor disbarred in Uganda practise, awarding about Ksh 157,207,524 in damages — one of the largest medical-negligence payouts ordered by a Kenyan court.",
+   "url": "https://x.com/wambuijoan2024/status/2078353195483476378",
+   "platform": "x",
+   "published_at": "2026-07-18T05:36:30Z",
+   "srhr_relevance": 8,
+   "harm_score": 0,
+   "sentiment": "negative",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "SENSITIVE: names an identifiable victim (Naila Qureshi) and describes her private reproductive-health injury. Net-new to the live radar_items X set and in no prior pending file. Core SRHR content: reproductive-surgery consent, bodily autonomy, and obstetric/reproductive injury (vesico-vaginal fistula) — a court-adjudicated accountability outcome, so the allegation against the named doctor is a proven court finding, not an unproven claim. srhr_relevance=8. NOT disinformation (is_disinfo=false, harm_score=0): factual report of a public court ruling. sentiment=negative (describes a serious consent violation and reproductive harm, despite the positive accountability outcome). typology=none (consent/negligence case, not a myth/fertility-abortion/anti-CSE/faith-healing narrative). HELD per rule because it names an identifiable victim and details her reproductive medical history. Tweet text read from the status page; the award figure/clauses captured before a tail truncation, substance intact. Add \"approved\": true to insert."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": []
+}
