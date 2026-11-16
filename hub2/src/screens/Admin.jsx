@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sb, C, timeAgo, toast, notifyMembers, cleanText } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
-import { MatchNotifyModal } from '../lib/matchNotify'
+import { MatchNotifyModal, NotifyButton } from '../lib/matchNotify'
 import { UkweliUsage } from '../lib/ukweliUsage'
 import { UkweliFeedback, countNewFeedback } from '../lib/ukweliFeedback'
 import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
@@ -1872,6 +1872,7 @@ function ResourceDesk({ onChange }) {
               chips={[{k:'Type',v:r.type||'Document',c:C.sky},{k:'Source',v:r.source_org,c:C.lilac},{k:'Score',v:typeof r.auto_score==='number'?String(r.auto_score):null,c:C.mint}]}
               url={r.file_path ? null : r.file_url} urlLabel="Open source"/>
             <div style={{ display:'flex', gap:8, marginTop:10 }}>
+              <NotifyButton item={r} itemType="resource"/>
               <Btn small ghost color={C.coral} onClick={()=>reject(r)} disabled={busy===r.id}>🗑 Remove</Btn>
               <Btn small ghost color={C.gold} onClick={()=>unpublish(r)} disabled={busy===r.id}>{busy===r.id ? '…' : '↩ Pull back for review'}</Btn>
             </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { sb, C, logActivity, toast, isFresh } from '../lib/supabase'
 import { ScreenTitle, SectionLabel, Btn, inputStyle } from '../lib/components'
+import { NotifyButton } from '../lib/matchNotify'
 
 const fmtDay   = (d) => new Date(d + 'T00:00:00').getDate()
 const fmtMonth = (d) => new Date(d + 'T00:00:00').toLocaleString('en', { month:'short' }).toUpperCase()
@@ -235,6 +236,9 @@ function EventPage({ e, myStatus, onRsvp, onBack, isAdmin, onLinkSaved }) {
         </a>
       )}
 
+      {isAdmin && (
+        <div style={{ marginBottom:10 }}><NotifyButton item={e} itemType="event"/></div>
+      )}
       {isAdmin && (
         <div style={{ marginBottom:18 }}>
           {!editing ? (
