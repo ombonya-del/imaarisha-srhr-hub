@@ -68,9 +68,11 @@ serve(async (req) => {
     let emailed = 0, failed = 0, skipped = 0
     if (channels.email && org_ids.length) {
       const { data: orgs } = await svc.from("organizations")
-        .select("id, name, short_name, contact_email, notify_opt_in").in("id", org_ids)
+        .select("id, name, short_name, contact_email, alt_contact_email, notify_opt_in").in("id", org_ids)
       for (const o of (orgs || [])) {
-        const to = (o.contact_email || "").trim()
+        // main + alternate contact (either may be empty); one email, both on "To"
+        const recipients = [...new Set([o.contact_email, o.alt_contact_email].map((e: any) => (e || "").trim().toLowerCase()).filter(Boolean))]
+        const to = recipients.join(", ")
         if (!o.notify_opt_in) { skipped++; logRows.push({ item_type, item_id, item_title: title, org_id: o.id, org_name: o.short_name || o.name, channel: "email", status: "skipped", detail: "opted out", sent_by: user.id }); continue }
         if (!to) { skipped++; logRows.push({ item_type, item_id, item_title: title, org_id: o.id, org_name: o.short_name || o.name, channel: "email", status: "skipped", detail: "no contact email", sent_by: user.id }); continue }
         if (!RESEND_KEY) { failed++; logRows.push({ item_type, item_id, item_title: title, org_id: o.id, org_name: o.short_name || o.name, channel: "email", status: "failed", detail: "RESEND_API_KEY not set", sent_by: user.id }); continue }
@@ -88,7 +90,7 @@ serve(async (req) => {
           const r = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ from: FROM, to: [to], subject: `New SRHR ${kindLabel}: ${title}`, html }),
+            body: JSON.stringify({ from: FROM, to: recipients, subject: `New SRHR ${kindLabel}: ${title}`, html }),
           })
           if (r.ok) { emailed++; logRows.push({ item_type, item_id, item_title: title, org_id: o.id, org_name: o.short_name || o.name, channel: "email", status: "sent", detail: to, sent_by: user.id }) }
           else { failed++; const tx = await r.text(); logRows.push({ item_type, item_id, item_title: title, org_id: o.id, org_name: o.short_name || o.name, channel: "email", status: "failed", detail: tx.slice(0, 180), sent_by: user.id }) }

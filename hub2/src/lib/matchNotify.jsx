@@ -66,7 +66,7 @@ export function MatchNotifyModal({ item, itemType, onClose }) {
   const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
-    sb.from('organizations').select('id,name,short_name,focus_area,focus_tags,contact_email,notify_opt_in,website')
+    sb.from('organizations').select('id,name,short_name,focus_area,focus_tags,contact_email,alt_contact_email,notify_opt_in,website')
       .eq('approved', true).order('short_name').limit(400)
       .then(({ data }) => {
         const list = data || []
@@ -87,7 +87,8 @@ export function MatchNotifyModal({ item, itemType, onClose }) {
   const rest = ranked.filter(r => r.score === 0)
   const shown = showAll ? ranked : (matched.length ? matched : ranked.slice(0, 12))
   const chosen = ranked.filter(r => picked[r.org.id])
-  const chosenWithEmail = chosen.filter(r => (r.org.contact_email || '').trim() && r.org.notify_opt_in !== false)
+  const emailOf = (o) => (o.contact_email || '').trim() || (o.alt_contact_email || '').trim()
+  const chosenWithEmail = chosen.filter(r => emailOf(r.org) && r.org.notify_opt_in !== false)
 
   const send = async () => {
     const org_ids = chosen.map(r => r.org.id)
@@ -109,7 +110,7 @@ export function MatchNotifyModal({ item, itemType, onClose }) {
 
   const row = (r) => {
     const on = !!picked[r.org.id]
-    const hasEmail = (r.org.contact_email || '').trim()
+    const hasEmail = emailOf(r.org)
     const optedOut = r.org.notify_opt_in === false
     return (
       <label key={r.org.id} style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'9px 10px', borderRadius:10,
