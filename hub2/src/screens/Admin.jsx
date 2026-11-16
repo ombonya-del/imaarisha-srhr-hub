@@ -28,18 +28,26 @@ export default function Admin({ session, bottomTabs }) {
 
   const loadCounts = async () => {
     const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
-    const [u, r, g, n, res, opp, ev, fb] = await Promise.all([
+    // Opportunities: count only the ones the Submissions desk actually shows
+    // (not duplicates, not off-region / expired / off-topic), so the badge
+    // matches what's waiting for a decision.
+    const oppsNeeding = Promise.all([
+      sb.from('opportunities').select('title,org,description,deadline,link').eq('status', 'pending').limit(2000),
+      sb.from('opportunities').select('title,link').eq('status', 'rejected').limit(1000),
+    ]).then(([p, r]) => triageOpps(p.data || [], rejectedOppKeys(r.data)).relevant.length, () => 0)
+    const [u, r, g, n, res, opp, ev, fb, req] = await Promise.all([
       head('uliza_questions', 'pending'),
       head('fika_reviews', 'pending'),
       head('fika_suggestions', 'pending'),
       head('unado_posts', 'pending'),
       head('resources', 'pending'),
-      head('opportunities', 'pending'),
+      oppsNeeding,
       head('events', 'pending'),
       countNewFeedback(),
+      head('resource_requests', 'pending'),
     ])
     setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0,
-      resources: (res.count || 0) + (opp.count || 0) + (ev.count || 0), feedback: fb })
+      resources: (res.count || 0) + opp + (ev.count || 0) + (req.count || 0), feedback: fb })
   }
   useEffect(() => { loadCounts() }, [view])
 
@@ -1548,6 +1556,50 @@ function LinkPreview({ url, color, label }) {
   )
 }
 
+// ── Opportunity triage (shared by the Submissions desk and the admin badge) ──
+const OPP_KENYA = ['kenya','kenyan','east africa','eastern africa','nairobi','mombasa','kisumu','nakuru','eldoret']
+const OPP_OTHER = ['nigeria','ghana','south africa','southern africa','west africa','central africa','north africa','egypt','ethiopia','uganda','tanzania','rwanda','burundi','south sudan','somalia','sudan','zimbabwe','zambia','malawi','mozambique','angola','cameroon','senegal','mali','niger','morocco','tunisia','algeria','gambia','liberia','sierra leone','guinea','ivory coast','cote d','togo','benin','burkina','chad','congo','drc','gabon','madagascar','namibia','botswana','lesotho','eswatini','swaziland','mauritius','seychelles','djibouti','eritrea','comoros','cape verde','mauritania','india','pakistan','bangladesh','nepal','sri lanka','philippines','indonesia','vietnam','cambodia','myanmar','thailand','china','laos','mongolia','kazakhstan','uzbekistan','kyrgyz','tajikistan','brazil','mexico','colombia','peru','argentina','bolivia','ecuador','venezuela','guatemala','honduras','haiti','jamaica','trinidad','dominican','ukraine','moldova','georgia','armenia','azerbaijan','belarus','serbia','kosovo','albania','bosnia','croatia','romania','bulgaria','turkey','turkiye','syria','yemen','iraq','iran','afghanistan','palestine','lebanon','jordan','oman','kuwait','bahrain','qatar','saudi','uae','emirates','canada','australia','united states','usa','united kingdom','new zealand','japan','singapore','south korea','ireland','germany','france','italy','spain','netherlands','sweden','norway','switzerland','fiji','papua','timor','asia','europe','european','caribbean','pacific','latin america','mena','middle east','south asia','southeast asia','balkans','sahel']
+const OPP_TLD = /\.(gm|ng|za|gh|ug|tz|rw|et|zm|zw|mw|mz|ao|cm|sn|ml|ne|ma|tn|dz|lr|sl|gn|ci|tg|bj|bf|td|cg|cd|ga|mg|na|bw|ls|sz|mu|sc|dj|er|km|cv|mr|in|pk|bd|np|ph|id|vn|au|ca|us|uk|nz|jp|sg)\b/
+const OPP_SIGNAL = ['call for','grant','fund','fellowship','scholarship','apply','proposal','award','opportunit','vacancy','consultanc','deadline','inviting','nominations open','expression of interest','request for','submissions open','open for applications','cash prize']
+const OPP_JUNK = /\btop \d+|\b\d+ best|\bbest \d+|\b\d+ (grant|funding|fellowship|opportunit)|roundup|list of|^how to |how to (get|access|apply|find|win|secure)/
+// Only opportunities closing on/after this date count as time-viable.
+const OPP_MIN = new Date('2026-09-01T00:00:00Z').getTime()
+// Genuine SRHR / GBV topics only. Deliberately NOT 'youth'/'fellowship'/'scholarship'
+// (those are opportunity *types*, handled by OPP_SIGNAL) nor bare 'women'/'girls' —
+// they were waving through youth contests, journalism fellowships and climate funds.
+const OPP_CORE = ['reproductive','sexual health','sexual and reproductive','srhr','family planning','contracept','maternal','abortion','hiv','hpv','sti','adolescent health','adolescent sexual','teen pregnancy','teenage pregnancy','menstrual','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','defilement','domestic violence','harassment','gender equality','gender justice',"women's rights","women’s rights","girls' rights",'girl child','women empowerment','fgm','female genital','child marriage','early marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','sexuality education']
+const oppRelevant = (o) => {
+  const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
+  // Geo: Kenya/East-Africa explicit wins; a specific OTHER country/region excludes;
+  // global / pan-African / no-geography keeps. (Bare "africa" is NOT a keeper — it
+  // was matching "south/west/southern africa".)
+  const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : (!OPP_OTHER.some(k=>s.includes(k)) && !OPP_TLD.test(s))
+  // Stale: a past year (2010-2024) in the text with no 2025-2029 present => old cohort.
+  const stale = /\b20(1\d|2[0-4])\b/.test(s) && !/\b202[5-9]\b/.test(s)
+  // Time-viable: a dated call must close on/after the OPP_MIN cutoff (1 Sep 2026);
+  // undated (rolling / ongoing) calls stay in. Past-deadline calls drop out.
+  const current = (!o.deadline || new Date(o.deadline).getTime() >= OPP_MIN) && !stale
+  const onTopic = OPP_CORE.some(k=>s.includes(k))
+  // Must read as a real opportunity (grant/fellowship/call…), not a news article or listicle.
+  const isOpp = OPP_SIGNAL.some(k=>s.includes(k)) && !OPP_JUNK.test(s)
+  return geoOK && current && onTopic && isOpp
+}
+const oppKey = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 70)
+
+// Split pending opportunities into: relevant (needs a decision), hidden
+// (off-region / expired / off-topic) and dupes (repeat of another pending item
+// or of one already rejected). Only `relevant` is counted on the admin badge.
+function triageOpps(opps, rejectedKeys) {
+  const seen = new Set(), uniq = [], dupes = []
+  for (const o of opps) {
+    const k = oppKey(o.title)
+    if (!k || seen.has(k) || rejectedKeys.has(k) || rejectedKeys.has((o.link || '').trim().toLowerCase())) { dupes.push(o); continue }
+    seen.add(k); uniq.push(o)
+  }
+  return { uniq, dupes, relevant: uniq.filter(oppRelevant), hidden: uniq.filter(o => !oppRelevant(o)) }
+}
+const rejectedOppKeys = (rows) => new Set((rows || []).flatMap(o => [oppKey(o.title), (o.link || '').trim().toLowerCase()].filter(Boolean)))
+
 function ResourceDesk({ onChange }) {
   const [pending, setPending] = useState([])
   const [reqs, setReqs] = useState([])
@@ -1561,7 +1613,6 @@ function ResourceDesk({ onChange }) {
   const [q, setQ] = usePersisted('resources.q', '')                        // search across the queues
   const [rejectedKeys, setRejectedKeys] = useState(new Set()) // titles/links already rejected → hide re-scanned dupes
   const [oppEdit, setOppEdit] = usePersisted('resources.oppEdit', null)                // draft being edited: { id, kind, org, deadline, amount, eligibility, link }
-  const oppKey = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 70)
   const load = () => {
     sb.from('resources').select('*').eq('status','pending').order('created_at',{ascending:true})
       .then(({data}) => { setPending(data || []); onChange?.() })
@@ -1573,7 +1624,7 @@ function ResourceDesk({ onChange }) {
       .then(({data}) => setOpps(data || []))
     // Remember what has already been rejected so re-scanned duplicates never resurface.
     sb.from('opportunities').select('title,link').eq('status','rejected').limit(1000)
-      .then(({data}) => setRejectedKeys(new Set((data||[]).flatMap(o => [oppKey(o.title), (o.link||'').trim().toLowerCase()].filter(Boolean)))))
+      .then(({data}) => setRejectedKeys(rejectedOppKeys(data)))
     sb.from('events').select('*').eq('status','pending').order('event_date',{ascending:true})
       .then(({data}) => setEvs(data || []))
   }
@@ -1667,33 +1718,6 @@ function ResourceDesk({ onChange }) {
   }
   // ── Opportunity queue triage: hide off-region / expired / off-topic pending
   //    submissions so only the relevant ones (Kenya + current + SRHR) need review.
-  const OPP_KENYA = ['kenya','kenyan','east africa','eastern africa','nairobi','mombasa','kisumu','nakuru','eldoret']
-  const OPP_OTHER = ['nigeria','ghana','south africa','southern africa','west africa','central africa','north africa','egypt','ethiopia','uganda','tanzania','rwanda','burundi','south sudan','somalia','sudan','zimbabwe','zambia','malawi','mozambique','angola','cameroon','senegal','mali','niger','morocco','tunisia','algeria','gambia','liberia','sierra leone','guinea','ivory coast','cote d','togo','benin','burkina','chad','congo','drc','gabon','madagascar','namibia','botswana','lesotho','eswatini','swaziland','mauritius','seychelles','djibouti','eritrea','comoros','cape verde','mauritania','india','pakistan','bangladesh','nepal','sri lanka','philippines','indonesia','vietnam','cambodia','myanmar','thailand','china','laos','mongolia','kazakhstan','uzbekistan','kyrgyz','tajikistan','brazil','mexico','colombia','peru','argentina','bolivia','ecuador','venezuela','guatemala','honduras','haiti','jamaica','trinidad','dominican','ukraine','moldova','georgia','armenia','azerbaijan','belarus','serbia','kosovo','albania','bosnia','croatia','romania','bulgaria','turkey','turkiye','syria','yemen','iraq','iran','afghanistan','palestine','lebanon','jordan','oman','kuwait','bahrain','qatar','saudi','uae','emirates','canada','australia','united states','usa','united kingdom','new zealand','japan','singapore','south korea','ireland','germany','france','italy','spain','netherlands','sweden','norway','switzerland','fiji','papua','timor','asia','europe','european','caribbean','pacific','latin america','mena','middle east','south asia','southeast asia','balkans','sahel']
-  const OPP_TLD = /\.(gm|ng|za|gh|ug|tz|rw|et|zm|zw|mw|mz|ao|cm|sn|ml|ne|ma|tn|dz|lr|sl|gn|ci|tg|bj|bf|td|cg|cd|ga|mg|na|bw|ls|sz|mu|sc|dj|er|km|cv|mr|in|pk|bd|np|ph|id|vn|au|ca|us|uk|nz|jp|sg)\b/
-  const OPP_SIGNAL = ['call for','grant','fund','fellowship','scholarship','apply','proposal','award','opportunit','vacancy','consultanc','deadline','inviting','nominations open','expression of interest','request for','submissions open','open for applications','cash prize']
-  const OPP_JUNK = /\btop \d+|\b\d+ best|\bbest \d+|\b\d+ (grant|funding|fellowship|opportunit)|roundup|list of|^how to |how to (get|access|apply|find|win|secure)/
-  // Only opportunities closing on/after this date count as time-viable.
-  const OPP_MIN = new Date('2026-09-01T00:00:00Z').getTime()
-  // Genuine SRHR / GBV topics only. Deliberately NOT 'youth'/'fellowship'/'scholarship'
-  // (those are opportunity *types*, handled by OPP_SIGNAL) nor bare 'women'/'girls' —
-  // they were waving through youth contests, journalism fellowships and climate funds.
-  const OPP_CORE = ['reproductive','sexual health','sexual and reproductive','srhr','family planning','contracept','maternal','abortion','hiv','hpv','sti','adolescent health','adolescent sexual','teen pregnancy','teenage pregnancy','menstrual','gender-based violence','gender based violence','gbv','femicide','sexual violence','sexual assault','rape','defilement','domestic violence','harassment','gender equality','gender justice',"women's rights","women’s rights","girls' rights",'girl child','women empowerment','fgm','female genital','child marriage','early marriage','patriarch','masculinit','disinformation','online violence','reproductive rights','bodily autonomy','sexuality education']
-  const oppRelevant = (o) => {
-    const s = `${o.title||''} ${o.org||''} ${o.description||''}`.toLowerCase()
-    // Geo: Kenya/East-Africa explicit wins; a specific OTHER country/region excludes;
-    // global / pan-African / no-geography keeps. (Bare "africa" is NOT a keeper — it
-    // was matching "south/west/southern africa".)
-    const geoOK = OPP_KENYA.some(k=>s.includes(k)) ? true : (!OPP_OTHER.some(k=>s.includes(k)) && !OPP_TLD.test(s))
-    // Stale: a past year (2010-2024) in the text with no 2025-2029 present => old cohort.
-    const stale = /\b20(1\d|2[0-4])\b/.test(s) && !/\b202[5-9]\b/.test(s)
-    // Time-viable: a dated call must close on/after the OPP_MIN cutoff (1 Sep 2026);
-    // undated (rolling / ongoing) calls stay in. Past-deadline calls drop out.
-    const current = (!o.deadline || new Date(o.deadline).getTime() >= OPP_MIN) && !stale
-    const onTopic = OPP_CORE.some(k=>s.includes(k))
-    // Must read as a real opportunity (grant/fellowship/call…), not a news article or listicle.
-    const isOpp = OPP_SIGNAL.some(k=>s.includes(k)) && !OPP_JUNK.test(s)
-    return geoOK && current && onTopic && isOpp
-  }
   // Derive the Mazingira-style preview facts (region · funding · type) from the
   // opportunity's free text — the scanner doesn't store these as columns.
   const REGION_OF = (s) => {
@@ -1763,15 +1787,8 @@ function ResourceDesk({ onChange }) {
   }
   // De-dupe repeated submissions (the scanner stores the same call more than once) by
   // normalised title, then split into the relevant queue vs the hidden pile.
-  const _seenOpp = new Set()
-  const oppsUniq = opps.filter(o => {
-    const k = oppKey(o.title)
-    if (!k || _seenOpp.has(k)) return false            // in-batch duplicate
-    if (rejectedKeys.has(k) || rejectedKeys.has((o.link||'').trim().toLowerCase())) return false  // already rejected → never resurface
-    _seenOpp.add(k); return true
-  })
-  const oppsRelevant = oppsUniq.filter(oppRelevant)
-  const oppsHidden   = oppsUniq.filter(o => !oppRelevant(o))
+  const { uniq: oppsUniq, dupes: oppsDupes, relevant: oppsRelevant, hidden: oppsHidden } = triageOpps(opps, rejectedKeys)
+  const oppsClearable = [...oppsHidden, ...oppsDupes]
   // ── Search across the queues (title / org / submitter / description) ──
   const ql = q.trim().toLowerCase()
   const mQ = (...parts) => !ql || parts.filter(Boolean).join(' · ').toLowerCase().includes(ql)
@@ -1779,11 +1796,11 @@ function ResourceDesk({ onChange }) {
   const fOpps = (showHiddenOpps ? oppsUniq : oppsRelevant).filter(o => mQ(o.title, o.kind, o.org, o.submitter_name, o.description))
   const fEvs  = evs.filter(e => mQ(e.title, e.event_type, e.location, e.submitter_name, e.description))
   const bulkRejectHiddenOpps = async () => {
-    if (!oppsHidden.length) return
-    if (!confirm(`Reject ${oppsHidden.length} off-region / expired / off-topic submission(s)? They’re marked rejected and won’t be re-added.`)) return
+    if (!oppsClearable.length) return
+    if (!confirm(`Reject ${oppsClearable.length} hidden submission(s) (off-region / expired / off-topic or duplicates)? They’re marked rejected and won’t be re-added.`)) return
     setBusy('bulk')
-    const { error } = await sb.from('opportunities').update({ status:'rejected' }).in('id', oppsHidden.map(o=>o.id))
-    if (error) toast(error.message,'red'); else { toast(`Cleared ${oppsHidden.length} irrelevant`,'gold'); load() }
+    const { error } = await sb.from('opportunities').update({ status:'rejected' }).in('id', oppsClearable.map(o=>o.id))
+    if (error) toast(error.message,'red'); else { toast(`Cleared ${oppsClearable.length} hidden`,'gold'); load() }
     setBusy(null)
   }
 
@@ -1883,10 +1900,12 @@ function ResourceDesk({ onChange }) {
           </Btn>
           <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>Fills funder / amount / eligibility on older thin rows via AI.</span>
         </div>
-        {oppsHidden.length > 0 && (
+        {oppsClearable.length > 0 && (
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:12, padding:'8px 12px', background:'#f6f0fa', borderRadius:8 }}>
-            <span style={{ fontFamily:C.sans, fontSize:12, color:C.mut }}>{oppsHidden.length} hidden - off-region / expired / off-topic</span>
-            <Btn small ghost color={C.coral} onClick={bulkRejectHiddenOpps} disabled={busy==='bulk'}>{busy==='bulk' ? '...' : 'Reject all ' + oppsHidden.length}</Btn>
+            <span style={{ fontFamily:C.sans, fontSize:12, color:C.mut }}>
+              {oppsClearable.length} hidden{oppsHidden.length ? ` · ${oppsHidden.length} off-region / expired / off-topic` : ''}{oppsDupes.length ? ` · ${oppsDupes.length} duplicate${oppsDupes.length === 1 ? '' : 's'}` : ''}
+            </span>
+            <Btn small ghost color={C.coral} onClick={bulkRejectHiddenOpps} disabled={busy==='bulk'}>{busy==='bulk' ? '...' : 'Reject all ' + oppsClearable.length}</Btn>
             <Btn small ghost color={C.lilac} onClick={()=>setShowHiddenOpps(v=>!v)}>{showHiddenOpps ? 'Hide them' : 'Show them'}</Btn>
           </div>
         )}
