@@ -3,6 +3,7 @@ import { sb, C, timeAgo, toast, notifyMembers, cleanText } from '../lib/supabase
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 import { MatchNotifyModal } from '../lib/matchNotify'
 import { UkweliUsage } from '../lib/ukweliUsage'
+import { UkweliFeedback, countNewFeedback } from '../lib/ukweliFeedback'
 import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
 
 // ── 👑 Admin — visible only to profiles.is_admin (enforced by RLS server-side) ─
@@ -23,11 +24,11 @@ export default function Admin({ session, bottomTabs }) {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-  const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0, resources: 0 })
+  const [counts, setCounts] = useState({ uliza: 0, fika: 0, unado: 0, resources: 0, feedback: 0 })
 
   const loadCounts = async () => {
     const head = (t, s) => sb.from(t).select('id', { count: 'exact', head: true }).eq('status', s)
-    const [u, r, g, n, res, opp, ev] = await Promise.all([
+    const [u, r, g, n, res, opp, ev, fb] = await Promise.all([
       head('uliza_questions', 'pending'),
       head('fika_reviews', 'pending'),
       head('fika_suggestions', 'pending'),
@@ -35,9 +36,10 @@ export default function Admin({ session, bottomTabs }) {
       head('resources', 'pending'),
       head('opportunities', 'pending'),
       head('events', 'pending'),
+      countNewFeedback(),
     ])
     setCounts({ uliza: u.count || 0, fika: (r.count || 0) + (g.count || 0), unado: n.count || 0,
-      resources: (res.count || 0) + (opp.count || 0) + (ev.count || 0) })
+      resources: (res.count || 0) + (opp.count || 0) + (ev.count || 0), feedback: fb })
   }
   useEffect(() => { loadCounts() }, [view])
 
@@ -54,7 +56,7 @@ export default function Admin({ session, bottomTabs }) {
       ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['usage','📈 Usage report'] ] },
+      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
   ]
   const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
   const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
@@ -98,6 +100,7 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'latest'    && <LatestDesk/>}
       {view === 'community' && <CommunityDesk/>}
       {view === 'usage'     && <UkweliUsage/>}
+      {view === 'feedback'  && <UkweliFeedback onChange={loadCounts}/>}
 
       {/* Fixed bottom tab bar for the standalone Admin PWA (four sections). */}
       {bottomTabs && (

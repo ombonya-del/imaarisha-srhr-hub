@@ -85,6 +85,15 @@ function flush(useBeacon) {
   if (queue.length) flush(useBeacon)
 }
 
+// Context sent with in-app feedback (same anonymous fields as the usage counts).
+export function feedbackContext() {
+  const county = getCounty()
+  return {
+    visitor: visitorId(), lang: currentLang(), device: device(), ref: ls.get('ukweli_ref'),
+    county: county && county !== 'skip' ? county : null,
+  }
+}
+
 export function track(event, data = {}) {
   try {
     const county = getCounty()

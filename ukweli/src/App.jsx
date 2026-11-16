@@ -7,7 +7,7 @@ import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES } from 
 import { cleanPhoto, uploadPhoto, speechSupported, startDictation } from './lib/photo'
 import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
 import KenyaMap from './KenyaMap'
-import { startTracking, track, getCounty, setCounty as saveCounty } from './lib/track'
+import { startTracking, track, getCounty, setCounty as saveCounty, feedbackContext } from './lib/track'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -192,6 +192,7 @@ export default function App() {
         {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'learn' && <Learn tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'fika'  && <Fika  tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
+        <FeedbackPrompt tr={tr} tab={tab}/>
         <div style={{ textAlign:'center', marginTop:30, paddingTop:14, borderTop:`1px solid ${Y.line}` }}>
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer"
             style={{ fontFamily:Y.sans, fontSize:11, color:Y.mut, textDecoration:'none' }}>{tr('privacy')}</a>
@@ -250,6 +251,111 @@ function CountyAsk({ tr }) {
           {tr('county_save')}
         </button>
         <button onClick={()=>done('skip')} className="uk-press" style={{ ...ghostBtn, padding:'9px 12px' }}>{tr('county_skip')}</button>
+      </div>
+    </div>
+  )
+}
+
+// ── "Tell us what you think" — in-app feedback for the test run ────────────
+// A card at the foot of every section opens a short, optional form: a 1–5
+// face rating and three short answers. Anonymous; saved via
+// ukweli_feedback_submit() with the same context as the usage counts.
+const FACES = ['😞', '🙁', '😐', '🙂', '😍']
+
+function FeedbackPrompt({ tr, tab }) {
+  const [open, setOpen] = useState(false)
+  const [done, setDone] = useState(false)
+  return (
+    <>
+      <div className="uk-card" style={{ marginTop:28, background:Y.card, border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.teal}`,
+        borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', maxWidth:560 }}>
+        <div style={{ flex:'1 1 200px' }}>
+          <p style={{ fontFamily:Y.disp, fontSize:15, fontWeight:600, color:Y.txt, margin:0 }}>
+            {done ? tr('fb_thanks_short') : tr('fb_title')}
+          </p>
+          {!done && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'3px 0 0', lineHeight:1.5 }}>{tr('fb_sub')}</p>}
+        </div>
+        {!done && <button onClick={()=>setOpen(true)} className="uk-press"
+          style={{ fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'9px 16px', borderRadius:10, border:'none',
+            cursor:'pointer', background:Y.teal, color:'#06241C' }}>💬 {tr('fb_button')}</button>}
+      </div>
+      {open && <FeedbackModal tr={tr} tab={tab} onClose={()=>setOpen(false)} onSent={()=>setDone(true)}/>}
+    </>
+  )
+}
+
+function FeedbackModal({ tr, tab, onClose, onSent }) {
+  const [rating, setRating] = useState(0)
+  const [liked, setLiked] = useState('')
+  const [confusing, setConfusing] = useState('')
+  const [missing, setMissing] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const submit = async () => {
+    if (!rating && !liked.trim() && !confusing.trim() && !missing.trim()) { setMsg(tr('fb_need')); return }
+    setBusy(true); setMsg('')
+    const { data, error } = await sb.rpc('ukweli_feedback_submit', { p: {
+      ...feedbackContext(), tab, rating: rating || null,
+      liked: liked.trim(), confusing: confusing.trim(), missing: missing.trim(),
+    } })
+    setBusy(false)
+    if (error) { setMsg(tr('fb_error')); return }
+    if (data === 'limit') { setMsg(tr('fb_limit')); return }
+    if (data === 'empty') { setMsg(tr('fb_need')); return }
+    setSent(true); onSent?.()
+  }
+
+  const box = { width:'100%', boxSizing:'border-box', fontFamily:Y.sans, fontSize:13.5, color:Y.txt, background:Y.card2,
+    border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 12px', outline:'none', minHeight:62, resize:'vertical', marginBottom:10 }
+  const lab = { display:'block', fontFamily:Y.sans, fontSize:12.5, fontWeight:700, color:Y.txt, margin:'0 0 5px' }
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(4,18,14,0.7)', zIndex:50,
+      display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr('fb_title')}
+        style={{ background:Y.card, border:`1px solid ${Y.line}`, borderRadius:18, padding:22, width:'100%', maxWidth:440,
+          maxHeight:'90vh', overflowY:'auto', boxShadow:'0 20px 50px rgba(0,0,0,0.5)' }}>
+        {sent ? (
+          <div style={{ textAlign:'center', padding:'10px 0' }}>
+            <p style={{ fontSize:36, margin:'0 0 6px' }}>💚</p>
+            <p style={{ fontFamily:Y.disp, fontSize:19, fontWeight:600, color:Y.txt, margin:'0 0 6px' }}>{tr('fb_thanks')}</p>
+            <p style={{ fontFamily:Y.sans, fontSize:13, color:Y.mut, margin:'0 0 16px', lineHeight:1.5 }}>{tr('fb_thanks_sub')}</p>
+            <button onClick={onClose} className="uk-press" style={{ ...ghostBtn }}>{tr('fb_close')}</button>
+          </div>
+        ) : <>
+          <p style={{ fontFamily:Y.disp, fontSize:19, fontWeight:600, color:Y.txt, margin:'0 0 2px' }}>{tr('fb_title')}</p>
+          <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'0 0 14px', lineHeight:1.5 }}>{tr('fb_privacy')}</p>
+
+          <span style={lab}>{tr('fb_rate')}</span>
+          <div style={{ display:'flex', gap:6, marginBottom:14 }} role="radiogroup" aria-label={tr('fb_rate')}>
+            {FACES.map((f, i) => (
+              <button key={i} onClick={()=>setRating(i + 1)} className="uk-press" role="radio" aria-checked={rating === i + 1}
+                aria-label={`${i + 1} / 5`}
+                style={{ fontSize:26, lineHeight:1, padding:'6px 8px', borderRadius:12, cursor:'pointer',
+                  border:`1px solid ${rating === i + 1 ? Y.teal : Y.line}`, background: rating === i + 1 ? 'rgba(47,208,196,0.15)' : 'transparent',
+                  filter: rating && rating !== i + 1 ? 'grayscale(1) opacity(.5)' : 'none' }}>{f}</button>
+            ))}
+          </div>
+
+          <label style={lab} htmlFor="fb-liked">{tr('fb_liked')}</label>
+          <textarea id="fb-liked" value={liked} onChange={e=>setLiked(e.target.value)} maxLength={1000} style={box}/>
+          <label style={lab} htmlFor="fb-conf">{tr('fb_confusing')}</label>
+          <textarea id="fb-conf" value={confusing} onChange={e=>setConfusing(e.target.value)} maxLength={1000} style={box}/>
+          <label style={lab} htmlFor="fb-miss">{tr('fb_missing')}</label>
+          <textarea id="fb-miss" value={missing} onChange={e=>setMissing(e.target.value)} maxLength={1000} style={box}/>
+
+          {msg && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'0 0 10px' }}>{msg}</p>}
+          <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
+            <button onClick={onClose} className="uk-press" style={{ ...ghostBtn }}>{tr('fb_cancel')}</button>
+            <button onClick={submit} disabled={busy} className="uk-press"
+              style={{ fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'10px 18px', borderRadius:10, border:'none',
+                cursor: busy ? 'default' : 'pointer', background:Y.teal, color:'#06241C', opacity: busy ? .6 : 1 }}>
+              {busy ? '…' : tr('fb_send')}
+            </button>
+          </div>
+        </>}
       </div>
     </div>
   )

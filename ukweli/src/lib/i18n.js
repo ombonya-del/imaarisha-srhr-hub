@@ -490,6 +490,38 @@ const COUNTY_ASK = {
 }
 for (const l of Object.keys(COUNTY_ASK)) Object.assign(STRINGS[l], COUNTY_ASK[l])
 
+// In-app feedback ("Tell us what you think").
+const FEEDBACK = {
+  en: {
+    fb_title: 'Tell us what you think', fb_sub: 'We’re testing UkweliSRHR. Your honest feedback helps us make it better.',
+    fb_button: 'Give feedback', fb_privacy: 'Anonymous. Please don’t include your name, phone number or other personal details.',
+    fb_rate: 'How do you like UkweliSRHR so far?', fb_liked: 'What did you like?', fb_confusing: 'What was confusing or didn’t work?',
+    fb_missing: 'What’s missing that you’d like to see?', fb_send: 'Send', fb_cancel: 'Cancel', fb_close: 'Close',
+    fb_need: 'Pick a face or write something first.', fb_limit: 'Thanks! You’ve already sent feedback a few times today. Try again tomorrow.',
+    fb_error: 'Couldn’t send just now. Please try again.', fb_thanks: 'Asante for your feedback!',
+    fb_thanks_sub: 'It goes straight to the team building UkweliSRHR.', fb_thanks_short: 'Asante! Your feedback was sent 💚',
+  },
+  sw: {
+    fb_title: 'Tuambie maoni yako', fb_sub: 'Tunajaribu UkweliSRHR. Maoni yako ya kweli yanatusaidia kuiboresha.',
+    fb_button: 'Toa maoni', fb_privacy: 'Bila jina. Tafadhali usiandike jina lako, nambari ya simu au taarifa nyingine binafsi.',
+    fb_rate: 'Unaonaje UkweliSRHR kufikia sasa?', fb_liked: 'Ulipenda nini?', fb_confusing: 'Nini kilikuchanganya au hakikufanya kazi?',
+    fb_missing: 'Nini kinakosekana ungependa kuona?', fb_send: 'Tuma', fb_cancel: 'Ghairi', fb_close: 'Funga',
+    fb_need: 'Chagua uso au andika kitu kwanza.', fb_limit: 'Asante! Umeshatuma maoni mara kadhaa leo. Jaribu tena kesho.',
+    fb_error: 'Imeshindwa kutuma sasa hivi. Tafadhali jaribu tena.', fb_thanks: 'Asante kwa maoni yako!',
+    fb_thanks_sub: 'Yanaenda moja kwa moja kwa timu inayojenga UkweliSRHR.', fb_thanks_short: 'Asante! Maoni yako yametumwa 💚',
+  },
+  sheng: {
+    fb_title: 'Tuambie unaonaje', fb_sub: 'Tunatest UkweliSRHR. Maoni yako ya ukweli inatusaidia kuiimprove.',
+    fb_button: 'Toa maoni', fb_privacy: 'Ni anonymous. Usiandike jina, namba ya simu ama details zako zingine.',
+    fb_rate: 'UkweliSRHR iko aje kwako so far?', fb_liked: 'Ulipenda nini?', fb_confusing: 'Ni nini ilikuconfuse ama haikuwork?',
+    fb_missing: 'Ni nini inakosekana ungependa kuona?', fb_send: 'Tuma', fb_cancel: 'Wacha', fb_close: 'Funga',
+    fb_need: 'Chagua uso ama andika kitu kwanza.', fb_limit: 'Asante! Umetuma maoni mara kadhaa leo. Jaribu tena kesho.',
+    fb_error: 'Haikutuma saa hii. Jaribu tena.', fb_thanks: 'Asante kwa maoni yako!',
+    fb_thanks_sub: 'Inaenda direct kwa team inajenga UkweliSRHR.', fb_thanks_short: 'Asante! Maoni yako imetumwa 💚',
+  },
+}
+for (const l of Object.keys(FEEDBACK)) Object.assign(STRINGS[l], FEEDBACK[l])
+
 let current = (() => { try { return localStorage.getItem('imaarisha_lang') || 'en' } catch { return 'en' } })()
 const listeners = new Set()
 
