@@ -1,0 +1,27 @@
+{
+ "generated_at": "2026-11-18T10:45:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-18 ~13:42 EAT (scheduled DAILY 13:30 EAT). Browser 2 of 4 connected Chrome profiles was the one logged in as @vombonya.",
+ "target_table": "public.radar_items",
+ "folder_note": "Sweep captured 46 renderable posts (large-step descent under-rendered at 20/27 due to virtualization; two fine top-to-bottom passes at 400px then 320px steps settled firmly at 46, spinner gone, scrollHeight settled ~25011, bottom reached). Live dedupe against radar_items via the public anon key: platform=eq.x returns 37 live X items, all with status ids (3754 total radar urls across platforms). Of the 46 captured ids, 36 are already in the live X set. The remaining 10 were checked against every prior pending_supplement file (scripts/ + outbox/): 9 of them are already handled in prior files (previously inserted, held, or skipped), leaving exactly 1 net-new id present in neither radar_items nor any prior pending file: 2122683835309596905 (@IMARATVKE). That one is an on-theme, non-sensitive, prize-winning youth SRHR awareness film and is the sole auto-insert candidate. ZERO held (SENSITIVE) candidates this run. ZERO ukweli candidates. ZERO new skips.",
+ "candidates": [
+  {
+   "source_name": "@IMARATVKE",
+   "title": "IMARA.TV prize-winning youth SRHR film on condom protection: \"Think all condoms offer protection? Here's what you need to know\" (backed by YSW Kenya & UNFPA Kenya)",
+   "snippet": "IMARA.TV (@IMARATVKE), a Kenyan youth media outlet, shared a short film opening with the hook \"Think all condoms offer protection? Here's what you need to know.\" The 4:14 film won Ksh 20,000 from @YSW_Kenya and @UNFPAKen (UNFPA Kenya), framing condom awareness and correct understanding of protection for young audiences. It is youth-produced SRHR education, not a false health claim.",
+   "url": "https://x.com/IMARATVKE/status/2122683835309596905",
+   "platform": "x",
+   "published_at": "2026-11-17T13:30:38Z",
+   "srhr_relevance": 8,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Net-new to the live radar_items X set and to every prior pending_supplement file (scripts/ + outbox/). Core SRHR content: condom awareness and protection literacy aimed at youth, produced by IMARA.TV and recognised with a Ksh 20,000 award from YSW Kenya and UNFPA Kenya — institutional, pro-SRHR provenance. NOT disinformation (is_disinfo=false, harm_score=0): the post is an educational/corrective film, and the headline question is a teaser the film answers, not a myth being asserted. sentiment=positive (constructive, award-winning youth SRHR education). typology=none (it debunks/educates rather than carrying a contraceptive-myth, fertility/abortion, anti-CSE, or faith-healing narrative); srhr_relevance=8. NOT sensitive: no minor is named or depicted as a victim, no identifiable victim, and no unproven allegation against a named person — the youth-audience framing is general SRHR education. Full tweet text read from the status page (video post, short caption, no truncation). Auto-insert."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": []
+}

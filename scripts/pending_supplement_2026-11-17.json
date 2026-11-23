@@ -1,0 +1,44 @@
+{
+ "generated_at": "2026-11-17T10:40:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, fired 2026-11-17 ~13:30 EAT (scheduled DAILY 13:30 EAT). Browser 2 of 4 connected Chrome profiles was the one logged in as @vombonya (Browser 1 showed the 'See what's happening' login page).",
+ "target_table": "public.radar_items",
+ "folder_note": "Sweep captured 45 posts. Virtualization dropped items on fast descents (large-step passes plateaued at 20 then 26), so fine 300-320px top-to-bottom and bottom-to-top re-passes were used; count settled firmly at 45 across repeated passes (spinner gone, scrollHeight settled ~24588, bottom reached). Live dedupe via the public anon key: platform=eq.x returns exactly 35 live X items (radar_items has 3748 rows total). Handled set = 35 live X ids UNION 49 ids drawn from all prior pending_supplement files (scripts/ + outbox/) = 49 unique (all 35 live ids are a subset of the prior-pending ids). Of the 45 captured, 43 are already handled and 2 are net-new (both posted 2026-11-16, ids 2122288687148937287 and 2122342741111664672 — newer than every handled id). Both net-new are on-theme Kenya SRHR and NON-sensitive (no minor, no named/identifiable victim, no unproven allegation against a named person), so both are auto-insert candidates. ZERO held/sensitive. ZERO ukweli_candidates. ZERO new skips.",
+ "candidates": [
+  {
+   "source_name": "@AfUncensored",
+   "title": "Kenya's fertility rate falls to 3.1 children per woman; 32.9% of women 15-49 never married (2025-26 KNBS Mini DHS) — Africa Uncensored",
+   "snippet": "Africa Uncensored (@AfUncensored): Kenya's fertility rate has fallen to 3.1 children per woman, and 32.9% of women aged 15-49 have never married, per new 2025-26 KNBS Mini DHS data. On #TheBigPicturePodcast they speak with KNBS Senior Manager of Demography Francis Kundu to unpack what smaller, later families mean for Kenya's schools, healthcare, jobs and pensions over the next two decades.",
+   "url": "https://x.com/AfUncensored/status/2122288687148937287",
+   "platform": "x",
+   "published_at": "2026-11-16T11:20:27Z",
+   "srhr_relevance": 6,
+   "harm_score": 0,
+   "sentiment": "neutral",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Net-new to the live radar_items X set and to all prior pending files. Factual demographic/reproductive-health reporting from a credible outlet (Africa Uncensored) citing official 2025-26 KNBS Mini DHS data on fertility rate and marriage/family-formation trends — core SRHR demography. NOT disinformation (is_disinfo=false, harm_score=0): accurate reporting of official statistics, not a false health claim. sentiment=neutral (data/analysis framing). typology=none (not a myth, fertility/abortion, anti-CSE or faith-healing narrative). srhr_relevance=6. NON-sensitive: no minor, no identifiable victim, no allegation; the named demographer is a public official quoted in a neutral professional context. Full tweet text read from the status page (no truncation)."
+  },
+  {
+   "source_name": "@IMARATVKE",
+   "title": "IMARA.TV: 'No shame in protection' — SRHR film promoting protection wins UNFPA Kenya & YSW Kenya funding",
+   "snippet": "IMARA.TV (@IMARATVKE): 'No shame in protection, no shortcuts when it comes to your health.' A film was awarded funding (Ksh) from @YSW_Kenya and @UNFPAKen (UNFPA Kenya). Positive youth SRHR messaging promoting protection/contraception and destigmatising it.",
+   "url": "https://x.com/IMARATVKE/status/2122342741111664672",
+   "platform": "x",
+   "published_at": "2026-11-16T14:55:15Z",
+   "srhr_relevance": 6,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Net-new to the live radar_items X set and to all prior pending files. Positive SRHR health-promotion content from IMARA.TV: a youth-focused film promoting 'protection' (contraception/condom use) and destigmatising it ('no shame in protection'), awarded funding from UNFPA Kenya (@UNFPAKen) and @YSW_Kenya. NOT disinformation (is_disinfo=false, harm_score=0): accurate, pro-health messaging. sentiment=positive. typology=none. srhr_relevance=6. NON-sensitive: no minor, no identifiable victim, no allegation. Tweet text read from the status page; an in-line t.co link split the sentence and a Ksh figure was not rendered as plain text, so the snippet states 'funding (Ksh)' without inventing an amount; substance (protection message + UNFPA/YSW funding) intact."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": []
+}
