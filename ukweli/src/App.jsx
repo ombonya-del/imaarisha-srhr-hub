@@ -822,6 +822,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
   const [cards, setCards] = useState([])
   const [know, setKnow] = useState([])
   const [openId, setOpenId] = useState(null)
+  const [suggestFor, setSuggestFor] = useState(null)
   useEffect(() => {
     sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || []))
     sb.from('ukweli_knowledge').select('*').eq('active', true).then(({ data }) => setKnow(data || []))
@@ -841,7 +842,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
       const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
       let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
+      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     for (const a of answered) {
       const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
@@ -901,6 +902,12 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
                             })}
                           </div>
                         )}
+                        {lang === 'sheng' && (
+                          <button type="button" onClick={()=>setSuggestFor(m)} className="uk-press"
+                            style={{ display:'inline-flex', alignItems:'center', gap:5, marginTop:9, background:'transparent',
+                              border:`1px solid ${Y.teal}`, color:Y.teal, borderRadius:999, padding:'6px 11px',
+                              fontFamily:Y.disp, fontSize:12, fontWeight:700, cursor:'pointer' }}>✍️ {tr('sheng_cta')}</button>
+                        )}
                       </div>
                     ) : m.by ? (
                       <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>
@@ -912,6 +919,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
           })}
         </div>
       </>}
+      {suggestFor && <ShengSuggest tr={tr} entrySlug={suggestFor.slug} entryTitle={suggestFor.title} onClose={()=>setSuggestFor(null)}/>}
     </div>
   )
 }
@@ -958,7 +966,7 @@ function ShengBar({ tr }) {
     </>
   )
 }
-function ShengSuggest({ tr, onClose }) {
+function ShengSuggest({ tr, onClose, entrySlug = null, entryTitle = '' }) {
   const [orig, setOrig] = useState('')
   const [sug, setSug] = useState('')
   const [note, setNote] = useState('')
@@ -968,7 +976,7 @@ function ShengSuggest({ tr, onClose }) {
   const send = async () => {
     if (sug.trim().length < 2) { setErr(tr('sheng_min')); return }
     setBusy(true); setErr('')
-    const { data, error } = await sb.rpc('ukweli_sheng_suggest', { p: { suggestion:sug, original_text:orig, note, lang:'sheng', visitor:shengVisitor() } })
+    const { data, error } = await sb.rpc('ukweli_sheng_suggest', { p: { suggestion:sug, original_text:orig, note, lang:'sheng', entry_slug:entrySlug, visitor:shengVisitor() } })
     setBusy(false)
     if (error || data !== 'ok') { setErr(tr('sheng_err')); return }
     setDone(true)
@@ -985,6 +993,7 @@ function ShengSuggest({ tr, onClose }) {
         ) : (
           <>
             <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:700, color:Y.txt, margin:'0 0 4px' }}>{tr('sheng_title')}</p>
+            {entryTitle && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.teal, margin:'0 0 8px', fontWeight:600, lineHeight:1.4 }}>{tr('sheng_about')}: “{entryTitle}”</p>}
             <label style={shLbl}>{tr('sheng_orig')}</label>
             <textarea value={orig} onChange={e=>setOrig(e.target.value)} rows={2} style={shInput}/>
             <label style={shLbl}>{tr('sheng_sug')} *</label>

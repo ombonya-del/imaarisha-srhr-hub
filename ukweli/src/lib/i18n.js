@@ -685,3 +685,5 @@ const MYSHENG = {
     sheng_close: 'Funga', sheng_min: 'Andika suggestion yako kwanza', sheng_err: 'Haikuweza tumwa — jaribu tena.' },
 }
 for (const l of Object.keys(MYSHENG)) Object.assign(STRINGS[l], MYSHENG[l])
+const MYSHENG_ABOUT = { en:{ sheng_about:'About' }, sw:{ sheng_about:'Kuhusu' }, sheng:{ sheng_about:'Kuhusu' } }
+for (const l of Object.keys(MYSHENG_ABOUT)) Object.assign(STRINGS[l], MYSHENG_ABOUT[l])
