@@ -576,9 +576,10 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
   useEffect(() => () => stopRef.current?.(), [])
 
   useEffect(() => {
-    sb.from('uliza_questions').select('id,question,answer,answered_by,answered_at').eq('status','answered')
+    // Feed respects the chosen language: Sheng shows Sheng Q&A, SWA shows SWA, EN shows EN.
+    sb.from('uliza_questions').select('id,question,answer,answered_by,answered_at').eq('status','answered').eq('language', lang)
       .order('answered_at',{ascending:false}).limit(40).then(({data}) => setAnswered(data || []))
-  }, [])
+  }, [lang])
   useEffect(() => { try { localStorage.setItem('ukweli_remember', remember ? '1' : '0') } catch {} }, [remember])
 
   const tooShort = q.trim().length < 8
