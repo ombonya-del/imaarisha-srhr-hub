@@ -245,7 +245,7 @@ export default function App() {
           .uk-word { font-size: 16px !important; }
           .uk-logo { height: 26px !important; width: auto; }
           .uk-langs button { padding: 3px 5px !important; }
-          .uk-exit { padding: 5px 7px !important; }
+          .uk-exit { padding: 3px 8px !important; }
           .uk-hdr-r { gap: 4px !important; }
         }
         @media (max-width: 340px) { .uk-logo { display: none !important; } }
@@ -301,11 +301,10 @@ export default function App() {
                 return (
                   <button key={pl.id} onClick={()=>setPalette(pl.id)} className="uk-press"
                     aria-label={pl.id} aria-pressed={on} title={pl.id.charAt(0).toUpperCase()+pl.id.slice(1)}
-                    style={{ width: isDesktop?18:16, height: isDesktop?18:16, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
-                      background:`radial-gradient(circle at 33% 30%, ${pl.pri} 0 48%, ${pl.bg} 49% 100%)`,
-                      border: on ? `2px solid ${Y.txt}` : `1px solid ${Y.line}`,
-                      boxShadow: on ? `0 0 0 2px ${Y.bg}, 0 0 0 3px ${pl.pri}` : 'none',
-                      transform: on ? 'scale(1.08)' : 'none', transition:'transform .12s, box-shadow .12s' }} />
+                    style={{ width: isDesktop?16:15, height: isDesktop?16:15, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
+                      background: pl.pri, border:`1px solid ${Y.line}`,
+                      outline: on ? `2px solid ${Y.txt}` : 'none', outlineOffset: on ? '2px' : 0,
+                      transition:'outline-color .12s' }} />
                 )
               })}
             </div>
@@ -324,11 +323,12 @@ export default function App() {
                     cursor:'pointer', background: lang===code?Y.txt:'transparent', color: lang===code?Y.bg:Y.mut }}>{label}</button>
               ))}
             </div>
-            <button onClick={quickExit} title="Leave this site instantly" className="uk-press uk-exit"
-              style={{ fontFamily:Y.disp, fontSize: isDesktop?11:10, fontWeight:600,
-                padding: isDesktop?'6px 12px':'5px 9px', borderRadius:16, flexShrink:0,
-                border:`1px solid ${Y.coral}`, background:'rgba(255,111,97,0.12)', color:Y.coral, cursor:'pointer', whiteSpace:'nowrap' }}>
-              ✕ {tr('exit')}
+            <button onClick={quickExit} title={tr('exit_leave') || 'Leave this site instantly'} aria-label={tr('exit_leave') || 'Leave this site instantly'} className="uk-press uk-exit"
+              style={{ fontFamily:Y.disp, fontSize: isDesktop?14:13, fontWeight:700, lineHeight:1,
+                width: isDesktop?32:28, height: isDesktop?32:28, borderRadius:'50%', flexShrink:0, padding:0,
+                display:'inline-flex', alignItems:'center', justifyContent:'center',
+                border:`1px solid ${Y.coral}`, background:'transparent', color:Y.coral, cursor:'pointer' }}>
+              ✕
             </button>
           </div>
         </div>

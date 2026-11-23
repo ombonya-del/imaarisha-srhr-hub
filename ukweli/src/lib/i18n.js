@@ -704,3 +704,11 @@ const THEMEPICK = {
   sheng: { theme_pick: 'Chagua rangi ya theme' },
 }
 for (const l of Object.keys(THEMEPICK)) Object.assign(STRINGS[l], THEMEPICK[l])
+
+// Quick-exit icon accessible label
+const EXITLEAVE = {
+  en:    { exit_leave: 'Leave this site instantly' },
+  sw:    { exit_leave: 'Ondoka kwenye tovuti hii mara moja' },
+  sheng: { exit_leave: 'Toka kwa site hii saa hiyo' },
+}
+for (const l of Object.keys(EXITLEAVE)) Object.assign(STRINGS[l], EXITLEAVE[l])
