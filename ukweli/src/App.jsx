@@ -716,7 +716,8 @@ const EMERGENCY_LINES = [
 ]
 const EMERGENCY_TERMS = ['rape','raped','defile','defiled','molest','suicide','kill myself','killing myself','want to die',' to die','end my life','overdose','bleeding','haemorrhage','hemorrhage','unconscious','passed out','emergency','being beaten','beats me','beating me','assault','in danger','forced me','forced to','abused','abuse me','self harm','self-harm','hurt myself','kubakwa','nimebakwa','amenibaka','ubakaji','kunajisiwa','kujiua','najiua','nataka kufa','nitajiua','damu nyingi','kutokwa damu','dharura','nimepigwa','ananipiga','niko hatarini','hatarini','amenilazimisha','kwa nguvu','kunyanyaswa','amenidhulumu']
 const isEmergency = (str) => { const t = (str || '').toLowerCase(); return EMERGENCY_TERMS.some(w => t.includes(w)) }
-const QTOKENS = (str) => (str || '').toLowerCase().replace(/[^a-z0-9À-ɏ ]+/g, ' ').split(/\s+/).filter(w => w.length >= 3)
+const STOPWORDS = new Set(['the','and','that','this','have','has','had','you','your','are','was','were','for','but','not','with','how','should','could','would','about','what','when','who','whom','why','from','they','them','their','there','here','out','get','got','can','will','just','very','really','some','any','been','being','into','than','then','him','her','his','she','its','our','ours','myself','towards','toward','which','because','around','recently','noticed','notice','issue','approach','something','someone','kwa','ya','na','ni','za','wa','katika','kama','sana','iko','vile','ama','sasa','hii','hizi','yangu','yako','ina','kuwa','pia','lakini','ili','hata'])
+const QTOKENS = (str) => (str || '').toLowerCase().replace(/[^a-z0-9À-ɏ ]+/g, ' ').split(/\s+/).filter(w => w.length >= 3 && !STOPWORDS.has(w))
 
 function EmergencyCard({ tr }) {
   return (
@@ -849,7 +850,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
       let score = 0; for (const t of toks) if (hay.includes(t)) score++
       if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, urg:0, title:a.question, body:a.answer, by:a.answered_by })
     }
-    return pool.sort((x, y) => (y.urg - x.urg) || (y.score - x.score)).slice(0, 3)
+    return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
   }, [cards, know, answered, lang, query])
 
   if (matches.length === 0) {
