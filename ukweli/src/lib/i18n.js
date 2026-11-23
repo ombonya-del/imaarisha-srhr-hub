@@ -573,3 +573,55 @@ export function useLang() {
 
 // English & Kiswahili are the core languages; Sheng is an optional informal layer.
 export const LANGS = [['en','EN'],['sw','SW'],['sheng','Sheng']]
+
+// ── Instant answers + emergency help + "notify me" (Nov 2026) ───────────────
+// Feedback asked for (1) an immediate answer, not only the ask-and-wait lane,
+// and (2) a phone nudge when a waited answer lands.
+const QUICK = {
+  en: {
+    quick_title: 'Quick answers', quick_sub: 'Checked by our health team. Start typing and matches show here instantly.',
+    quick_none: 'No instant match — send your question below and a verified health worker will reply.',
+    quick_more: 'Read more', quick_myth: 'Myth', quick_answered: 'Answered before',
+    emg_title: 'Need help right now?', emg_sub: 'If you’re in danger or someone is hurt, reach a real person now — free, 24/7.',
+    emg_gbv: 'GBV / abuse helpline', emg_child: 'Child helpline', emg_lvct: 'LVCT helpline (GBV & health)',
+    emg_nascop: 'NASCOP Uliza (HIV & SRHR)', emg_emergency: 'Police / ambulance', emg_redcross: 'Kenya Red Cross',
+    emg_call: 'Call', emg_note: 'Calls to these lines are free and confidential. You don’t have to give your name.',
+    notify_cta: '🔔 Nudge me when it’s answered', notify_on: '✓ We’ll nudge you when it’s ready',
+    notify_blocked: 'Notifications are off — turn them on in your browser settings to get a nudge.',
+    notify_ios: 'On iPhone, add Ukweli to your Home Screen first (Share → Add to Home Screen), then you can get a nudge.',
+    notify_unsupported: 'This browser can’t send a nudge — just check “My questions” later with your code.',
+    notify_err: 'Couldn’t set that up. You can still check “My questions” later with your code.',
+    notify_working: 'Setting up…',
+  },
+  sw: {
+    quick_title: 'Majibu ya haraka', quick_sub: 'Yamekaguliwa na timu yetu ya afya. Anza kuandika na yanayolingana yataonekana papo hapo.',
+    quick_none: 'Hakuna linalolingana papo hapo — tuma swali lako hapa chini, mhudumu wa afya atajibu.',
+    quick_more: 'Soma zaidi', quick_myth: 'Uongo', quick_answered: 'Lilijibiwa awali',
+    emg_title: 'Unahitaji msaada sasa hivi?', emg_sub: 'Ikiwa uko hatarini au mtu ameumia, pata msaada wa mtu halisi sasa — bila malipo, saa 24.',
+    emg_gbv: 'Simu ya dharura ya GBV / unyanyasaji', emg_child: 'Simu ya watoto', emg_lvct: 'Simu ya LVCT (GBV na afya)',
+    emg_nascop: 'NASCOP Uliza (HIV na SRHR)', emg_emergency: 'Polisi / ambulensi', emg_redcross: 'Kenya Red Cross',
+    emg_call: 'Piga', emg_note: 'Simu kwa nambari hizi ni bure na za siri. Huhitaji kutoa jina lako.',
+    notify_cta: '🔔 Nikumbushe likijibiwa', notify_on: '✓ Tutakukumbusha likiwa tayari',
+    notify_blocked: 'Arifa zimezimwa — ziwashe kwenye mipangilio ya kivinjari chako upate ukumbusho.',
+    notify_ios: 'Kwa iPhone, ongeza Ukweli kwenye Skrini yako ya Nyumbani kwanza (Share → Add to Home Screen), kisha utaweza kukumbushwa.',
+    notify_unsupported: 'Kivinjari hiki hakiwezi kutuma ukumbusho — angalia tu “Maswali yangu” baadaye kwa msimbo wako.',
+    notify_err: 'Haikuweza kuwekwa. Bado unaweza kuangalia “Maswali yangu” baadaye kwa msimbo wako.',
+    notify_working: 'Inawekwa…',
+  },
+  sheng: {
+    quick_title: 'Majibu za haraka', quick_sub: 'Zime-checkiwa na health team yetu. Anza kuandika na zinazomatch zitashow papo hapo.',
+    quick_none: 'Hakuna inayomatch sahii — tuma swali yako hapa chini, health worker atareply.',
+    quick_more: 'Soma zaidi', quick_myth: 'Uongo', quick_answered: 'Ilijibiwa before',
+    emg_title: 'Unahitaji help sahii hivi?', emg_sub: 'Kama uko hatarini ama mtu ameumia, pata mtu wa ukweli sahii — free, 24/7.',
+    emg_gbv: 'Line ya GBV / abuse', emg_child: 'Line ya watoto', emg_lvct: 'Line ya LVCT (GBV na afya)',
+    emg_nascop: 'NASCOP Uliza (HIV na SRHR)', emg_emergency: 'Polisi / ambulance', emg_redcross: 'Kenya Red Cross',
+    emg_call: 'Piga', emg_note: 'Hizi line ni free na za siri. Huhitaji kutoa jina yako.',
+    notify_cta: '🔔 Nikumbushe ikijibiwa', notify_on: '✓ Tutakureminder ikiwa ready',
+    notify_blocked: 'Notifications ziko off — ziwashe kwa browser settings upate reminder.',
+    notify_ios: 'Kwa iPhone, add Ukweli kwa Home Screen kwanza (Share → Add to Home Screen), alafu utaweza kupata reminder.',
+    notify_unsupported: 'Hii browser haiwezi tuma reminder — cheki tu “Maswali yangu” baadaye na code yako.',
+    notify_err: 'Haikuweza setup. Bado unaweza cheki “Maswali yangu” baadaye na code yako.',
+    notify_working: 'Ina-setup…',
+  },
+}
+for (const l of Object.keys(QUICK)) Object.assign(STRINGS[l], QUICK[l])

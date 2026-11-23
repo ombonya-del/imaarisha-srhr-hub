@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { sb, timeAgo, cleanText } from './lib/supabase'
 import { TurnstileWidget, tsInsert, resetTurnstile } from './lib/turnstile'
 import { useLang, LANGS } from './lib/i18n'
@@ -6,6 +6,7 @@ import { LEARN } from './lib/learn'
 import { KENYA_COUNTIES, FACILITY_TYPES, FACILITIES_FALLBACK, ATTRIBUTES } from './lib/fika'
 import { cleanPhoto, uploadPhoto, speechSupported, startDictation } from './lib/photo'
 import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
+import { notifyWhenAnswered, pushSupported } from './lib/push'
 import KenyaMap from './KenyaMap'
 import { startTracking, track, getCounty, setCounty as saveCounty, feedbackContext } from './lib/track'
 import { ImaarishaMedia, KnowledgeCheck } from './CampaignMedia'
@@ -123,6 +124,9 @@ const ICONS = {
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
   key:    'M7.5 15a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zM11 11.5h10M18 11.5v3M21 11.5v2',
   lock:   'M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3',
+  phone:  'M6 3c1 0 1.6.4 2 1.4l1 2.4c.3.8.1 1.4-.5 2l-1 .9a12 12 0 0 0 4.3 4.3l.9-1c.6-.6 1.2-.8 2-.5l2.4 1c1 .4 1.4 1 1.4 2 0 2.5-2.2 3.9-4.4 3.3C9.4 20.7 3.3 14.6 2.7 8.4 2.3 6.2 3.5 4 6 3z',
+  bell:   'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',
 }
 function Icon({ name, size = 18, color = 'currentColor', style }) {
   return (
@@ -569,6 +573,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.mut, margin:'10px 0 0', lineHeight:1.55 }}>
               {remember ? tr('code_saved') : tr('code_not_saved')} {tr('status_pending')}
             </p>
+            <NotifyButton code={sentCode} lang={lang} tr={tr}/>
             <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
               <button onClick={()=>{ setSentCode(''); setItem('mine') }} className="uk-press" style={{ background:Y.green,
                 border:'none', color:Y.on, fontFamily:Y.disp, fontSize:13.5, fontWeight:600, padding:'10px 16px',
@@ -619,6 +624,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             )}
             {photoErr && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'6px 2px 0' }}>{photoErr}</p>}
 
+            <InstantAnswers q={q} lang={lang} tr={tr} answered={answered} isDesktop={isDesktop}/>
             <fieldset style={{ border:'none', margin:'14px 0 0', padding:0 }}>
               <legend style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, color:Y.txt, marginBottom:6, padding:0 }}>{tr('ask_visibility')}</legend>
               {[[false, tr('ask_share_public')], [true, tr('ask_keep_private')]].map(([val, label]) => (
@@ -687,6 +693,135 @@ function CodeCard({ code, tr }) {
 // device), each card shows just the question until tapped, and only the first
 // few are listed until "Show more", so the rest of the page is a short scroll away.
 const QS_STEP = 5
+// ── Instant help: emergency hotlines + quick answers from vetted content ─────
+// NOT a chatbot — nothing is generated here. The emergency card is fixed,
+// human-curated numbers; "quick answers" are only myth cards and questions a
+// verified health worker already answered. A novel question still goes to the
+// Ask lane (AI draft + human review). Instant where it's safe, reviewed where
+// it matters.
+const EMERGENCY_LINES = [
+  ['emg_gbv', '1195', '1195'],
+  ['emg_child', '116', '116'],
+  ['emg_lvct', '1190', '1190'],
+  ['emg_nascop', '0800 724 848', '0800724848'],
+  ['emg_emergency', '999 / 112', '999'],
+  ['emg_redcross', '1199', '1199'],
+]
+const EMERGENCY_TERMS = ['rape','raped','defile','defiled','molest','suicide','kill myself','killing myself','want to die',' to die','end my life','overdose','bleeding','haemorrhage','hemorrhage','unconscious','passed out','emergency','being beaten','beats me','beating me','assault','in danger','forced me','forced to','abused','abuse me','self harm','self-harm','hurt myself','kubakwa','nimebakwa','amenibaka','ubakaji','kunajisiwa','kujiua','najiua','nataka kufa','nitajiua','damu nyingi','kutokwa damu','dharura','nimepigwa','ananipiga','niko hatarini','hatarini','amenilazimisha','kwa nguvu','kunyanyaswa','amenidhulumu']
+const isEmergency = (str) => { const t = (str || '').toLowerCase(); return EMERGENCY_TERMS.some(w => t.includes(w)) }
+const QTOKENS = (str) => (str || '').toLowerCase().replace(/[^a-z0-9À-ɏ ]+/g, ' ').split(/\s+/).filter(w => w.length >= 3)
+
+function EmergencyCard({ tr }) {
+  return (
+    <div role="alert" style={{ background:Y.card, border:`1px solid ${Y.coral}`, borderLeft:`4px solid ${Y.coral}`,
+      borderRadius:16, padding:16, margin:'12px 0' }}>
+      <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:700, color:Y.coral, margin:'0 0 4px' }}>{tr('emg_title')}</p>
+      <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, margin:'0 0 12px', lineHeight:1.55 }}>{tr('emg_sub')}</p>
+      <div style={{ display:'grid', gap:8 }}>
+        {EMERGENCY_LINES.map(([k, shown, tel]) => (
+          <a key={k} href={`tel:${tel}`} className="uk-press" style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+            gap:10, textDecoration:'none', background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 13px' }}>
+            <span style={{ fontFamily:Y.sans, fontSize:13, color:Y.txt, fontWeight:600 }}>{tr(k)}</span>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:8, color:Y.coral }}>
+              <span style={{ fontFamily:"ui-monospace, Menlo, monospace", fontSize:15, fontWeight:700 }}>{shown}</span>
+              <span style={{ display:'inline-flex', alignItems:'center', gap:4, fontFamily:Y.disp, fontSize:12.5, fontWeight:700 }}><Icon name="phone" size={14} color={Y.coral}/>{tr('emg_call')}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+      <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'10px 0 0', lineHeight:1.5 }}>{tr('emg_note')}</p>
+    </div>
+  )
+}
+
+function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
+  const [cards, setCards] = useState([])
+  const [openId, setOpenId] = useState(null)
+  useEffect(() => { sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || [])) }, [])
+  const query = (q || '').trim()
+  const emg = query.length >= 4 && isEmergency(query)
+  const matches = useMemo(() => {
+    const toks = QTOKENS(query)
+    if (toks.length < 1 || query.length < 6) return []
+    const pool = []
+    for (const c of cards) {
+      if (c.language && c.language !== lang && c.language !== 'en') continue
+      const hay = [c.claim, c.truth, c.what_to_do, c.why_it_feels_true].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, title:c.claim, body:c.truth, extra:c.what_to_do })
+    }
+    for (const a of answered) {
+      const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, title:a.question, body:a.answer, by:a.answered_by })
+    }
+    return pool.sort((x, y) => y.score - x.score).slice(0, 3)
+  }, [cards, answered, lang, query])
+
+  if (!emg && matches.length === 0) {
+    if (QTOKENS(query).length >= 2 && query.length >= 12)
+      return <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'10px 2px 0', lineHeight:1.5, fontStyle:'italic' }}>{tr('quick_none')}</p>
+    return null
+  }
+  return (
+    <div style={{ margin:'12px 0 0' }}>
+      {emg && <EmergencyCard tr={tr}/>}
+      {matches.length > 0 && <>
+        <p style={{ fontFamily:Y.disp, fontSize:13, fontWeight:700, color:Y.green, margin:'4px 2px 2px' }}>{tr('quick_title')}</p>
+        <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'0 2px 8px', lineHeight:1.5 }}>{tr('quick_sub')}</p>
+        <div style={{ display:'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap:8, alignItems:'start' }}>
+          {matches.map(m => {
+            const open = openId === m.id
+            return (
+              <div key={m.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${open ? Y.green : Y.line}`, borderRadius:14 }}>
+                <button onClick={()=>setOpenId(open ? null : m.id)} aria-expanded={open}
+                  style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between', width:'100%', textAlign:'left',
+                    background:'none', border:'none', cursor:'pointer', padding:'12px 13px', color:Y.txt }}>
+                  <span style={{ flex:1 }}>
+                    <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase',
+                      color: m.kind === 'myth' ? Y.gold : Y.green }}>{m.kind === 'myth' ? tr('quick_myth') : tr('quick_answered')}</span>
+                    <span style={{ display:'block', fontFamily:Y.disp, fontSize:14.5, fontWeight:600, lineHeight:1.3, marginTop:3 }}>{m.title}</span>
+                  </span>
+                  <span aria-hidden="true" style={{ color:Y.green, fontSize:18, lineHeight:1, flexShrink:0, transform: open ? 'rotate(45deg)' : 'none', transition:'transform .15s' }}>+</span>
+                </button>
+                {open && (
+                  <div style={{ padding:'0 13px 12px' }}>
+                    <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.88, whiteSpace:'pre-line' }}>{m.body}</p>
+                    {m.extra && <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.6, margin:'8px 0 0', opacity:.8 }}><b>{tr('what_to_do')}:</b> {m.extra}</p>}
+                    {m.by && <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </>}
+    </div>
+  )
+}
+
+function NotifyButton({ code, lang, tr }) {
+  const [state, setState] = useState('idle')  // idle | working | on | msg
+  const [msg, setMsg] = useState('')
+  if (!pushSupported()) return null
+  const go = async () => {
+    setState('working')
+    const r = await notifyWhenAnswered(code, lang)
+    if (r === 'ok') { setState('on'); return }
+    setMsg(tr(r === 'blocked' ? 'notify_blocked' : r === 'ios' ? 'notify_ios' : r === 'unsupported' ? 'notify_unsupported' : 'notify_err'))
+    setState('msg')
+  }
+  if (state === 'on') return <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.green, margin:'12px 0 0', fontWeight:700 }}>{tr('notify_on')}</p>
+  return (
+    <div style={{ marginTop:12 }}>
+      <button onClick={go} disabled={state === 'working'} className="uk-press" style={{ ...ghostBtn, borderColor:Y.gold, color:Y.gold }}>
+        {state === 'working' ? tr('notify_working') : tr('notify_cta')}
+      </button>
+      {state === 'msg' && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'8px 0 0', lineHeight:1.5 }}>{msg}</p>}
+    </div>
+  )
+}
+
 function AnsweredList({ tr, answered, isDesktop }) {
   const [hidden, setHidden] = useState(() => { try { return localStorage.getItem('ukweli_qs_hidden') === '1' } catch { return false } })
   const [shown, setShown] = useState(QS_STEP)
