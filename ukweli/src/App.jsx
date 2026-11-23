@@ -800,33 +800,19 @@ function AskNudge({ q, lang, tr, answered, isDesktop }) {
   const matches = useMemo(() => {
     const toks = QTOKENS(query)
     const ql = query.toLowerCase()
-    if (toks.length < 1 || query.length < 5) return []
-    // Keyword-sensitive: score against the curated keywords + the question only,
-    // never the long answer body (which made stray single words trigger). A
-    // multi-word keyword ("same sex", "morning after") counts strongly; a bare
-    // topic word less so; and a minimum signal is required before anything shows.
-    const scoreOf = (fields, keywords) => {
-      const text = fields.filter(Boolean).join(' ').toLowerCase()
-      let s = 0
-      for (const t of toks) if (text.includes(t)) s++
-      for (const kw of (keywords || [])) { const k = String(kw).toLowerCase(); if (k && ql.includes(k)) s += k.includes(' ') ? 2 : 1.5 }
-      return s
-    }
-    const MIN = 2
+    if (query.length < 5) return []
+    // Strict + keyword-sensitive: only the curated knowledge base, and only when
+    // the query holds a multi-word keyword phrase, or at least two keyword hits.
+    // The question text adds ranking weight only; it never triggers the dot.
     const pool = []
-    for (const c of cards) {
-      if (c.language && c.language !== lang && c.language !== 'en') continue
-      const s = scoreOf([c.claim, c.what_to_do], [])
-      if (s >= MIN) pool.push({ kind:'myth', id:'m'+c.id, score:s, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
-    }
     for (const k of know) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
-      const s = scoreOf([k.question], k.keywords)
-      if (s >= MIN) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: s + 0.3, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
-    }
-    for (const a of answered) {
-      const s = scoreOf([a.question], [])
-      if (s >= MIN) pool.push({ kind:'ans', id:'a'+a.id, score:s, urg:0, title:a.question, body:a.answer, by:a.answered_by })
+      let phrase = 0, word = 0
+      for (const kw of (k.keywords || [])) { const kk = String(kw).toLowerCase(); if (kk && ql.includes(kk)) { if (kk.includes(' ')) phrase++; else word++ } }
+      if (!(phrase >= 1 || (phrase + word) >= 2)) continue
+      let qtok = 0; const qlc = (k.question || '').toLowerCase(); for (const t of toks) if (qlc.includes(t)) qtok++
+      const score = phrase * 2 + word * 1.5 + qtok * 0.4 + (URGENT_TOPICS[k.topic] || 0) * 0.2
+      pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
   }, [cards, know, answered, lang, query])
@@ -972,33 +958,19 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
   const matches = useMemo(() => {
     const toks = QTOKENS(query)
     const ql = query.toLowerCase()
-    if (toks.length < 1 || query.length < 5) return []
-    // Keyword-sensitive: score against the curated keywords + the question only,
-    // never the long answer body (which made stray single words trigger). A
-    // multi-word keyword ("same sex", "morning after") counts strongly; a bare
-    // topic word less so; and a minimum signal is required before anything shows.
-    const scoreOf = (fields, keywords) => {
-      const text = fields.filter(Boolean).join(' ').toLowerCase()
-      let s = 0
-      for (const t of toks) if (text.includes(t)) s++
-      for (const kw of (keywords || [])) { const k = String(kw).toLowerCase(); if (k && ql.includes(k)) s += k.includes(' ') ? 2 : 1.5 }
-      return s
-    }
-    const MIN = 2
+    if (query.length < 5) return []
+    // Strict + keyword-sensitive: only the curated knowledge base, and only when
+    // the query holds a multi-word keyword phrase, or at least two keyword hits.
+    // The question text adds ranking weight only; it never triggers the dot.
     const pool = []
-    for (const c of cards) {
-      if (c.language && c.language !== lang && c.language !== 'en') continue
-      const s = scoreOf([c.claim, c.what_to_do], [])
-      if (s >= MIN) pool.push({ kind:'myth', id:'m'+c.id, score:s, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
-    }
     for (const k of know) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
-      const s = scoreOf([k.question], k.keywords)
-      if (s >= MIN) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: s + 0.3, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
-    }
-    for (const a of answered) {
-      const s = scoreOf([a.question], [])
-      if (s >= MIN) pool.push({ kind:'ans', id:'a'+a.id, score:s, urg:0, title:a.question, body:a.answer, by:a.answered_by })
+      let phrase = 0, word = 0
+      for (const kw of (k.keywords || [])) { const kk = String(kw).toLowerCase(); if (kk && ql.includes(kk)) { if (kk.includes(' ')) phrase++; else word++ } }
+      if (!(phrase >= 1 || (phrase + word) >= 2)) continue
+      let qtok = 0; const qlc = (k.question || '').toLowerCase(); for (const t of toks) if (qlc.includes(t)) qtok++
+      const score = phrase * 2 + word * 1.5 + qtok * 0.4 + (URGENT_TOPICS[k.topic] || 0) * 0.2
+      pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
   }, [cards, know, answered, lang, query])
