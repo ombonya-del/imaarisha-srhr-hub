@@ -34,6 +34,7 @@ const Y = {
   glass2:'var(--uk-glass2)',
   tint:  'var(--uk-tint)',   // faint fill (chips, segmented controls)
   dim:   'var(--uk-dim)',    // unlit stars
+  tag:   'var(--uk-tag)',   // brand strapline — white on the bold dark palettes
   disp:  "'Space Grotesk', system-ui, sans-serif",
   sans:  "'Plus Jakarta Sans', system-ui, sans-serif",
 }
@@ -46,7 +47,7 @@ const THEME_CSS = `
   :root, [data-uk-theme="dark"] {
     --uk-bg:#0A2620; --uk-card:#0F3329; --uk-card2:#17463A; --uk-line:rgba(214,243,230,0.12);
     --uk-green:#3FE0A0; --uk-teal:#2FD0C4; --uk-coral:#FF6F61; --uk-gold:#F2C75C; --uk-rose:#FF5C8A;
-    --uk-txt:#F1F5EE; --uk-mut:#88AE9D; --uk-on:#06241C;
+    --uk-txt:#F1F5EE; --uk-mut:#88AE9D; --uk-on:#06241C; --uk-tag:#3FE0A0;
     --uk-glass:rgba(10,38,32,0.82); --uk-glass2:rgba(10,38,32,0.95);
     --uk-tint:rgba(255,255,255,0.06); --uk-dim:rgba(255,255,255,0.2); --uk-scroll:#1d4a3c;
     --uk-glow1:rgba(47,208,196,0.18); --uk-glow2:rgba(63,224,160,0.14); --uk-glow3:rgba(255,111,97,0.12);
@@ -57,7 +58,7 @@ const THEME_CSS = `
   [data-uk-theme="light"] {
     --uk-bg:#F3F8F4; --uk-card:#FFFFFF; --uk-card2:#E6F0E9; --uk-line:rgba(10,38,32,0.13);
     --uk-green:#0B8459; --uk-teal:#0A7A73; --uk-coral:#C23B2A; --uk-gold:#8F6200; --uk-rose:#BF2A5E;
-    --uk-txt:#10261F; --uk-mut:#4A675B; --uk-on:#FFFFFF;
+    --uk-txt:#10261F; --uk-mut:#4A675B; --uk-on:#FFFFFF; --uk-tag:#0B8459;
     --uk-glass:rgba(243,248,244,0.86); --uk-glass2:rgba(255,255,255,0.96);
     --uk-tint:rgba(10,38,32,0.05); --uk-dim:rgba(10,38,32,0.18); --uk-scroll:#B7CEC0;
     --uk-glow1:rgba(10,122,115,0.09); --uk-glow2:rgba(11,132,89,0.08); --uk-glow3:rgba(194,59,42,0.06);
@@ -65,9 +66,49 @@ const THEME_CSS = `
     --uk-map-ink:#10261F; --uk-map-ink-hi:#FFFFFF;
     color-scheme: light;
   }
+  [data-uk-palette="ink"][data-uk-theme="dark"] {
+    --uk-bg:#0E1016; --uk-card:#171A24; --uk-card2:#20242F; --uk-line:rgba(255,255,255,.10); --uk-green:#D4537E; --uk-teal:#8A93D6; --uk-coral:#FF6F61; --uk-gold:#8A93D6; --uk-rose:#D4537E; --uk-txt:#ECEDF2; --uk-mut:#868CA0; --uk-on:#0E1016; --uk-tag:#FFFFFF; --uk-glass:rgba(14,16,22,0.82); --uk-glass2:rgba(14,16,22,0.96); --uk-tint:rgba(255,255,255,0.06); --uk-dim:rgba(255,255,255,0.2); --uk-scroll:#20242F; --uk-glow1:rgba(138,147,214,0.16); --uk-glow2:rgba(212,83,126,0.14); --uk-glow3:rgba(255,111,97,0.12); --uk-map0:#20242F; --uk-map1:#5F344B; --uk-map2:#9E4566; --uk-map3:#D4537E; --uk-map-edge:#0E1016; --uk-map-ink:#ECEDF2; --uk-map-ink-hi:#0E1016;
+    color-scheme: dark;
+  }
+  [data-uk-palette="ink"][data-uk-theme="light"] {
+    --uk-bg:#F6F4F8; --uk-card:#FFFFFF; --uk-card2:#ECEAF2; --uk-line:rgba(14,16,22,.12); --uk-green:#B13463; --uk-teal:#4A54A6; --uk-coral:#C23B2A; --uk-gold:#4A54A6; --uk-rose:#B13463; --uk-txt:#16181F; --uk-mut:#5A6072; --uk-on:#FFFFFF; --uk-tag:#16181F; --uk-glass:rgba(246,244,248,0.82); --uk-glass2:rgba(246,244,248,0.96); --uk-tint:rgba(10,20,30,0.05); --uk-dim:rgba(10,20,30,0.18); --uk-scroll:#ECEAF2; --uk-glow1:rgba(74,84,166,0.16); --uk-glow2:rgba(177,52,99,0.14); --uk-glow3:rgba(194,59,42,0.12); --uk-map0:#ECEAF2; --uk-map1:#D7AAC0; --uk-map2:#C36B8E; --uk-map3:#B13463; --uk-map-edge:#F6F4F8; --uk-map-ink:#16181F; --uk-map-ink-hi:#FFFFFF;
+    color-scheme: light;
+  }
+  [data-uk-palette="aubergine"][data-uk-theme="dark"] {
+    --uk-bg:#171020; --uk-card:#221733; --uk-card2:#2C2040; --uk-line:rgba(255,255,255,.10); --uk-green:#DE7350; --uk-teal:#C98BA6; --uk-coral:#FF6F61; --uk-gold:#C98BA6; --uk-rose:#DE7350; --uk-txt:#F1EAF1; --uk-mut:#9B8CA6; --uk-on:#171020; --uk-tag:#FFFFFF; --uk-glass:rgba(23,16,32,0.82); --uk-glass2:rgba(23,16,32,0.96); --uk-tint:rgba(255,255,255,0.06); --uk-dim:rgba(255,255,255,0.2); --uk-scroll:#2C2040; --uk-glow1:rgba(201,139,166,0.16); --uk-glow2:rgba(222,115,80,0.14); --uk-glow3:rgba(255,111,97,0.12); --uk-map0:#2C2040; --uk-map1:#6A3D46; --uk-map2:#A95A4B; --uk-map3:#DE7350; --uk-map-edge:#171020; --uk-map-ink:#F1EAF1; --uk-map-ink-hi:#171020;
+    color-scheme: dark;
+  }
+  [data-uk-palette="aubergine"][data-uk-theme="light"] {
+    --uk-bg:#F8F4F6; --uk-card:#FFFFFF; --uk-card2:#F0E9EF; --uk-line:rgba(23,16,32,.12); --uk-green:#BE4F2B; --uk-teal:#A4476B; --uk-coral:#C23B2A; --uk-gold:#A4476B; --uk-rose:#BE4F2B; --uk-txt:#241A2E; --uk-mut:#6E6076; --uk-on:#FFFFFF; --uk-tag:#241A2E; --uk-glass:rgba(248,244,246,0.82); --uk-glass2:rgba(248,244,246,0.96); --uk-tint:rgba(10,20,30,0.05); --uk-dim:rgba(10,20,30,0.18); --uk-scroll:#F0E9EF; --uk-glow1:rgba(164,71,107,0.16); --uk-glow2:rgba(190,79,43,0.14); --uk-glow3:rgba(194,59,42,0.12); --uk-map0:#F0E9EF; --uk-map1:#DEB3AA; --uk-map2:#CD7D66; --uk-map3:#BE4F2B; --uk-map-edge:#F8F4F6; --uk-map-ink:#241A2E; --uk-map-ink-hi:#FFFFFF;
+    color-scheme: light;
+  }
+  [data-uk-palette="slate"][data-uk-theme="dark"] {
+    --uk-bg:#14161C; --uk-card:#1E212A; --uk-card2:#282C37; --uk-line:rgba(255,255,255,.10); --uk-green:#CE6F84; --uk-teal:#6FA39F; --uk-coral:#FF6F61; --uk-gold:#6FA39F; --uk-rose:#CE6F84; --uk-txt:#ECEEF2; --uk-mut:#868C98; --uk-on:#14161C; --uk-tag:#FFFFFF; --uk-glass:rgba(20,22,28,0.82); --uk-glass2:rgba(20,22,28,0.96); --uk-tint:rgba(255,255,255,0.06); --uk-dim:rgba(255,255,255,0.2); --uk-scroll:#282C37; --uk-glow1:rgba(111,163,159,0.16); --uk-glow2:rgba(206,111,132,0.14); --uk-glow3:rgba(255,111,97,0.12); --uk-map0:#282C37; --uk-map1:#624352; --uk-map2:#9C5B6D; --uk-map3:#CE6F84; --uk-map-edge:#14161C; --uk-map-ink:#ECEEF2; --uk-map-ink-hi:#14161C;
+    color-scheme: dark;
+  }
+  [data-uk-palette="slate"][data-uk-theme="light"] {
+    --uk-bg:#F5F6F8; --uk-card:#FFFFFF; --uk-card2:#EAECF0; --uk-line:rgba(20,22,28,.12); --uk-green:#B14E63; --uk-teal:#2F7D77; --uk-coral:#C23B2A; --uk-gold:#2F7D77; --uk-rose:#B14E63; --uk-txt:#16181C; --uk-mut:#5A6070; --uk-on:#FFFFFF; --uk-tag:#16181C; --uk-glass:rgba(245,246,248,0.82); --uk-glass2:rgba(245,246,248,0.96); --uk-tint:rgba(10,20,30,0.05); --uk-dim:rgba(10,20,30,0.18); --uk-scroll:#EAECF0; --uk-glow1:rgba(47,125,119,0.16); --uk-glow2:rgba(177,78,99,0.14); --uk-glow3:rgba(194,59,42,0.12); --uk-map0:#EAECF0; --uk-map1:#D6B5BF; --uk-map2:#C27D8D; --uk-map3:#B14E63; --uk-map-edge:#F5F6F8; --uk-map-ink:#16181C; --uk-map-ink-hi:#FFFFFF;
+    color-scheme: light;
+  }
 `
 
 // Saved choice wins; otherwise follow the phone's own light/dark setting.
+const PALETTES = [
+  { id:'evergreen', bg:'#0A2620', pri:'#3FE0A0' },
+  { id:'ink',       bg:'#0E1016', pri:'#D4537E' },
+  { id:'aubergine', bg:'#171020', pri:'#DE7350' },
+  { id:'slate',     bg:'#14161C', pri:'#CE6F84' },
+]
+function usePalette() {
+  const saved = () => { try { return localStorage.getItem('ukweli_palette') } catch { return null } }
+  const [palette, setPaletteState] = useState(() => saved() || 'evergreen')
+  useEffect(() => {
+    document.documentElement.setAttribute('data-uk-palette', palette)
+  }, [palette])
+  const setPalette = (id) => { try { localStorage.setItem('ukweli_palette', id) } catch {} ; setPaletteState(id) }
+  return [palette, setPalette]
+}
+
 function useTheme() {
   const saved = () => { try { return localStorage.getItem('ukweli_theme') } catch { return null } }
   const system = () => (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
@@ -144,6 +185,7 @@ const navLabel = (tr, id) => tr(id === 'ask' ? 'ask_anon' : id === 'fika' ? 'fik
 export default function App() {
   const { tr, lang, setLang } = useLang()
   const [theme, toggleTheme] = useTheme()
+  const [palette, setPalette] = usePalette()
   const [fbOpen, setFbOpen] = useState(false)
   const [fbSent, setFbSent] = useState(false)
   // Tab + open item live in the URL hash so the reader keeps their place.
@@ -229,7 +271,7 @@ export default function App() {
               </span>
               <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:8, fontWeight:700,
                 letterSpacing: isDesktop?'.26em':'.18em', whiteSpace:'nowrap',
-                textTransform:'uppercase', color:Y.green, marginTop:5 }}>{tr('brand_sub')}</span>
+                textTransform:'uppercase', color:Y.tag, marginTop:5 }}>{tr('brand_sub')}</span>
             </div>
           </div>
 
@@ -252,6 +294,21 @@ export default function App() {
           )}
 
           <div className="uk-hdr-r" style={{ display:'flex', alignItems:'center', gap: isDesktop?8:6, flexShrink:0 }}>
+            <div className="uk-palrow" role="group" aria-label={tr('theme_pick') || 'Choose colour theme'}
+              style={{ display:'flex', alignItems:'center', gap: isDesktop?6:5, marginRight:2 }}>
+              {PALETTES.map(pl => {
+                const on = palette === pl.id
+                return (
+                  <button key={pl.id} onClick={()=>setPalette(pl.id)} className="uk-press"
+                    aria-label={pl.id} aria-pressed={on} title={pl.id.charAt(0).toUpperCase()+pl.id.slice(1)}
+                    style={{ width: isDesktop?18:16, height: isDesktop?18:16, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
+                      background:`radial-gradient(circle at 33% 30%, ${pl.pri} 0 48%, ${pl.bg} 49% 100%)`,
+                      border: on ? `2px solid ${Y.txt}` : `1px solid ${Y.line}`,
+                      boxShadow: on ? `0 0 0 2px ${Y.bg}, 0 0 0 3px ${pl.pri}` : 'none',
+                      transform: on ? 'scale(1.08)' : 'none', transition:'transform .12s, box-shadow .12s' }} />
+                )
+              })}
+            </div>
             <button onClick={toggleTheme} className="uk-press"
               aria-label={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')} title={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')}
               style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width: isDesktop?32:28, height: isDesktop?32:28,

@@ -689,3 +689,18 @@ const MYSHENG_ABOUT = { en:{ sheng_about:'About' }, sw:{ sheng_about:'Kuhusu' },
 for (const l of Object.keys(MYSHENG_ABOUT)) Object.assign(STRINGS[l], MYSHENG_ABOUT[l])
 const QUICKPILL = { en:{ quick_pill:'💡 Answer — tap' }, sw:{ quick_pill:'💡 Jibu — gusa' }, sheng:{ quick_pill:'💡 Jibu — bonyeza' } }
 for (const l of Object.keys(QUICKPILL)) Object.assign(STRINGS[l], QUICKPILL[l])
+// Brand strapline (tag under the logo) — localised
+const BRAND = {
+  en:    { brand_sub: 'Fresh & Friendly' },
+  sw:    { brand_sub: 'Safi na Kirafiki' },
+  sheng: { brand_sub: 'Freshi na Poa' },
+}
+for (const l of Object.keys(BRAND)) Object.assign(STRINGS[l], BRAND[l])
+
+// Colour-theme picker label (per-device palette choice)
+const THEMEPICK = {
+  en:    { theme_pick: 'Choose colour theme' },
+  sw:    { theme_pick: 'Chagua rangi ya mandhari' },
+  sheng: { theme_pick: 'Chagua rangi ya theme' },
+}
+for (const l of Object.keys(THEMEPICK)) Object.assign(STRINGS[l], THEMEPICK[l])
