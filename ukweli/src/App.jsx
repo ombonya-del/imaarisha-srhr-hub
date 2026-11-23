@@ -192,6 +192,9 @@ export default function App() {
         @media (prefers-reduced-motion: reduce) { .uk-card { animation: none } .uk-press { transition: none } }
         .uk-press { transition: transform .12s ease, box-shadow .15s ease, background .15s ease; }
         .uk-press:active { transform: scale(.985); }
+        @keyframes uk-pulse { 0%{ box-shadow:0 0 0 0 rgba(255,122,107,.65) } 70%{ box-shadow:0 0 0 12px rgba(255,122,107,0) } 100%{ box-shadow:0 0 0 0 rgba(255,122,107,0) } }
+        .uk-pulse { animation: uk-pulse 1.5s infinite; }
+        @media (prefers-reduced-motion: reduce) { .uk-pulse { animation: none } }
         .uk-navlink { transition: color .15s ease, border-color .15s ease; }
         /* small phones: tighten the header so the theme button fits beside the wordmark */
         @media (max-width: 400px) {
@@ -589,11 +592,14 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
               <li>{tr('ask_how_1')}</li><li>{tr('ask_how_2')}</li><li>{tr('ask_how_3')}</li>
             </ol>
             <label htmlFor="uk-q" style={{ position:'absolute', left:-9999 }}>{tr('ask_cta')}</label>
-            <textarea id="uk-q" value={q} onChange={e=>{ setQ(e.target.value); if (err) setErr('') }}
-              placeholder={tr('ask_placeholder')} maxLength={2000}
-              style={{ width:'100%', minHeight:110, resize:'vertical', background:Y.bg,
-                border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
-                fontFamily:Y.sans, fontSize:15, outline:'none', lineHeight:1.5 }}/>
+            <div style={{ position:'relative' }}>
+              <textarea id="uk-q" value={q} onChange={e=>{ setQ(e.target.value); if (err) setErr('') }}
+                placeholder={tr('ask_placeholder')} maxLength={2000}
+                style={{ width:'100%', minHeight:110, resize:'vertical', background:Y.bg,
+                  border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
+                  fontFamily:Y.sans, fontSize:15, outline:'none', lineHeight:1.5 }}/>
+              <UrgentNudge q={q} lang={lang} tr={tr}/>
+            </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
               {canSpeak && (
                 <button type="button" onClick={toggleMic} className="uk-press" aria-pressed={listening}
@@ -734,12 +740,92 @@ function EmergencyCard({ tr }) {
   )
 }
 
+const TIER2_TERMS = ['unprotected','condom broke','condom burst','condom bust','morning after','morning-after','emergency pill','plan b',' pep','exposed to hiv','hiv exposure','might be pregnant','think i am pregnant',"think i'm pregnant",'missed my period','late period','missed period','missed pills','missed my pills','forgot my pill','forgot the pill','slept with','had sex last night','unprotected sex','came inside','pulled out','overdose','took too many','bila condom','condom ilipasuka','kidonge cha dharura','mimba','sijaona period','nimechelewa period','nililala na','ngono bila kinga','ngono jana']
+const containsAny = (t, arr) => arr.some(w => t.includes(w))
+// Rank by informational urgency, not only physical danger: a question can be a
+// "danger now" (safety) or "time-sensitive" (the answer only helps if acted on
+// in hours) — both surface as a pulsing nudge on the box the asker taps open.
+function urgentTier(query) {
+  const t = (query || '').toLowerCase()
+  if (t.trim().length < 4) return null
+  if (containsAny(t, EMERGENCY_TERMS)) return 'danger'
+  if (containsAny(t, TIER2_TERMS)) return 'time'
+  return null
+}
+const URGENT_TOPICS = { emergency:3, hiv:2, pregnancy:2, 'safer-sex':2, 'harm-reduction':2, safety:2, consent:1 }
+
+function TimeSensitiveCard({ tr }) {
+  const rows = [['time_ec_h','time_ec_b'], ['time_pep_h','time_pep_b'], ['time_std_h','time_std_b']]
+  return (
+    <div role="alert" style={{ background:Y.card, border:`1px solid ${Y.gold}`, borderLeft:`4px solid ${Y.gold}`, borderRadius:16, padding:16 }}>
+      <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:700, color:Y.gold, margin:'0 0 4px' }}>{tr('time_title')}</p>
+      <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, margin:'0 0 12px', lineHeight:1.55 }}>{tr('time_sub')}</p>
+      <div style={{ display:'grid', gap:8 }}>
+        {rows.map(([h, b]) => (
+          <div key={h} style={{ background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 13px' }}>
+            <p style={{ fontFamily:Y.disp, fontSize:13, fontWeight:700, color:Y.txt, margin:0 }}>{tr(h)}</p>
+            <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'3px 0 0', lineHeight:1.5 }}>{tr(b)}</p>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, fontWeight:700, margin:'12px 0 0', lineHeight:1.5 }}>{tr('time_go')}</p>
+      <a href="tel:0800724848" className="uk-press" style={{ display:'inline-flex', alignItems:'center', gap:7, marginTop:10,
+        textDecoration:'none', background:Y.green, color:Y.on, borderRadius:12, padding:'10px 14px', fontFamily:Y.disp, fontSize:13, fontWeight:700 }}>
+        <Icon name="phone" size={15} color={Y.on}/> NASCOP Uliza · 0800 724 848
+      </a>
+    </div>
+  )
+}
+
+// The two-step nudge: a red pulsing pill sits on the Ask box; tapping it opens
+// the matching card centred at eye level, instead of burying it down the page.
+function UrgentNudge({ q, lang, tr }) {
+  const [open, setOpen] = useState(false)
+  const tier = urgentTier(q)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+  useEffect(() => { if (!tier) setOpen(false) }, [tier])
+  if (!tier) return null
+  return (
+    <>
+      <button type="button" onClick={()=>setOpen(true)} aria-label={tr('urgent_pill')}
+        className="uk-press uk-pulse"
+        style={{ position:'absolute', right:10, bottom:10, display:'inline-flex', alignItems:'center', gap:7,
+          background:Y.coral, color:'#fff', border:'none', borderRadius:999, padding:'7px 12px',
+          fontFamily:Y.disp, fontSize:12, fontWeight:700, cursor:'pointer', zIndex:3 }}>
+        <span aria-hidden="true" style={{ width:8, height:8, borderRadius:'50%', background:'#fff' }}/> {tr('urgent_pill')}
+      </button>
+      {open && (
+        <div role="dialog" aria-modal="true" onClick={()=>setOpen(false)}
+          style={{ position:'fixed', inset:0, background:'rgba(3,15,12,.6)', zIndex:1000,
+            display:'flex', justifyContent:'center', alignItems:'flex-start', padding:'12vh 16px 16px', overflowY:'auto' }}>
+          <div onClick={e=>e.stopPropagation()} style={{ width:'100%', maxWidth:440 }}>
+            {tier === 'danger' ? <EmergencyCard tr={tr}/> : <TimeSensitiveCard tr={tr}/>}
+            <button type="button" onClick={()=>setOpen(false)} className="uk-press"
+              style={{ width:'100%', marginTop:10, background:Y.card2, border:`1px solid ${Y.line}`, color:Y.txt,
+                fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'12px 0', borderRadius:12, cursor:'pointer' }}>
+              {tr('urgent_close')}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
   const [cards, setCards] = useState([])
+  const [know, setKnow] = useState([])
   const [openId, setOpenId] = useState(null)
-  useEffect(() => { sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || [])) }, [])
+  useEffect(() => {
+    sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || []))
+    sb.from('ukweli_knowledge').select('*').eq('active', true).then(({ data }) => setKnow(data || []))
+  }, [])
   const query = (q || '').trim()
-  const emg = query.length >= 4 && isEmergency(query)
   const matches = useMemo(() => {
     const toks = QTOKENS(query)
     if (toks.length < 1 || query.length < 6) return []
@@ -748,24 +834,29 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
       if (c.language && c.language !== lang && c.language !== 'en') continue
       const hay = [c.claim, c.truth, c.what_to_do, c.why_it_feels_true].filter(Boolean).join(' ').toLowerCase()
       let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, title:c.claim, body:c.truth, extra:c.what_to_do })
+      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
+    }
+    for (const k of know) {
+      if (k.language && k.language !== lang && k.language !== 'en') continue
+      const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url })
     }
     for (const a of answered) {
       const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
       let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, title:a.question, body:a.answer, by:a.answered_by })
+      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, urg:0, title:a.question, body:a.answer, by:a.answered_by })
     }
-    return pool.sort((x, y) => y.score - x.score).slice(0, 3)
-  }, [cards, answered, lang, query])
+    return pool.sort((x, y) => (y.urg - x.urg) || (y.score - x.score)).slice(0, 3)
+  }, [cards, know, answered, lang, query])
 
-  if (!emg && matches.length === 0) {
+  if (matches.length === 0) {
     if (QTOKENS(query).length >= 2 && query.length >= 12)
       return <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'10px 2px 0', lineHeight:1.5, fontStyle:'italic' }}>{tr('quick_none')}</p>
     return null
   }
   return (
     <div style={{ margin:'12px 0 0' }}>
-      {emg && <EmergencyCard tr={tr}/>}
       {matches.length > 0 && <>
         <p style={{ fontFamily:Y.disp, fontSize:13, fontWeight:700, color:Y.green, margin:'4px 2px 2px' }}>{tr('quick_title')}</p>
         <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'0 2px 8px', lineHeight:1.5 }}>{tr('quick_sub')}</p>
@@ -779,7 +870,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
                     background:'none', border:'none', cursor:'pointer', padding:'12px 13px', color:Y.txt }}>
                   <span style={{ flex:1 }}>
                     <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase',
-                      color: m.kind === 'myth' ? Y.gold : Y.green }}>{m.kind === 'myth' ? tr('quick_myth') : tr('quick_answered')}</span>
+                      color: m.kind === 'myth' ? Y.gold : m.kind === 'know' ? Y.teal : Y.green }}>{m.kind === 'myth' ? tr('quick_myth') : m.kind === 'know' ? (m.by || 'Nurse Charity') : tr('quick_answered')}</span>
                     <span style={{ display:'block', fontFamily:Y.disp, fontSize:14.5, fontWeight:600, lineHeight:1.3, marginTop:3 }}>{m.title}</span>
                   </span>
                   <span aria-hidden="true" style={{ color:Y.green, fontSize:18, lineHeight:1, flexShrink:0, transform: open ? 'rotate(45deg)' : 'none', transition:'transform .15s' }}>+</span>
@@ -788,7 +879,13 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
                   <div style={{ padding:'0 13px 12px' }}>
                     <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.88, whiteSpace:'pre-line' }}>{m.body}</p>
                     {m.extra && <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.6, margin:'8px 0 0', opacity:.8 }}><b>{tr('what_to_do')}:</b> {m.extra}</p>}
-                    {m.by && <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>}
+                    {m.kind === 'know' ? (
+                      <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'10px 0 0', fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
+                        {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {tr('latest_sources')} ({m.source}) ↗</a>}
+                      </p>
+                    ) : m.by ? (
+                      <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>
+                    ) : null}
                   </div>
                 )}
               </div>

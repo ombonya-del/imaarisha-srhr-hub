@@ -67,7 +67,7 @@ export default function Admin({ session, bottomTabs }) {
       ['cdash','📈 Dashboard'], ['clib','🎬 Library'], ['cvoices','🔗 Voices & links'], ['creports','📝 Reports'], ['crapid','⚡ Rapid response'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
+      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['knowledge','🌿 Quick answers'], ['mailbag','📨 Mailbag'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
   ]
   const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
   const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
@@ -108,6 +108,8 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'radar'     && <RadarCurate/>}
       {view === 'myths'     && <MythsDesk/>}
       {view === 'learn'     && <LearnDesk/>}
+      {view === 'knowledge' && <KnowledgeDesk/>}
+      {view === 'mailbag'   && <MailbagDesk/>}
       {view === 'latest'    && <LatestDesk/>}
       {view === 'community' && <CommunityDesk/>}
       {view === 'usage'     && <UkweliUsage/>}
@@ -1154,6 +1156,10 @@ function UlizaDesk({ session, onChange }) {
     toast('Hidden — the asker is told to contact One2One 1190 or a clinic','gold'); if (focus === q.id) setFocus(null); load()
   }
 
+  const addToMailbag = async (q) => {
+    const { error } = await sb.from('podcast_mailbag').insert({ source_question_id: q.id, title: (q.question || '').trim().slice(0, 120), status: 'idea' })
+    if (error) toast(error.message, 'red'); else toast('📨 Added to the podcast mailbag', 'green')
+  }
   const LANG = { en:'English', sw:'Kiswahili', sheng:'Sheng' }
   const list = pending || []
   return (
@@ -1205,6 +1211,7 @@ function UlizaDesk({ session, onChange }) {
               {busy===q.id ? 'Publishing…' : (q.keep_private ? '✓ Send answer' : '✓ Publish answer')}
             </Btn>
             <Btn small ghost onClick={()=>hide(q)}>Hide</Btn>
+            <Btn small ghost color={C.sky} onClick={()=>addToMailbag(q)}>📨 Mailbag</Btn>
             {prevDraft[q.id] && (
               <Btn small ghost onClick={()=>{ setAnswers(a => ({ ...a, [q.id]: prevDraft[q.id] })); setAiDrafted(m => { const n = { ...m }; delete n[q.id]; return n }); setPrevDraft(p => { const n = { ...p }; delete n[q.id]; return n }) }}>
                 ↩ Restore my own draft
@@ -2074,6 +2081,157 @@ function FactCard({ color, chips = [], who, url, urlLabel }) {
         </p>
       )}
       {url && <div style={{ marginTop: (shown.length || who) ? 8 : 0 }}><LinkPreview url={url} color={color} label={urlLabel}/></div>}
+    </div>
+  )
+}
+
+// ── 🌿 Quick answers — the instant knowledge base (Nov 2026) ─────────────────
+const EMPTY_KNOW = { slug:'', topic:'', question:'', keywordsText:'', answer:'', byline:'Nurse Charity', source:'', source_url:'', language:'en', sort_order:0, sensitive:false, active:false }
+const KNOW_LANGS = [['en','English'],['sw','Kiswahili'],['sheng','Sheng']]
+function KnowledgeDesk() {
+  const [rows, setRows] = useState([])
+  const [form, setForm] = usePersisted('know.form', EMPTY_KNOW)
+  const [editId, setEditId] = usePersisted('know.editId', null)
+  const [lang, setLang] = usePersisted('know.lang', 'en')
+  const [busy, setBusy] = useState(false)
+  const load = () => sb.from('ukweli_knowledge').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+  const slugify = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48)
+  const save = async () => {
+    if (!form.question.trim() || !form.answer.trim()) { toast('Question and answer are required', 'red'); return }
+    const slug = (form.slug || '').trim() || slugify(form.question)
+    const keywords = (form.keywordsText || '').split(/[,\n]/).map(x => x.trim().toLowerCase()).filter(Boolean)
+    const payload = { slug, topic:form.topic.trim() || null, question:form.question.trim(), keywords, answer:form.answer.trim(),
+      byline:(form.byline || 'Nurse Charity').trim(), source:form.source.trim() || null, source_url:form.source_url.trim() || null,
+      language:form.language, sort_order:Number(form.sort_order) || 0, sensitive:!!form.sensitive, active:!!form.active }
+    setBusy(true)
+    let error
+    if (editId) ({ error } = await sb.from('ukweli_knowledge').update(payload).eq('id', editId))
+    else ({ error } = await sb.from('ukweli_knowledge').insert(payload))
+    setBusy(false)
+    if (error) { toast(/duplicate|unique/.test(error.message) ? 'That slug is taken — change it' : error.message, 'red'); return }
+    toast(editId ? '✓ Updated' : '✓ Added', 'green'); setForm(EMPTY_KNOW); setEditId(null); load()
+  }
+  const editRow = (r) => { setEditId(r.id); setForm({ slug:r.slug || '', topic:r.topic || '', question:r.question || '', keywordsText:(r.keywords || []).join(', '), answer:r.answer || '', byline:r.byline || 'Nurse Charity', source:r.source || '', source_url:r.source_url || '', language:r.language || 'en', sort_order:r.sort_order || 0, sensitive:!!r.sensitive, active:!!r.active }); window.scrollTo({ top:0, behavior:'smooth' }) }
+  const reset = () => { setEditId(null); setForm(EMPTY_KNOW) }
+  const toggle = async (r) => { const { error } = await sb.from('ukweli_knowledge').update({ active: !r.active }).eq('id', r.id); if (error) toast(error.message, 'red'); else { toast(r.active ? 'Hidden' : '✓ Live', r.active ? 'gold' : 'green'); load() } }
+  const del = async (id) => { const { error } = await sb.from('ukweli_knowledge').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); if (editId === id) reset(); load() } }
+  const shown = rows.filter(r => r.language === lang)
+  const pending = rows.filter(r => !r.active).length
+  return (
+    <div>
+      <SectionLabel color={C.gold}>🌿 Quick answers — the instant knowledge base</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 6px' }}>
+        These show instantly under the Ask box when a young person types a matching question, under the
+        <strong style={{ color:C.txt }}> {form.byline || 'Nurse Charity'}</strong> byline. Nothing is AI-generated — you write or approve every word.
+        {pending > 0 && <strong style={{ color:C.gold }}> · {pending} awaiting review (not yet live)</strong>}
+      </p>
+      <p style={{ fontFamily:C.sans, fontSize:11.5, color:C.coral, lineHeight:1.55, margin:'0 0 14px' }}>
+        ⚠ Entries marked “sensitive” (identity, LGBTQ+, harm-reduction) should get the health <em>and</em> legal lead’s sign-off before you tick “live”.
+      </p>
+      <div style={{ background:C.card, border:`1px solid ${editId ? C.gold : C.line}`, borderRadius:12, padding:14, marginBottom:18 }}>
+        <input value={form.question} onChange={e=>setForm({ ...form, question:e.target.value })} placeholder="The question, in a young person's words *" style={inputStyle}/>
+        <textarea value={form.answer} onChange={e=>setForm({ ...form, answer:e.target.value })} placeholder="The answer Nurse Charity gives — warm, accurate, non-judgemental *" style={{ ...inputStyle, minHeight:90, marginTop:8 }}/>
+        <input value={form.keywordsText} onChange={e=>setForm({ ...form, keywordsText:e.target.value })} placeholder="Trigger keywords, comma-separated (e.g. prep, protect, hiv)" style={{ ...inputStyle, marginTop:8 }}/>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
+          <input value={form.topic} onChange={e=>setForm({ ...form, topic:e.target.value })} placeholder="Topic" style={{ ...inputStyle, width:140 }}/>
+          <input value={form.byline} onChange={e=>setForm({ ...form, byline:e.target.value })} placeholder="Byline" style={{ ...inputStyle, width:140 }}/>
+          <input value={form.source} onChange={e=>setForm({ ...form, source:e.target.value })} placeholder="Source (WHO…)" style={{ ...inputStyle, width:130 }}/>
+        </div>
+        <input value={form.source_url} onChange={e=>setForm({ ...form, source_url:e.target.value })} placeholder="Source link (optional)" style={{ ...inputStyle, marginTop:8 }}/>
+        <div style={{ display:'flex', gap:12, flexWrap:'wrap', alignItems:'center', margin:'10px 0' }}>
+          <select value={form.language} onChange={e=>setForm({ ...form, language:e.target.value })} style={{ ...inputStyle, width:'auto' }}>
+            {KNOW_LANGS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+          </select>
+          <input type="number" value={form.sort_order} onChange={e=>setForm({ ...form, sort_order:e.target.value })} placeholder="Order" style={{ ...inputStyle, width:84 }}/>
+          <label style={{ fontFamily:C.sans, fontSize:12, fontWeight:700, color:C.txt, display:'flex', alignItems:'center', gap:6 }}>
+            <input type="checkbox" checked={form.sensitive} onChange={e=>setForm({ ...form, sensitive:e.target.checked })}/> sensitive
+          </label>
+          <label style={{ fontFamily:C.sans, fontSize:12, fontWeight:700, color:C.txt, display:'flex', alignItems:'center', gap:6 }}>
+            <input type="checkbox" checked={form.active} onChange={e=>setForm({ ...form, active:e.target.checked })}/> live
+          </label>
+        </div>
+        <div style={{ display:'flex', gap:8 }}>
+          <Btn color={C.gold} onClick={save} disabled={busy || !form.question.trim() || !form.answer.trim()}>{busy ? 'Saving…' : (editId ? 'Save changes' : '＋ Add entry')}</Btn>
+          {editId && <Btn ghost color={C.mut} onClick={reset}>Cancel</Btn>}
+        </div>
+      </div>
+      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+        {KNOW_LANGS.map(([k,l]) => <Chip key={k} active={lang === k} onClick={()=>setLang(k)} color={C.gold}>{l}</Chip>)}
+      </div>
+      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>No entries in this language yet.</p>}
+      {shown.map(r => (
+        <div key={r.id} style={{ display:'flex', gap:10, justifyContent:'space-between', alignItems:'flex-start', background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${r.active ? C.mint : C.gold}`, borderRadius:10, padding:'10px 12px', marginBottom:8, opacity:r.active ? 1 : 0.65 }}>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:700, overflowWrap:'anywhere' }}>{r.question}</div>
+            <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginTop:2 }}>#{r.sort_order}{r.topic ? ' · ' + r.topic : ''}{r.source ? ' · ' + r.source : ''}{r.sensitive ? ' · ⚠ sensitive' : ''} · {r.active ? 'live' : 'pending review'}</div>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+            <Btn small color={r.active ? C.gold : C.mint} ghost={r.active} onClick={()=>toggle(r)}>{r.active ? 'Unpublish' : '✓ Go live'}</Btn>
+            <Btn small ghost color={C.gold} onClick={()=>editRow(r)}>Edit</Btn>
+            <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── 📨 Podcast mailbag — episode ideas sourced from the platform ─────────────
+const MAILBAG_STATUS = [['idea','💡 Idea'],['shortlisted','⭐ Shortlisted'],['planned','🗓 Planned'],['used','✅ Used'],['archived','🗄 Archived']]
+function MailbagDesk() {
+  const [rows, setRows] = useState(null)
+  const [form, setForm] = usePersisted('mailbag.form', { title:'', note:'', theme:'' })
+  const [busy, setBusy] = useState(false)
+  const [filter, setFilter] = usePersisted('mailbag.filter', 'all')
+  const load = () => sb.from('podcast_mailbag').select('*').order('created_at', { ascending:false }).then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+  const add = async () => {
+    if (!form.title.trim()) { toast('Give the idea a title', 'red'); return }
+    setBusy(true)
+    const { error } = await sb.from('podcast_mailbag').insert({ title:form.title.trim(), note:form.note.trim() || null, theme:form.theme.trim() || null, status:'idea' })
+    setBusy(false)
+    if (error) toast(error.message, 'red'); else { toast('📨 Added', 'green'); setForm({ title:'', note:'', theme:'' }); load() }
+  }
+  const setStatus = async (r, status) => { const { error } = await sb.from('podcast_mailbag').update({ status }).eq('id', r.id); if (error) toast(error.message, 'red'); else load() }
+  const del = async (id) => { const { error } = await sb.from('podcast_mailbag').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); load() } }
+  const shown = (rows || []).filter(r => filter === 'all' ? true : r.status === filter)
+  return (
+    <div>
+      <SectionLabel color={C.sky}>📨 Podcast mailbag — episode ideas from the platform</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 14px' }}>
+        A bucket of real questions and ideas worth turning into podcast episodes. Add one here, or tap “📨 Mailbag” on any
+        question in the Uliza desk to drop it in. Move ideas through to “Used” as episodes ship.
+      </p>
+      <div style={{ background:C.card, border:`1px solid ${C.line}`, borderRadius:12, padding:14, marginBottom:18 }}>
+        <input value={form.title} onChange={e=>setForm({ ...form, title:e.target.value })} placeholder="Idea / question title *" style={inputStyle}/>
+        <textarea value={form.note} onChange={e=>setForm({ ...form, note:e.target.value })} placeholder="The angle — why it's interesting, who it speaks to…" style={{ ...inputStyle, minHeight:60, marginTop:8 }}/>
+        <input value={form.theme} onChange={e=>setForm({ ...form, theme:e.target.value })} placeholder="Theme (optional)" style={{ ...inputStyle, marginTop:8 }}/>
+        <div style={{ marginTop:12 }}><Btn color={C.sky} onClick={add} disabled={busy || !form.title.trim()}>{busy ? 'Adding…' : '＋ Add idea'}</Btn></div>
+      </div>
+      <div style={{ display:'flex', gap:6, marginBottom:12, flexWrap:'wrap' }}>
+        <Chip active={filter === 'all'} onClick={()=>setFilter('all')} color={C.sky}>All</Chip>
+        {MAILBAG_STATUS.map(([k,l]) => <Chip key={k} active={filter === k} onClick={()=>setFilter(k)} color={C.sky}>{l}</Chip>)}
+      </div>
+      {rows === null && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Loading…</p>}
+      {rows !== null && shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>Nothing here yet.</p>}
+      {shown.map(r => (
+        <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${C.sky}`, borderRadius:12, padding:14, marginBottom:9 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', gap:10, flexWrap:'wrap' }}>
+            <p style={{ fontFamily:C.sans, fontSize:13.5, fontWeight:800, color:C.txt, margin:0, overflowWrap:'anywhere', flex:1, minWidth:0 }}>{r.title}</p>
+            <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>{timeAgo(r.created_at)}</span>
+          </div>
+          {r.note && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'6px 0 0', lineHeight:1.5, whiteSpace:'pre-line' }}>{r.note}</p>}
+          <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginTop:10 }}>
+            <select value={r.status} onChange={e=>setStatus(r, e.target.value)} style={{ ...inputStyle, width:'auto', padding:'6px 10px' }}>
+              {MAILBAG_STATUS.map(([k,l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+            {r.theme && <span style={{ fontFamily:C.sans, fontSize:11, color:C.teal, fontWeight:700 }}>#{r.theme}</span>}
+            <span style={{ flex:1 }}/>
+            <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

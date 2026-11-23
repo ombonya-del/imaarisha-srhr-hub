@@ -11,7 +11,8 @@
 // Secrets: supabase secrets set ASK_PUSH_WEBHOOK_SECRET=<long random string> --project-ref uwxtqyqyrhhxqagaqelg
 //          (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY are already set for send-push)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import webpush from "npm:web-push"
+import * as webpushMod from "npm:web-push@3.6.7"
+const webpush: any = (webpushMod as any).default ?? webpushMod
 
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { "Content-Type": "application/json" } })

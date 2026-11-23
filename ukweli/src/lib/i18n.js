@@ -63,7 +63,7 @@ const STRINGS = {
     quiz_submit: 'See my answers', quiz_saving: 'Checking…', quiz_score: 'You got {n} of {t} right',
     quiz_again: 'Try again', quiz_error: 'Couldn’t save just now — check your connection and try again.',
     quiz_privacy: 'No name, no number. Your answers only help us see if this information is working.',
-    verified_pro: 'Verified health professional',
+    verified_pro: 'Nurse Charity',
     // hebu fika
     fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Where do young people actually get treated well? Find youth-friendly SRHR services near you, rated by people like you — and share your own experience.',
@@ -148,7 +148,7 @@ const STRINGS = {
     quiz_submit: 'Ona majibu yangu', quiz_saving: 'Inakagua…', quiz_score: 'Umepata {n} kati ya {t}',
     quiz_again: 'Jaribu tena', quiz_error: 'Haijahifadhiwa — angalia mtandao kisha ujaribu tena.',
     quiz_privacy: 'Hakuna jina wala namba. Majibu yako yanatusaidia kujua kama taarifa hizi zinafanya kazi.',
-    verified_pro: 'Mtaalamu wa afya aliyethibitishwa',
+    verified_pro: 'Nurse Charity',
     // hebu fika
     fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Ni wapi vijana wanahudumiwa vizuri kweli? Pata huduma za SRHR rafiki kwa vijana karibu nawe, zilizotathminiwa na watu kama wewe — na ushiriki uzoefu wako.',
@@ -228,7 +228,7 @@ const STRINGS = {
     quiz_title: 'Quick check — unajua nini?',
     quiz_intro: 'Maswali machache, dakika 2, bila jina. Unaona majibu papo hapo.',
     quiz_submit: 'Nionyeshe majibu', quiz_score: 'Umepata {n} kati ya {t}',
-    verified_pro: 'Pro wa afya aliyeverify-iwa',
+    verified_pro: 'Nurse Charity',
     // hebu fika
     fika: 'Hebu Fika', fika_nav: 'Hebu Fika',
     fika_intro: 'Ni wapi vijana wanatreatiwa poa kweli? Pata SRHR services za youth karibu, zikiratiwa na watu kama wewe — na ushare experience yako.',
@@ -625,3 +625,43 @@ const QUICK = {
   },
 }
 for (const l of Object.keys(QUICK)) Object.assign(STRINGS[l], QUICK[l])
+
+// ── Team faces strip (Nov 2026) ─────────────────────────────────────────────
+const TEAM = {
+  en:    { team_strip: 'Real answers from Nurse Charity and the Ukweli team.' },
+  sw:    { team_strip: 'Majibu halisi kutoka kwa Nurse Charity na timu ya Ukweli.' },
+  sheng: { team_strip: 'Majibu za ukweli kutoka kwa Nurse Charity na team ya Ukweli.' },
+}
+for (const l of Object.keys(TEAM)) Object.assign(STRINGS[l], TEAM[l])
+
+// ── Urgency: pulsing nudge + time-sensitive card (Nov 2026) ─────────────────
+const URGENT = {
+  en: {
+    urgent_pill: 'Important — tap to read', urgent_close: 'Close',
+    time_title: 'This might be time-sensitive',
+    time_sub: 'Some things work best within hours, not days. Here’s what matters right now:',
+    time_ec_h: 'Emergency pill — prevent pregnancy', time_ec_b: 'Works up to 72–120 hours after sex. Sooner is better.',
+    time_pep_h: 'PEP — prevent HIV', time_pep_b: 'Must be started within 72 hours of exposure.',
+    time_std_h: 'Get checked', time_std_b: 'A youth-friendly clinic can sort EC, PEP and STI testing — free and confidential.',
+    time_go: 'Go to a clinic or pharmacy as soon as you can.',
+  },
+  sw: {
+    urgent_pill: 'Muhimu — gusa kusoma', urgent_close: 'Funga',
+    time_title: 'Hili laweza kuwa la haraka',
+    time_sub: 'Mambo mengine hufanya kazi vizuri ndani ya saa chache, si siku. Hiki ndicho cha muhimu sasa:',
+    time_ec_h: 'Kidonge cha dharura — kuzuia mimba', time_ec_b: 'Hufanya kazi hadi saa 72–120 baada ya ngono. Mapema ni bora.',
+    time_pep_h: 'PEP — kuzuia HIV', time_pep_b: 'Lazima ianze ndani ya saa 72 baada ya kuathiriwa.',
+    time_std_h: 'Pata kuchunguzwa', time_std_b: 'Kliniki rafiki kwa vijana inaweza kusaidia na EC, PEP na vipimo vya STI — bure na siri.',
+    time_go: 'Nenda kliniki au duka la dawa haraka uwezavyo.',
+  },
+  sheng: {
+    urgent_pill: 'Muhimu — bonyeza usome', urgent_close: 'Funga',
+    time_title: 'Hii inaweza kuwa ya haraka',
+    time_sub: 'Vitu zingine zinafanya kazi poa ndani ya masaa, si siku. Hii ndio muhimu sahii:',
+    time_ec_h: 'Kidonge ya emergency — kuzuia mimba', time_ec_b: 'Inafanya kazi hadi masaa 72–120 baada ya ngono. Mapema ni poa.',
+    time_pep_h: 'PEP — kuzuia HIV', time_pep_b: 'Lazima ianze ndani ya masaa 72 baada ya exposure.',
+    time_std_h: 'Pata checkup', time_std_b: 'Clinic friendly kwa vijana inaweza saidia na EC, PEP na STI test — free na siri.',
+    time_go: 'Enda clinic ama pharmacy haraka iwezekanavyo.',
+  },
+}
+for (const l of Object.keys(URGENT)) Object.assign(STRINGS[l], URGENT[l])
