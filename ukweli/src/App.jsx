@@ -799,24 +799,34 @@ function AskNudge({ q, lang, tr, answered, isDesktop }) {
   const query = (q || '').trim()
   const matches = useMemo(() => {
     const toks = QTOKENS(query)
-    if (toks.length < 1 || query.length < 6) return []
+    const ql = query.toLowerCase()
+    if (toks.length < 1 || query.length < 5) return []
+    // Keyword-sensitive: score against the curated keywords + the question only,
+    // never the long answer body (which made stray single words trigger). A
+    // multi-word keyword ("same sex", "morning after") counts strongly; a bare
+    // topic word less so; and a minimum signal is required before anything shows.
+    const scoreOf = (fields, keywords) => {
+      const text = fields.filter(Boolean).join(' ').toLowerCase()
+      let s = 0
+      for (const t of toks) if (text.includes(t)) s++
+      for (const kw of (keywords || [])) { const k = String(kw).toLowerCase(); if (k && ql.includes(k)) s += k.includes(' ') ? 2 : 1.5 }
+      return s
+    }
+    const MIN = 2
     const pool = []
     for (const c of cards) {
       if (c.language && c.language !== lang && c.language !== 'en') continue
-      const hay = [c.claim, c.truth, c.what_to_do, c.why_it_feels_true].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
+      const s = scoreOf([c.claim, c.what_to_do], [])
+      if (s >= MIN) pool.push({ kind:'myth', id:'m'+c.id, score:s, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
     }
     for (const k of know) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
-      const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
+      const s = scoreOf([k.question], k.keywords)
+      if (s >= MIN) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: s + 0.3, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     for (const a of answered) {
-      const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, urg:0, title:a.question, body:a.answer, by:a.answered_by })
+      const s = scoreOf([a.question], [])
+      if (s >= MIN) pool.push({ kind:'ans', id:'a'+a.id, score:s, urg:0, title:a.question, body:a.answer, by:a.answered_by })
     }
     return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
   }, [cards, know, answered, lang, query])
@@ -961,24 +971,34 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
   const query = (q || '').trim()
   const matches = useMemo(() => {
     const toks = QTOKENS(query)
-    if (toks.length < 1 || query.length < 6) return []
+    const ql = query.toLowerCase()
+    if (toks.length < 1 || query.length < 5) return []
+    // Keyword-sensitive: score against the curated keywords + the question only,
+    // never the long answer body (which made stray single words trigger). A
+    // multi-word keyword ("same sex", "morning after") counts strongly; a bare
+    // topic word less so; and a minimum signal is required before anything shows.
+    const scoreOf = (fields, keywords) => {
+      const text = fields.filter(Boolean).join(' ').toLowerCase()
+      let s = 0
+      for (const t of toks) if (text.includes(t)) s++
+      for (const kw of (keywords || [])) { const k = String(kw).toLowerCase(); if (k && ql.includes(k)) s += k.includes(' ') ? 2 : 1.5 }
+      return s
+    }
+    const MIN = 2
     const pool = []
     for (const c of cards) {
       if (c.language && c.language !== lang && c.language !== 'en') continue
-      const hay = [c.claim, c.truth, c.what_to_do, c.why_it_feels_true].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
+      const s = scoreOf([c.claim, c.what_to_do], [])
+      if (s >= MIN) pool.push({ kind:'myth', id:'m'+c.id, score:s, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
     }
     for (const k of know) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
-      const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
+      const s = scoreOf([k.question], k.keywords)
+      if (s >= MIN) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: s + 0.3, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     for (const a of answered) {
-      const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
-      let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, urg:0, title:a.question, body:a.answer, by:a.answered_by })
+      const s = scoreOf([a.question], [])
+      if (s >= MIN) pool.push({ kind:'ans', id:'a'+a.id, score:s, urg:0, title:a.question, body:a.answer, by:a.answered_by })
     }
     return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
   }, [cards, know, answered, lang, query])
