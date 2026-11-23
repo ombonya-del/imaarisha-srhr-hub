@@ -840,7 +840,7 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
       if (k.language && k.language !== lang && k.language !== 'en') continue
       const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
       let score = 0; for (const t of toks) if (hay.includes(t)) score++
-      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url })
+      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
     }
     for (const a of answered) {
       const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
@@ -880,9 +880,27 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
                     <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.88, whiteSpace:'pre-line' }}>{m.body}</p>
                     {m.extra && <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.6, margin:'8px 0 0', opacity:.8 }}><b>{tr('what_to_do')}:</b> {m.extra}</p>}
                     {m.kind === 'know' ? (
-                      <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'10px 0 0', fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
-                        {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {tr('latest_sources')} ({m.source}) ↗</a>}
-                      </p>
+                      <div style={{ marginTop:10 }}>
+                        <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
+                          {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {m.source} ↗</a>}
+                        </p>
+                        {(m.resources || []).length > 0 && (
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:9 }}>
+                            {m.resources.map((r, i) => {
+                              const call = r.k === 'call', ext = r.k === 'link'
+                              return (
+                                <a key={i} href={call ? `tel:${r.v}` : r.v} {...(ext ? { target:'_blank', rel:'noopener noreferrer' } : {})} className="uk-press"
+                                  style={{ display:'inline-flex', alignItems:'center', gap:5, textDecoration:'none',
+                                    background: call ? Y.green : Y.tint, color: call ? Y.on : Y.txt,
+                                    border:`1px solid ${call ? Y.green : Y.line}`, borderRadius:999, padding:'6px 11px',
+                                    fontFamily:Y.disp, fontSize:12, fontWeight:700 }}>
+                                  <Icon name={call ? 'phone' : r.k === 'app' ? 'ask' : 'search'} size={13} color={call ? Y.on : Y.green}/>{r.label}
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
                     ) : m.by ? (
                       <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>
                     ) : null}
