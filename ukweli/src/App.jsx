@@ -829,7 +829,7 @@ function AskNudge({ q, lang, tr, answered, isDesktop }) {
                      : { color:Y.teal, cls:'uk-pulse-teal', label:tr('quick_pill') }
   return (
     <>
-      <button type="button" onClick={()=>setOpen(true)} aria-label={pill.label} className={`uk-press ${pill.cls}`}
+      <button type="button" onClick={()=>{ setOpen(true); if (!tier && matches[0] && matches[0].slug) track('quick_answer', { item: matches[0].slug }) }} aria-label={pill.label} className={`uk-press ${pill.cls}`}
         style={{ position:'absolute', right:10, bottom:10, display:'inline-flex', alignItems:'center', gap:7,
           background:pill.color, color:'#fff', border:'none', borderRadius:999, padding:'7px 12px',
           fontFamily:Y.disp, fontSize:12, fontWeight:700, cursor:'pointer', zIndex:3 }}>
@@ -851,7 +851,7 @@ function AskNudge({ q, lang, tr, answered, isDesktop }) {
                     const o = openId === m.id || (openId === 'init' && idx === 0)
                     return (
                       <div key={m.id} className="uk-card" style={{ background:Y.card2, border:`1px solid ${o ? Y.green : Y.line}`, borderRadius:14 }}>
-                        <button onClick={()=>setOpenId(o ? '' : m.id)} aria-expanded={o}
+                        <button onClick={()=>{ if (!o && m.slug) track('quick_answer', { item: m.slug }); setOpenId(o ? '' : m.id) }} aria-expanded={o}
                           style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between', width:'100%', textAlign:'left', background:'none', border:'none', cursor:'pointer', padding:'12px 13px', color:Y.txt }}>
                           <span style={{ flex:1 }}>
                             <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color: m.kind === 'myth' ? Y.gold : m.kind === 'know' ? Y.teal : Y.green }}>{m.kind === 'myth' ? tr('quick_myth') : m.kind === 'know' ? (m.by || 'Nurse Charity') : tr('quick_answered')}</span>

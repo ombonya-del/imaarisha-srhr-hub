@@ -2096,7 +2096,15 @@ function KnowledgeDesk() {
   const [lang, setLang] = usePersisted('know.lang', 'en')
   const [filter, setFilter] = usePersisted('know.filter', 'all')
   const [busy, setBusy] = useState(false)
-  const load = () => sb.from('ukweli_knowledge').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
+  const [views, setViews] = useState({})
+  const load = () => {
+    sb.from('ukweli_knowledge').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
+    const from = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10)
+    const to = new Date().toISOString().slice(0, 10)
+    sb.rpc('ukweli_quick_answer_counts', { p_from: from, p_to: to }).then(({ data }) => {
+      const m = {}; for (const r of (data || [])) m[r.slug] = r; setViews(m)
+    }).catch(() => {})
+  }
   useEffect(() => { load() }, [])
   const slugify = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48)
   const save = async () => {
@@ -2175,7 +2183,7 @@ function KnowledgeDesk() {
           </div>
           <div style={{ fontFamily:C.sans, fontSize:13.5, color:C.txt, fontWeight:800, overflowWrap:'anywhere', marginBottom:5 }}>{r.question}</div>
           <div style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, opacity:.85, lineHeight:1.6, whiteSpace:'pre-line', marginBottom:5 }}>{r.answer}</div>
-          <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginBottom:11 }}>— {r.byline || 'Nurse Charity'}{r.source_url ? ' · ' : ''}{r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer" style={{ color:C.teal, fontWeight:700, textDecoration:'none' }}>source ↗</a>}</div>
+          <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginBottom:11 }}>— {r.byline || 'Nurse Charity'}{r.source_url ? ' · ' : ''}{r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer" style={{ color:C.teal, fontWeight:700, textDecoration:'none' }}>source ↗</a>}{views[r.slug] && <span style={{ color:C.teal, fontWeight:700 }}> · 👁 {views[r.slug].views} views · {views[r.slug].people} people (90d)</span>}</div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             <Btn small color={r.active ? C.gold : C.mint} ghost={r.active} onClick={()=>toggle(r)}>{r.active ? 'Unpublish' : '✓ Go live'}</Btn>
             <Btn small ghost color={C.gold} onClick={()=>editRow(r)}>Edit</Btn>
