@@ -194,7 +194,9 @@ export default function App() {
         .uk-press:active { transform: scale(.985); }
         @keyframes uk-pulse { 0%{ box-shadow:0 0 0 0 rgba(255,122,107,.65) } 70%{ box-shadow:0 0 0 12px rgba(255,122,107,0) } 100%{ box-shadow:0 0 0 0 rgba(255,122,107,0) } }
         .uk-pulse { animation: uk-pulse 1.5s infinite; }
-        @media (prefers-reduced-motion: reduce) { .uk-pulse { animation: none } }
+        @keyframes uk-pulse-teal { 0%{ box-shadow:0 0 0 0 rgba(84,199,199,.6) } 70%{ box-shadow:0 0 0 12px rgba(84,199,199,0) } 100%{ box-shadow:0 0 0 0 rgba(84,199,199,0) } }
+        .uk-pulse-teal { animation: uk-pulse-teal 1.8s infinite; }
+        @media (prefers-reduced-motion: reduce) { .uk-pulse, .uk-pulse-teal { animation: none } }
         .uk-navlink { transition: color .15s ease, border-color .15s ease; }
         /* small phones: tighten the header so the theme button fits beside the wordmark */
         @media (max-width: 400px) {
@@ -592,14 +594,35 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             <ol style={{ margin:'0 0 14px', padding:'0 0 0 18px', fontFamily:Y.sans, fontSize:12.5, color:Y.txt, opacity:.85, lineHeight:1.6 }}>
               <li>{tr('ask_how_1')}</li><li>{tr('ask_how_2')}</li><li>{tr('ask_how_3')}</li>
             </ol>
-            <label htmlFor="uk-q" style={{ position:'absolute', left:-9999 }}>{tr('ask_cta')}</label>
+            <label htmlFor="uk-q" style={{ display:'block', fontFamily:Y.disp, fontSize:14, fontWeight:700, color:Y.green, margin:'2px 2px 7px' }}>{tr('ask_cta')}</label>
             <div style={{ position:'relative' }}>
               <textarea id="uk-q" value={q} onChange={e=>{ setQ(e.target.value); if (err) setErr('') }}
                 placeholder={tr('ask_placeholder')} maxLength={2000}
-                style={{ width:'100%', minHeight:110, resize:'vertical', background:Y.bg,
-                  border:`1px solid ${Y.line}`, borderRadius:14, padding:'13px', color:Y.txt,
-                  fontFamily:Y.sans, fontSize:15, outline:'none', lineHeight:1.5 }}/>
-              <UrgentNudge q={q} lang={lang} tr={tr}/>
+                style={{ width:'100%', minHeight:120, resize:'vertical', background:Y.card2,
+                  border:`2px solid ${Y.green}`, borderRadius:14, padding:'14px', color:Y.txt,
+                  fontFamily:Y.sans, fontSize:15.5, outline:'none', lineHeight:1.5, boxShadow:'0 2px 12px rgba(63,224,160,0.12)' }}/>
+              <AskNudge q={q} lang={lang} tr={tr} answered={answered} isDesktop={isDesktop}/>
+            </div>
+            <fieldset style={{ border:'none', margin:'14px 0 2px', padding:0 }}>
+              <legend style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, color:Y.txt, marginBottom:6, padding:0 }}>{tr('ask_visibility')}</legend>
+              {[[false, tr('ask_share_public')], [true, tr('ask_keep_private')]].map(([val, label]) => (
+                <label key={String(val)} style={{ display:'flex', gap:9, alignItems:'center', fontFamily:Y.sans, fontSize:13,
+                  color:Y.txt, padding:'6px 0', cursor:'pointer' }}>
+                  <input type="radio" name="uk-vis" checked={!!keepPrivate === val} onChange={()=>setKeepPrivate(val)}
+                    style={{ accentColor:Y.green, width:17, height:17, margin:0 }}/>
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+            <button onClick={submit} disabled={busy} className="uk-press"
+              style={{ marginTop:12, width:'100%', fontFamily:Y.disp, fontSize:16, fontWeight:700, padding:'15px 0',
+                borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:Y.on,
+                background:Y.green, boxShadow:'0 6px 16px rgba(63,224,160,0.28)', opacity: tooShort ? 0.6 : 1 }}>
+              {busy ? tr('ask_sending') : tr('ask_send')}
+            </button>
+            <div aria-live="polite" style={{ minHeight:18 }}>
+              {queued && !err && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.gold, margin:'8px 0 0', textAlign:'center', fontWeight:600 }}>{tr('ask_wait')}</p>}
+              {err && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', textAlign:'center', fontWeight:600, lineHeight:1.5 }}>{err}</p>}
             </div>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
               {canSpeak && (
@@ -631,18 +654,6 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             )}
             {photoErr && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'6px 2px 0' }}>{photoErr}</p>}
 
-            <InstantAnswers q={q} lang={lang} tr={tr} answered={answered} isDesktop={isDesktop}/>
-            <fieldset style={{ border:'none', margin:'14px 0 0', padding:0 }}>
-              <legend style={{ fontFamily:Y.disp, fontSize:12, fontWeight:600, color:Y.txt, marginBottom:6, padding:0 }}>{tr('ask_visibility')}</legend>
-              {[[false, tr('ask_share_public')], [true, tr('ask_keep_private')]].map(([val, label]) => (
-                <label key={String(val)} style={{ display:'flex', gap:9, alignItems:'center', fontFamily:Y.sans, fontSize:13,
-                  color:Y.txt, padding:'7px 0', cursor:'pointer' }}>
-                  <input type="radio" name="uk-vis" checked={!!keepPrivate === val} onChange={()=>setKeepPrivate(val)}
-                    style={{ accentColor:Y.green, width:17, height:17, margin:0 }}/>
-                  {label}
-                </label>
-              ))}
-            </fieldset>
             <label style={{ display:'flex', gap:9, alignItems:'flex-start', fontFamily:Y.sans, fontSize:12, color:Y.mut,
               padding:'6px 0 0', cursor:'pointer', lineHeight:1.45 }}>
               <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}
@@ -651,16 +662,6 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
             </label>
 
             <TurnstileWidget onVerify={setTsToken} appearance="interaction-only" />
-            <button onClick={submit} disabled={busy} className="uk-press"
-              style={{ marginTop:6, width:'100%', fontFamily:Y.disp, fontSize:15.5, fontWeight:600, padding:'14px 0',
-                borderRadius:14, border:'none', cursor: busy ? 'wait' : 'pointer', color:Y.on,
-                background:Y.green, opacity: tooShort ? 0.6 : 1 }}>
-              {busy ? tr('ask_sending') : tr('ask_send')}
-            </button>
-            <div aria-live="polite" style={{ minHeight:18 }}>
-              {queued && !err && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.gold, margin:'8px 0 0', textAlign:'center', fontWeight:600 }}>{tr('ask_wait')}</p>}
-              {err && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.coral, margin:'8px 0 0', textAlign:'center', fontWeight:600, lineHeight:1.5 }}>{err}</p>}
-            </div>
             <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'6px 0 0', textAlign:'center', fontWeight:600 }}>
               <Icon name="lock" size={13} style={{ marginRight:5 }}/>{tr('ask_privacy')}
             </p>
@@ -781,6 +782,135 @@ function TimeSensitiveCard({ tr }) {
 
 // The two-step nudge: a red pulsing pill sits on the Ask box; tapping it opens
 // the matching card centred at eye level, instead of burying it down the page.
+// AskNudge — one floating dot in the Ask box. Red + pulsing for danger/time
+// (opens the emergency / time-sensitive card); teal for a matching quick answer
+// (opens the answer card). Tap reveals the card at eye level, like the emergency.
+function AskNudge({ q, lang, tr, answered, isDesktop }) {
+  const [open, setOpen] = useState(false)
+  const [cards, setCards] = useState([])
+  const [know, setKnow] = useState([])
+  const [openId, setOpenId] = useState('init')
+  const [suggestFor, setSuggestFor] = useState(null)
+  useEffect(() => {
+    sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || []))
+    sb.from('ukweli_knowledge').select('*').eq('active', true).then(({ data }) => setKnow(data || []))
+  }, [])
+  const tier = urgentTier(q)
+  const query = (q || '').trim()
+  const matches = useMemo(() => {
+    const toks = QTOKENS(query)
+    if (toks.length < 1 || query.length < 6) return []
+    const pool = []
+    for (const c of cards) {
+      if (c.language && c.language !== lang && c.language !== 'en') continue
+      const hay = [c.claim, c.truth, c.what_to_do, c.why_it_feels_true].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'myth', id:'m'+c.id, score, urg:0, title:c.claim, body:c.truth, extra:c.what_to_do })
+    }
+    for (const k of know) {
+      if (k.language && k.language !== lang && k.language !== 'en') continue
+      const hay = [k.question, (k.keywords || []).join(' '), k.answer].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'know', id:'k'+k.id, slug:k.slug, score: score + 0.5, urg: URGENT_TOPICS[k.topic] || 0, title:k.question, body:k.answer, by:k.byline || 'Nurse Charity', source:k.source, url:k.source_url, resources:k.resources || [] })
+    }
+    for (const a of answered) {
+      const hay = [a.question, a.answer].filter(Boolean).join(' ').toLowerCase()
+      let score = 0; for (const t of toks) if (hay.includes(t)) score++
+      if (score > 0) pool.push({ kind:'ans', id:'a'+a.id, score, urg:0, title:a.question, body:a.answer, by:a.answered_by })
+    }
+    return pool.sort((x, y) => (y.score - x.score) || (y.urg - x.urg)).slice(0, 3)
+  }, [cards, know, answered, lang, query])
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+  const has = !!tier || matches.length > 0
+  useEffect(() => { if (!has) setOpen(false) }, [has])
+  if (!has) return null
+  const pill = tier ? { color:Y.coral, cls:'uk-pulse', label:tr('urgent_pill') }
+                     : { color:Y.teal, cls:'uk-pulse-teal', label:tr('quick_pill') }
+  return (
+    <>
+      <button type="button" onClick={()=>setOpen(true)} aria-label={pill.label} className={`uk-press ${pill.cls}`}
+        style={{ position:'absolute', right:10, bottom:10, display:'inline-flex', alignItems:'center', gap:7,
+          background:pill.color, color:'#fff', border:'none', borderRadius:999, padding:'7px 12px',
+          fontFamily:Y.disp, fontSize:12, fontWeight:700, cursor:'pointer', zIndex:3 }}>
+        <span aria-hidden="true" style={{ width:8, height:8, borderRadius:'50%', background:'#fff' }}/> {pill.label}
+      </button>
+      {open && (
+        <div role="dialog" aria-modal="true" onClick={()=>setOpen(false)}
+          style={{ position:'fixed', inset:0, background:'rgba(3,15,12,.6)', zIndex:1000,
+            display:'flex', justifyContent:'center', alignItems:'flex-start', padding:'10vh 16px 16px', overflowY:'auto' }}>
+          <div onClick={e=>e.stopPropagation()} style={{ width:'100%', maxWidth:460 }}>
+            {tier === 'danger' && <EmergencyCard tr={tr}/>}
+            {tier === 'time' && <TimeSensitiveCard tr={tr}/>}
+            {matches.length > 0 && (
+              <div style={{ background:Y.card, border:`1px solid ${Y.teal}`, borderLeft:`4px solid ${Y.teal}`, borderRadius:16, padding:'14px', marginTop: tier ? 10 : 0 }}>
+                <p style={{ fontFamily:Y.disp, fontSize:15, fontWeight:700, color:Y.teal, margin:'0 0 2px' }}>💡 {tr('quick_title')}</p>
+                <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'0 0 10px', lineHeight:1.5 }}>{tr('quick_sub')}</p>
+                <div style={{ display:'grid', gap:8 }}>
+                  {matches.map((m, idx) => {
+                    const o = openId === m.id || (openId === 'init' && idx === 0)
+                    return (
+                      <div key={m.id} className="uk-card" style={{ background:Y.card2, border:`1px solid ${o ? Y.green : Y.line}`, borderRadius:14 }}>
+                        <button onClick={()=>setOpenId(o ? '' : m.id)} aria-expanded={o}
+                          style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between', width:'100%', textAlign:'left', background:'none', border:'none', cursor:'pointer', padding:'12px 13px', color:Y.txt }}>
+                          <span style={{ flex:1 }}>
+                            <span style={{ fontFamily:Y.sans, fontSize:10, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color: m.kind === 'myth' ? Y.gold : m.kind === 'know' ? Y.teal : Y.green }}>{m.kind === 'myth' ? tr('quick_myth') : m.kind === 'know' ? (m.by || 'Nurse Charity') : tr('quick_answered')}</span>
+                            <span style={{ display:'block', fontFamily:Y.disp, fontSize:14.5, fontWeight:600, lineHeight:1.3, marginTop:3 }}>{m.title}</span>
+                          </span>
+                          <span aria-hidden="true" style={{ color:Y.green, fontSize:18, lineHeight:1, flexShrink:0, transform: o ? 'rotate(45deg)' : 'none', transition:'transform .15s' }}>+</span>
+                        </button>
+                        {o && (
+                          <div style={{ padding:'0 13px 12px' }}>
+                            <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.65, margin:0, opacity:.9, whiteSpace:'pre-line' }}>{m.body}</p>
+                            {m.extra && <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.6, margin:'8px 0 0', opacity:.8 }}><b>{tr('what_to_do')}:</b> {m.extra}</p>}
+                            {m.kind === 'know' ? (
+                              <div style={{ marginTop:10 }}>
+                                <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
+                                  {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {m.source} ↗</a>}
+                                </p>
+                                {(m.resources || []).length > 0 && (
+                                  <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:9 }}>
+                                    {m.resources.map((r, i) => {
+                                      const call = r.k === 'call', ext = r.k === 'link'
+                                      return (
+                                        <a key={i} href={call ? `tel:${r.v}` : r.v} {...(ext ? { target:'_blank', rel:'noopener noreferrer' } : {})} className="uk-press"
+                                          style={{ display:'inline-flex', alignItems:'center', gap:5, textDecoration:'none', background: call ? Y.green : Y.tint, color: call ? Y.on : Y.txt, border:`1px solid ${call ? Y.green : Y.line}`, borderRadius:999, padding:'6px 11px', fontFamily:Y.disp, fontSize:12, fontWeight:700 }}>
+                                          <Icon name={call ? 'phone' : r.k === 'app' ? 'ask' : 'search'} size={13} color={call ? Y.on : Y.green}/>{r.label}
+                                        </a>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+                                {lang === 'sheng' && (
+                                  <button type="button" onClick={()=>setSuggestFor(m)} className="uk-press"
+                                    style={{ display:'inline-flex', alignItems:'center', gap:5, marginTop:9, background:'transparent', border:`1px solid ${Y.teal}`, color:Y.teal, borderRadius:999, padding:'6px 11px', fontFamily:Y.disp, fontSize:12, fontWeight:700, cursor:'pointer' }}>✍️ {tr('sheng_cta')}</button>
+                                )}
+                              </div>
+                            ) : m.by ? (
+                              <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:'8px 0 0', fontWeight:700 }}>✓ {m.by}</p>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            <button type="button" onClick={()=>setOpen(false)} className="uk-press"
+              style={{ width:'100%', marginTop:10, background:Y.card2, border:`1px solid ${Y.line}`, color:Y.txt, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'12px 0', borderRadius:12, cursor:'pointer' }}>{tr('urgent_close')}</button>
+          </div>
+        </div>
+      )}
+      {suggestFor && <ShengSuggest tr={tr} entrySlug={suggestFor.slug} entryTitle={suggestFor.title} onClose={()=>setSuggestFor(null)}/>}
+    </>
+  )
+}
+
 function UrgentNudge({ q, lang, tr }) {
   const [open, setOpen] = useState(false)
   const tier = urgentTier(q)
@@ -822,7 +952,7 @@ function UrgentNudge({ q, lang, tr }) {
 function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
   const [cards, setCards] = useState([])
   const [know, setKnow] = useState([])
-  const [openId, setOpenId] = useState(null)
+  const [openId, setOpenId] = useState('init')
   const [suggestFor, setSuggestFor] = useState(null)
   useEffect(() => {
     sb.from('ukweli_cards').select('*').eq('active', true).then(({ data }) => setCards(data || []))
@@ -859,16 +989,17 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
     return null
   }
   return (
-    <div style={{ margin:'12px 0 0' }}>
-      {matches.length > 0 && <>
-        <p style={{ fontFamily:Y.disp, fontSize:13, fontWeight:700, color:Y.green, margin:'4px 2px 2px' }}>{tr('quick_title')}</p>
-        <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'0 2px 8px', lineHeight:1.5 }}>{tr('quick_sub')}</p>
+    <div style={{ margin:'14px 0 0' }}>
+      {matches.length > 0 && (
+        <div style={{ background:Y.card2, border:`1px solid ${Y.teal}`, borderLeft:`4px solid ${Y.teal}`, borderRadius:16, padding:'14px 14px 12px' }}>
+        <p style={{ fontFamily:Y.disp, fontSize:14, fontWeight:700, color:Y.teal, margin:'0 0 2px' }}>💡 {tr('quick_title')}</p>
+        <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, margin:'0 0 10px', lineHeight:1.5 }}>{tr('quick_sub')}</p>
         <div style={{ display:'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap:8, alignItems:'start' }}>
-          {matches.map(m => {
-            const open = openId === m.id
+          {matches.map((m, idx) => {
+            const open = openId === m.id || (openId === 'init' && idx === 0)
             return (
               <div key={m.id} className="uk-card" style={{ background:Y.card, border:`1px solid ${open ? Y.green : Y.line}`, borderRadius:14 }}>
-                <button onClick={()=>setOpenId(open ? null : m.id)} aria-expanded={open}
+                <button onClick={()=>setOpenId(open ? '' : m.id)} aria-expanded={open}
                   style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between', width:'100%', textAlign:'left',
                     background:'none', border:'none', cursor:'pointer', padding:'12px 13px', color:Y.txt }}>
                   <span style={{ flex:1 }}>
@@ -919,7 +1050,8 @@ function InstantAnswers({ q, lang, tr, answered, isDesktop }) {
             )
           })}
         </div>
-      </>}
+        </div>
+      )}
       {suggestFor && <ShengSuggest tr={tr} entrySlug={suggestFor.slug} entryTitle={suggestFor.title} onClose={()=>setSuggestFor(null)}/>}
     </div>
   )

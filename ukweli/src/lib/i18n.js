@@ -687,3 +687,5 @@ const MYSHENG = {
 for (const l of Object.keys(MYSHENG)) Object.assign(STRINGS[l], MYSHENG[l])
 const MYSHENG_ABOUT = { en:{ sheng_about:'About' }, sw:{ sheng_about:'Kuhusu' }, sheng:{ sheng_about:'Kuhusu' } }
 for (const l of Object.keys(MYSHENG_ABOUT)) Object.assign(STRINGS[l], MYSHENG_ABOUT[l])
+const QUICKPILL = { en:{ quick_pill:'💡 Answer — tap' }, sw:{ quick_pill:'💡 Jibu — gusa' }, sheng:{ quick_pill:'💡 Jibu — bonyeza' } }
+for (const l of Object.keys(QUICKPILL)) Object.assign(STRINGS[l], QUICKPILL[l])
