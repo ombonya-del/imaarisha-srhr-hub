@@ -3,6 +3,7 @@ import { sb, C, timeAgo, toast, notifyMembers, cleanText } from '../lib/supabase
 import { ScreenTitle, SectionLabel, Chip, Btn, inputStyle } from '../lib/components'
 import { MatchNotifyModal, NotifyButton } from '../lib/matchNotify'
 import { UkweliUsage } from '../lib/ukweliUsage'
+import { CampaignLibrary, CampaignVoices, CampaignReports, CampaignRapid, CampaignDashboard } from '../lib/campaign'
 import { UkweliFeedback, countNewFeedback } from '../lib/ukweliFeedback'
 import { usePersisted, getPersisted, setPersisted, scrollToWork } from '../lib/persist'
 
@@ -62,6 +63,8 @@ export default function Admin({ session, bottomTabs }) {
       ['resources','📚 Submissions', counts.resources] ] },
     { id:'voices', icon:'🗣', short:'Voices', label:'🗣 Voices', desks:[
       ['notify','📣 Broadcast'], ['unado','📸 UnaDO?', counts.unado], ['community','🙋 Community'] ] },
+    { id:'campaign', icon:'📢', short:'Campaign', label:'📢 Campaign', desks:[
+      ['cdash','📈 Dashboard'], ['clib','🎬 Library'], ['cvoices','🔗 Voices & links'], ['creports','📝 Reports'], ['crapid','⚡ Rapid response'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
       ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
@@ -72,7 +75,7 @@ export default function Admin({ session, bottomTabs }) {
   return (
     <div style={ bottomTabs ? { paddingBottom: 78 } : undefined }>
       <ScreenTitle accent={C.lilac} kicker="👑 Admin · members never see this" title="The control room"
-        sub="Activity, usage metrics, members, the Uliza answer desk, and Hebu Fika moderation."/>
+        sub="Activity, usage metrics, members, the digital campaign, the Uliza answer desk, and Hebu Fika moderation."/>
       {/* Top group chips — only in the integrated (non-PWA) view. */}
       {!bottomTabs && (
         <div style={{ display:'flex', gap:6, marginBottom: activeGroup.desks.length > 1 ? 8 : 16, flexWrap:'wrap' }}>
@@ -109,6 +112,11 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'community' && <CommunityDesk/>}
       {view === 'usage'     && <UkweliUsage/>}
       {view === 'feedback'  && <UkweliFeedback onChange={loadCounts}/>}
+      {view === 'cdash'     && <CampaignDashboard/>}
+      {view === 'clib'      && <CampaignLibrary session={session}/>}
+      {view === 'cvoices'   && <CampaignVoices/>}
+      {view === 'creports'  && <CampaignReports/>}
+      {view === 'crapid'    && <CampaignRapid/>}
 
       {/* Fixed bottom tab bar for the standalone Admin PWA (four sections). */}
       {bottomTabs && (

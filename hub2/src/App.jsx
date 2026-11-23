@@ -11,11 +11,12 @@ import Exchange from './screens/Exchange'
 import Events from './screens/Events'
 import Unado from './screens/Unado'
 import Admin from './screens/Admin'
+import Campaign from './screens/Campaign'
 
 // Each id maps to the screen that renders it.
 const SCREENS = {
   pulse: Pulse, radar: Radar, watch: Watch, forum: Forum, unado: Unado,
-  tracker: Tracker, exchange: Exchange, events: Events, admin: Admin,
+  tracker: Tracker, exchange: Exchange, events: Events, campaign: Campaign, admin: Admin,
 }
 // Sub-tab labels for grouped destinations (shown in the in-page sub-nav row).
 const SUB_META = {
@@ -33,6 +34,7 @@ const NAV = [
   { id:'voices',   icon:'💬', label:'Voices',   subs:['forum','unado'] },
   { id:'exchange', icon:'⇄',  label:'Exchange', subs:['exchange'] },
   { id:'events',   icon:'📅', label:'Events',   subs:['events'] },
+  { id:'campaign', icon:'📢', label:'Campaign', subs:['campaign'] },
   // Admin is NOT a member-hub tab — admins use the standalone app at
   // admin.imaarishasrhr.org (hub.imaarishasrhr.org/admin.html and #admin still work).
 ]

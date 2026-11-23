@@ -8,6 +8,7 @@ import { cleanPhoto, uploadPhoto, speechSupported, startDictation } from './lib/
 import { useHashRoute, useSessionState, clearSessionDrafts, useScrollToItem, newQuestionCode, normCode, prettyCode, loadSavedCodes, saveCode, forgetSavedCodes } from './lib/persist'
 import KenyaMap from './KenyaMap'
 import { startTracking, track, getCounty, setCounty as saveCounty, feedbackContext } from './lib/track'
+import { ImaarishaMedia, KnowledgeCheck } from './CampaignMedia'
 
 // ── Ukweli — youth-facing PWA. No accounts, no names, quick exit. ─────────────
 // Identity: evergreen + sophisticated. Deep forest base gives cards real
@@ -1368,6 +1369,7 @@ function Learn({ tr, lang, isDesktop, item, setItem }) {
       <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, opacity:.7, margin:'0 0 18px', lineHeight:1.6, fontWeight:500 }}>
         {tr('learn_intro')}
       </p>
+      <ImaarishaMedia Y={Y} tr={tr} lang={lang} isDesktop={isDesktop} open={open} setOpen={setOpen} onCheck={()=>setOpen('quiz')}/>
       <div style={{ display:'grid', gridTemplateColumns: isDesktop?'1fr 1fr':'1fr', gap:12 }}>
         {topics.map(topic => {
           const isOpen = open === topic.key
@@ -1429,6 +1431,7 @@ function Learn({ tr, lang, isDesktop, item, setItem }) {
           )
         })}
       </div>
+      <KnowledgeCheck Y={Y} tr={tr} lang={lang} open={open} setOpen={setOpen}/>
       <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.mut, lineHeight:1.6, margin:'18px 4px 0', textAlign:'center' }}>
         {tr('learn_footer')}
       </p>
