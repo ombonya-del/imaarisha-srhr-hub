@@ -243,12 +243,20 @@ export default function App() {
         /* small phones: tighten the header so the theme button fits beside the wordmark */
         @media (max-width: 400px) {
           .uk-word { font-size: 16px !important; }
-          .uk-logo { height: 26px !important; width: auto; }
-          .uk-langs button { padding: 3px 5px !important; }
-          .uk-exit { padding: 3px 8px !important; }
-          .uk-hdr-r { gap: 4px !important; }
+          .uk-logo { height: 24px !important; width: auto; }
+          .uk-langs button { padding: 2px 5px !important; font-size: 8.5px !important; }
+          .uk-dot { width: 11px !important; height: 11px !important; }
+          .uk-themebtn, .uk-exit { width: 24px !important; height: 24px !important; }
+          .uk-hdr-r { gap: 3px !important; }
+          .uk-palrow { gap: 3px !important; }
         }
-        @media (max-width: 340px) { .uk-logo { display: none !important; } }
+        @media (max-width: 352px) {
+          .uk-logo { display: none !important; }
+          .uk-word { font-size: 15px !important; }
+          .uk-dot { width: 10px !important; height: 10px !important; }
+          .uk-langs button { padding: 2px 4px !important; font-size: 8px !important; }
+          .uk-themebtn, .uk-exit { width: 22px !important; height: 22px !important; }
+        }
       `}</style>
 
       {/* identity stripe */}
@@ -261,16 +269,16 @@ export default function App() {
         <div style={{ maxWidth:maxW, margin:'0 auto', padding: isDesktop?'12px 16px':'10px 12px',
           display:'flex', alignItems:'center', justifyContent:'space-between', gap: isDesktop?12:8 }}>
           <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink: isDesktop?0:1 }}>
-            <img className="uk-logo" src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:30}
+            <img className="uk-logo" src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:26}
               style={{ display:'block', flexShrink:0, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
             <div style={{ display:'flex', flexDirection:'column', lineHeight:1, minWidth:0 }}>
-              <span className="uk-word" style={{ fontFamily:Y.disp, fontSize: isDesktop?21:18, fontWeight:600, letterSpacing:'-.02em',
+              <span className="uk-word" style={{ fontFamily:Y.disp, fontSize: isDesktop?21:17, fontWeight:600, letterSpacing:'-.02em',
                 display:'inline-flex', alignItems:'flex-start', whiteSpace:'nowrap' }}>
                 Ukweli<span style={{ color:Y.green }}>SRHR</span>
                 <Bolt size={isDesktop?11:9} color={Y.gold}/>
               </span>
-              <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:8, fontWeight:700,
-                letterSpacing: isDesktop?'.26em':'.18em', whiteSpace:'nowrap',
+              <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:7.5, fontWeight:700,
+                letterSpacing: isDesktop?'.26em':'.12em', whiteSpace:'nowrap',
                 textTransform:'uppercase', color:Y.tag, marginTop:5 }}>{tr('brand_sub')}</span>
             </div>
           </div>
@@ -293,39 +301,39 @@ export default function App() {
             </nav>
           )}
 
-          <div className="uk-hdr-r" style={{ display:'flex', alignItems:'center', gap: isDesktop?8:6, flexShrink:0 }}>
+          <div className="uk-hdr-r" style={{ display:'flex', alignItems:'center', gap: isDesktop?8:4, flexShrink:0 }}>
             <div className="uk-palrow" role="group" aria-label={tr('theme_pick') || 'Choose colour theme'}
-              style={{ display:'flex', alignItems:'center', gap: isDesktop?6:5, marginRight:2 }}>
+              style={{ display:'flex', alignItems:'center', gap: isDesktop?6:4, marginRight:2 }}>
               {PALETTES.map(pl => {
                 const on = palette === pl.id
                 return (
-                  <button key={pl.id} onClick={()=>setPalette(pl.id)} className="uk-press"
+                  <button key={pl.id} onClick={()=>setPalette(pl.id)} className="uk-press uk-dot"
                     aria-label={pl.id} aria-pressed={on} title={pl.id.charAt(0).toUpperCase()+pl.id.slice(1)}
-                    style={{ width: isDesktop?16:15, height: isDesktop?16:15, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
+                    style={{ width: isDesktop?16:12, height: isDesktop?16:12, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
                       background: pl.pri, border:`1px solid ${Y.line}`,
                       outline: on ? `2px solid ${Y.txt}` : 'none', outlineOffset: on ? '2px' : 0,
                       transition:'outline-color .12s' }} />
                 )
               })}
             </div>
-            <button onClick={toggleTheme} className="uk-press"
+            <button onClick={toggleTheme} className="uk-press uk-themebtn"
               aria-label={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')} title={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')}
-              style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width: isDesktop?32:28, height: isDesktop?32:28,
+              style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width: isDesktop?32:24, height: isDesktop?32:24,
                 borderRadius:'50%', border:`1px solid ${Y.line}`, background:Y.tint, color:Y.txt, cursor:'pointer', flexShrink:0, padding:0 }}>
-              <ThemeIcon theme={theme} size={isDesktop?16:14}/>
+              <ThemeIcon theme={theme} size={isDesktop?16:13}/>
             </button>
             <div className="uk-langs" style={{ display:'flex', gap:2, background:Y.tint, borderRadius:20,
               padding: isDesktop?3:2, border:`1px solid ${Y.line}` }}>
               {LANGS.map(([code,label]) => (
                 <button key={code} onClick={()=>setLang(code)}
-                  style={{ fontFamily:Y.sans, fontSize: isDesktop?10.5:9.5, fontWeight:700,
-                    padding: isDesktop?'4px 10px':'3px 7px', borderRadius:16, border:'none',
+                  style={{ fontFamily:Y.sans, fontSize: isDesktop?10.5:9, fontWeight:700,
+                    padding: isDesktop?'4px 10px':'2px 6px', borderRadius:16, border:'none',
                     cursor:'pointer', background: lang===code?Y.txt:'transparent', color: lang===code?Y.bg:Y.mut }}>{label}</button>
               ))}
             </div>
             <button onClick={quickExit} title={tr('exit_leave') || 'Leave this site instantly'} aria-label={tr('exit_leave') || 'Leave this site instantly'} className="uk-press uk-exit"
-              style={{ fontFamily:Y.disp, fontSize: isDesktop?14:13, fontWeight:700, lineHeight:1,
-                width: isDesktop?32:28, height: isDesktop?32:28, borderRadius:'50%', flexShrink:0, padding:0,
+              style={{ fontFamily:Y.disp, fontSize: isDesktop?14:12, fontWeight:700, lineHeight:1,
+                width: isDesktop?32:24, height: isDesktop?32:24, borderRadius:'50%', flexShrink:0, padding:0,
                 display:'inline-flex', alignItems:'center', justifyContent:'center',
                 border:`1px solid ${Y.coral}`, background:'transparent', color:Y.coral, cursor:'pointer' }}>
               ✕
