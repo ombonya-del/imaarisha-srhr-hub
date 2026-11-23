@@ -712,3 +712,18 @@ const EXITLEAVE = {
   sheng: { exit_leave: 'Toka kwa site hii saa hiyo' },
 }
 for (const l of Object.keys(EXITLEAVE)) Object.assign(STRINGS[l], EXITLEAVE[l])
+
+// Sheng: fill remaining media + quiz labels
+Object.assign(STRINGS.sheng, {
+  media_ep: 'Ep.',
+  media_download: 'Download',
+  media_listen_full: 'Sikiliza episode nzima',
+  quiz_intro_again: 'Umeshafanya? Jaribu tena ukimaliza kuangalia — uone kilichobadilika.',
+  quiz_age: 'Umri wako',
+  quiz_under18_btn: 'Chini ya 18',
+  quiz_under18: 'Asante! Hii check ni ya watu wa 18 na above — lakini kila kitu kingine kwa Ukweli ni chako.',
+  quiz_saving: 'Inacheck…',
+  quiz_again: 'Jaribu tena',
+  quiz_error: 'Haikusave saa hii — check connection yako kisha ujaribu tena.',
+  quiz_privacy: 'Hakuna jina, hakuna namba. Majibu yako inatusaidia tu kujua kama hii info inawork.',
+})
