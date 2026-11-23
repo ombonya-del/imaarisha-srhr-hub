@@ -67,7 +67,7 @@ export default function Admin({ session, bottomTabs }) {
       ['cdash','📈 Dashboard'], ['clib','🎬 Library'], ['cvoices','🔗 Voices & links'], ['creports','📝 Reports'], ['crapid','⚡ Rapid response'] ] },
     { id:'ukweli', icon:'✦', short:'Ukweli', label:'✦ Ukweli', desks:[
       ['uliza','💬 Uliza desk', counts.uliza], ['fika','📍 Hebu Fika', counts.fika],
-      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['knowledge','🌿 Quick answers'], ['mailbag','📨 Mailbag'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
+      ['radar','🚩 Trending'], ['latest','📰 Latest'], ['myths','⚡ Myths'], ['learn','📖 Learn'], ['knowledge','🌿 Quick answers'], ['mailbag','📨 Mailbag'], ['mysheng','✍️ My Sheng'], ['feedback','💬 Feedback', counts.feedback], ['usage','📈 Usage report'] ] },
   ]
   const activeGroup = GROUPS.find(g => g.desks.some(d => d[0] === view)) || GROUPS[0]
   const groupBadge = (g) => g.desks.reduce((s, d) => s + (d[2] || 0), 0)
@@ -110,6 +110,7 @@ export default function Admin({ session, bottomTabs }) {
       {view === 'learn'     && <LearnDesk/>}
       {view === 'knowledge' && <KnowledgeDesk/>}
       {view === 'mailbag'   && <MailbagDesk/>}
+      {view === 'mysheng'   && <MyShengDesk/>}
       {view === 'latest'    && <LatestDesk/>}
       {view === 'community' && <CommunityDesk/>}
       {view === 'usage'     && <UkweliUsage/>}
@@ -2237,6 +2238,52 @@ function MailbagDesk() {
             </select>
             {r.theme && <span style={{ fontFamily:C.sans, fontSize:11, color:C.teal, fontWeight:700 }}>#{r.theme}</span>}
             <span style={{ flex:1 }}/>
+            <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── ✍️ My Sheng — community suggestions for better Sheng wording (Nov 2026) ──
+const SHENG_STATUS = [['new','🆕 New'],['applied','✅ Applied'],['declined','🚫 Declined']]
+function MyShengDesk() {
+  const [rows, setRows] = useState(null)
+  const [filter, setFilter] = usePersisted('mysheng.filter', 'new')
+  const load = () => sb.from('ukweli_sheng_suggestions').select('*').order('created_at', { ascending:false }).limit(500).then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+  const setStatus = async (r, status) => { const { error } = await sb.from('ukweli_sheng_suggestions').update({ status }).eq('id', r.id); if (error) toast(error.message, 'red'); else load() }
+  const del = async (id) => { const { error } = await sb.from('ukweli_sheng_suggestions').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); load() } }
+  const copy = async (t) => { try { await navigator.clipboard.writeText(t || ''); toast('Copied', 'green') } catch { /* ignore */ } }
+  const shown = (rows || []).filter(r => filter === 'all' ? true : r.status === filter)
+  const newCount = (rows || []).filter(r => r.status === 'new').length
+  return (
+    <div>
+      <SectionLabel color={C.teal}>✍️ My Sheng — suggestions from young users</SectionLabel>
+      <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, lineHeight:1.6, margin:'0 0 14px' }}>
+        When the Sheng doesn’t land, young people suggest a better phrasing right in the app. Review each one, copy the wording
+        you like into the relevant Quick answer (or Myth/Learn card), then mark it Applied.{newCount > 0 ? ` · ${newCount} new` : ''}
+      </p>
+      <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
+        <Chip active={filter === 'all'} onClick={()=>setFilter('all')} color={C.teal}>All</Chip>
+        {SHENG_STATUS.map(([k,l]) => <Chip key={k} active={filter === k} onClick={()=>setFilter(k)} color={C.teal}>{l}</Chip>)}
+      </div>
+      {rows === null && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, fontStyle:'italic' }}>Loading…</p>}
+      {rows !== null && shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>Nothing here yet.</p>}
+      {shown.map(r => (
+        <div key={r.id} style={{ background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${r.status === 'applied' ? C.mint : r.status === 'declined' ? C.coral : C.teal}`, borderRadius:12, padding:14, marginBottom:10 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', gap:10, flexWrap:'wrap', marginBottom:6 }}>
+            <span style={{ fontFamily:C.sans, fontSize:10.5, color:C.mut }}>{r.entry_slug ? r.entry_slug + ' · ' : ''}{r.lang} · {timeAgo(r.created_at)}</span>
+            <span style={{ fontFamily:C.sans, fontSize:10.5, fontWeight:800, color: r.status === 'applied' ? C.mint : r.status === 'declined' ? C.coral : C.teal }}>{(SHENG_STATUS.find(s => s[0] === r.status) || [,r.status])[1]}</span>
+          </div>
+          {r.original_text && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, margin:'0 0 6px', lineHeight:1.5 }}><span style={{ fontWeight:700 }}>Was:</span> “{r.original_text}”</p>}
+          <p style={{ fontFamily:C.sans, fontSize:14, color:C.txt, fontWeight:700, margin:'0 0 6px', lineHeight:1.5, overflowWrap:'anywhere' }}>“{r.suggestion}”</p>
+          {r.note && <p style={{ fontFamily:C.sans, fontSize:12, color:C.mut, margin:'0 0 8px', lineHeight:1.5 }}>{r.note}</p>}
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
+            <Btn small ghost color={C.sky} onClick={()=>copy(r.suggestion)}>Copy wording</Btn>
+            <Btn small color={C.mint} onClick={()=>setStatus(r, 'applied')} disabled={r.status === 'applied'}>✅ Applied</Btn>
+            <Btn small ghost onClick={()=>setStatus(r, 'declined')} disabled={r.status === 'declined'}>Decline</Btn>
             <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
           </div>
         </div>

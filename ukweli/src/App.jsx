@@ -282,6 +282,7 @@ export default function App() {
         </p>
         <CountyAsk tr={tr}/>
         <FeedbackStrip tr={tr} sent={fbSent} onOpen={()=>setFbOpen(true)}/>
+        {lang === 'sheng' && <ShengBar tr={tr}/>}
         {tab === 'ask'   && <Uliza tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'myths' && <Myths tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
         {tab === 'disinfo' && <Disinfo tr={tr} lang={lang} isDesktop={isDesktop} {...itemProps} />}
@@ -933,6 +934,71 @@ function NotifyButton({ code, lang, tr }) {
         {state === 'working' ? tr('notify_working') : tr('notify_cta')}
       </button>
       {state === 'msg' && <p style={{ fontFamily:Y.sans, fontSize:12, color:Y.mut, margin:'8px 0 0', lineHeight:1.5 }}>{msg}</p>}
+    </div>
+  )
+}
+
+const shLbl = { display:'block', fontFamily:Y.disp, fontSize:11.5, fontWeight:600, color:Y.mut, margin:'8px 0 3px' }
+const shInput = { width:'100%', background:Y.bg, border:`1px solid ${Y.line}`, borderRadius:12, padding:'10px 12px', color:Y.txt, fontFamily:Y.sans, fontSize:14, outline:'none', resize:'vertical', marginBottom:2 }
+function shengVisitor() {
+  try { let v = localStorage.getItem('uk_visitor'); if (!v) { v = Math.random().toString(36).slice(2, 12); localStorage.setItem('uk_visitor', v) } return v } catch { return '' }
+}
+// "My Sheng" — a Sheng-only bar inviting young users to improve the wording.
+function ShengBar({ tr }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', background:Y.card,
+        border:`1px solid ${Y.line}`, borderLeft:`3px solid ${Y.teal}`, borderRadius:14, padding:'11px 13px', margin:'0 0 16px' }}>
+        <span style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.5, flex:1, minWidth:170 }}>{tr('sheng_bar')}</span>
+        <button onClick={()=>setOpen(true)} className="uk-press" style={{ fontFamily:Y.disp, fontSize:12.5, fontWeight:700,
+          padding:'8px 13px', borderRadius:12, border:`1px solid ${Y.teal}`, background:'transparent', color:Y.teal, cursor:'pointer', flexShrink:0 }}>{tr('sheng_cta')}</button>
+      </div>
+      {open && <ShengSuggest tr={tr} onClose={()=>setOpen(false)}/>}
+    </>
+  )
+}
+function ShengSuggest({ tr, onClose }) {
+  const [orig, setOrig] = useState('')
+  const [sug, setSug] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+  const [err, setErr] = useState('')
+  const send = async () => {
+    if (sug.trim().length < 2) { setErr(tr('sheng_min')); return }
+    setBusy(true); setErr('')
+    const { data, error } = await sb.rpc('ukweli_sheng_suggest', { p: { suggestion:sug, original_text:orig, note, lang:'sheng', visitor:shengVisitor() } })
+    setBusy(false)
+    if (error || data !== 'ok') { setErr(tr('sheng_err')); return }
+    setDone(true)
+  }
+  return (
+    <div role="dialog" aria-modal="true" onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(3,15,12,.6)', zIndex:1000,
+      display:'flex', justifyContent:'center', alignItems:'flex-start', padding:'10vh 16px 16px', overflowY:'auto' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:'100%', maxWidth:440, background:Y.card, border:`1px solid ${Y.line}`, borderRadius:18, padding:18 }}>
+        {done ? (
+          <>
+            <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:700, color:Y.green, margin:'0 0 12px' }}>{tr('sheng_sent')}</p>
+            <button onClick={onClose} className="uk-press" style={{ width:'100%', background:Y.green, border:'none', color:Y.on, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'12px 0', borderRadius:12, cursor:'pointer' }}>{tr('sheng_close')}</button>
+          </>
+        ) : (
+          <>
+            <p style={{ fontFamily:Y.disp, fontSize:16, fontWeight:700, color:Y.txt, margin:'0 0 4px' }}>{tr('sheng_title')}</p>
+            <label style={shLbl}>{tr('sheng_orig')}</label>
+            <textarea value={orig} onChange={e=>setOrig(e.target.value)} rows={2} style={shInput}/>
+            <label style={shLbl}>{tr('sheng_sug')} *</label>
+            <textarea value={sug} onChange={e=>{ setSug(e.target.value); if (err) setErr('') }} rows={2} style={shInput}/>
+            <label style={shLbl}>{tr('sheng_note')}</label>
+            <input value={note} onChange={e=>setNote(e.target.value)} style={{ ...shInput, resize:'none' }}/>
+            {err && <p role="alert" style={{ fontFamily:Y.sans, fontSize:12, color:Y.coral, margin:'8px 0 0', fontWeight:600 }}>{err}</p>}
+            <div style={{ display:'flex', gap:8, marginTop:14 }}>
+              <button onClick={send} disabled={busy} className="uk-press" style={{ flex:1, background:Y.teal, border:'none', color:Y.on, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'12px 0', borderRadius:12, cursor:'pointer' }}>{busy ? '…' : tr('sheng_send')}</button>
+              <button onClick={onClose} className="uk-press" style={{ background:Y.card2, border:`1px solid ${Y.line}`, color:Y.txt, fontFamily:Y.disp, fontSize:14, fontWeight:600, padding:'12px 16px', borderRadius:12, cursor:'pointer' }}>{tr('sheng_close')}</button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   )
 }

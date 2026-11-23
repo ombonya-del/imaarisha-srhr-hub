@@ -665,3 +665,23 @@ const URGENT = {
   },
 }
 for (const l of Object.keys(URGENT)) Object.assign(STRINGS[l], URGENT[l])
+
+// ── My Sheng: community suggestions for better Sheng (Nov 2026) ──────────────
+const MYSHENG = {
+  en: { sheng_bar: 'This is our Sheng — a word not landing right? Help us fix it.', sheng_cta: '✍️ Suggest',
+    sheng_title: 'My Sheng — suggest a change', sheng_orig: 'The Sheng that felt off (optional)',
+    sheng_sug: 'How you’d say it in better Sheng', sheng_note: 'Why / where? (optional)',
+    sheng_send: 'Send suggestion', sheng_sent: '✓ Asante! We’ll review your suggestion.',
+    sheng_close: 'Close', sheng_min: 'Write your suggestion first', sheng_err: 'Could not send — try again.' },
+  sw: { sheng_bar: 'Hii ni Sheng yetu — neno halijakaa poa? Tusaidie kuirekebisha.', sheng_cta: '✍️ Pendekeza',
+    sheng_title: 'My Sheng — pendekeza mabadiliko', sheng_orig: 'Sheng iliyokwama (hiari)',
+    sheng_sug: 'Vile ungesema kwa Sheng poa zaidi', sheng_note: 'Kwa nini / iko wapi? (hiari)',
+    sheng_send: 'Tuma pendekezo', sheng_sent: '✓ Asante! Tutaangalia pendekezo lako.',
+    sheng_close: 'Funga', sheng_min: 'Andika pendekezo lako kwanza', sheng_err: 'Haikuweza kutumwa — jaribu tena.' },
+  sheng: { sheng_bar: 'Hii ni Sheng yetu — neno halijakaa poa? Tusaidie tui-fix.', sheng_cta: '✍️ Pendekeza',
+    sheng_title: 'My Sheng — pendekeza change', sheng_orig: 'Sheng iliyokwama (optional)',
+    sheng_sug: 'Vile ungesema kwa Sheng poa zaidi', sheng_note: 'Kwa nini / iko wapi? (optional)',
+    sheng_send: 'Tuma suggestion', sheng_sent: '✓ Asante! Tuta-review suggestion yako.',
+    sheng_close: 'Funga', sheng_min: 'Andika suggestion yako kwanza', sheng_err: 'Haikuweza tumwa — jaribu tena.' },
+}
+for (const l of Object.keys(MYSHENG)) Object.assign(STRINGS[l], MYSHENG[l])
