@@ -2093,6 +2093,7 @@ function KnowledgeDesk() {
   const [form, setForm] = usePersisted('know.form', EMPTY_KNOW)
   const [editId, setEditId] = usePersisted('know.editId', null)
   const [lang, setLang] = usePersisted('know.lang', 'en')
+  const [filter, setFilter] = usePersisted('know.filter', 'all')
   const [busy, setBusy] = useState(false)
   const load = () => sb.from('ukweli_knowledge').select('*').order('language').order('sort_order').then(({ data }) => setRows(data || []))
   useEffect(() => { load() }, [])
@@ -2116,7 +2117,7 @@ function KnowledgeDesk() {
   const reset = () => { setEditId(null); setForm(EMPTY_KNOW) }
   const toggle = async (r) => { const { error } = await sb.from('ukweli_knowledge').update({ active: !r.active }).eq('id', r.id); if (error) toast(error.message, 'red'); else { toast(r.active ? 'Hidden' : '✓ Live', r.active ? 'gold' : 'green'); load() } }
   const del = async (id) => { const { error } = await sb.from('ukweli_knowledge').delete().eq('id', id); if (error) toast(error.message, 'red'); else { toast('Deleted', 'gold'); if (editId === id) reset(); load() } }
-  const shown = rows.filter(r => r.language === lang)
+  const shown = rows.filter(r => r.language === lang && (filter === 'all' ? true : filter === 'sensitive' ? r.sensitive : filter === 'live' ? r.active : filter === 'pending' ? !r.active : true))
   const pending = rows.filter(r => !r.active).length
   return (
     <div>
@@ -2156,17 +2157,25 @@ function KnowledgeDesk() {
           {editId && <Btn ghost color={C.mut} onClick={reset}>Cancel</Btn>}
         </div>
       </div>
-      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
+      <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
         {KNOW_LANGS.map(([k,l]) => <Chip key={k} active={lang === k} onClick={()=>setLang(k)} color={C.gold}>{l}</Chip>)}
       </div>
-      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>No entries in this language yet.</p>}
+      <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
+        {[['all','All'],['pending','⏳ Pending'],['live','● Live'],['sensitive','⚠ Sensitive']].map(([k,l]) => <Chip key={k} active={filter === k} onClick={()=>setFilter(k)} color={C.sky}>{l}</Chip>)}
+      </div>
+      {shown.length === 0 && <p style={{ fontFamily:C.sans, fontSize:12.5, color:C.mut, fontStyle:'italic' }}>No entries match this filter.</p>}
       {shown.map(r => (
-        <div key={r.id} style={{ display:'flex', gap:10, justifyContent:'space-between', alignItems:'flex-start', background:C.card, border:`1px solid ${C.line}`, borderLeft:`3px solid ${r.active ? C.mint : C.gold}`, borderRadius:10, padding:'10px 12px', marginBottom:8, opacity:r.active ? 1 : 0.65 }}>
-          <div style={{ minWidth:0 }}>
-            <div style={{ fontFamily:C.sans, fontSize:13, color:C.txt, fontWeight:700, overflowWrap:'anywhere' }}>{r.question}</div>
-            <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginTop:2 }}>#{r.sort_order}{r.topic ? ' · ' + r.topic : ''}{r.source ? ' · ' + r.source : ''}{r.sensitive ? ' · ⚠ sensitive' : ''} · {r.active ? 'live' : 'pending review'}</div>
+        <div key={r.id} style={{ background:C.card, border:`1px solid ${r.sensitive ? C.coral : C.line}`, borderLeft:`3px solid ${r.active ? C.mint : C.gold}`, borderRadius:12, padding:14, marginBottom:10, opacity:r.active ? 1 : 0.95 }}>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:7 }}>
+            <span style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.04em', textTransform:'uppercase', color:C.on, background:r.active ? C.mint : C.gold, borderRadius:999, padding:'2px 9px' }}>{r.active ? '● Live' : '⏳ Pending'}</span>
+            {r.sensitive && <span style={{ fontFamily:C.sans, fontSize:10, fontWeight:800, letterSpacing:'.04em', textTransform:'uppercase', color:'#fff', background:C.coral, borderRadius:999, padding:'2px 9px' }}>⚠ Sensitive — needs legal sign-off</span>}
+            {r.topic && <span style={{ fontFamily:C.sans, fontSize:11, color:C.mut }}>{r.topic}</span>}
+            {r.source && <span style={{ fontFamily:C.sans, fontSize:11, color:C.teal, fontWeight:700 }}>{r.source}</span>}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6, flexShrink:0 }}>
+          <div style={{ fontFamily:C.sans, fontSize:13.5, color:C.txt, fontWeight:800, overflowWrap:'anywhere', marginBottom:5 }}>{r.question}</div>
+          <div style={{ fontFamily:C.sans, fontSize:12.5, color:C.txt, opacity:.85, lineHeight:1.6, whiteSpace:'pre-line', marginBottom:5 }}>{r.answer}</div>
+          <div style={{ fontFamily:C.sans, fontSize:11, color:C.mut, marginBottom:11 }}>— {r.byline || 'Nurse Charity'}{r.source_url ? ' · ' : ''}{r.source_url && <a href={r.source_url} target="_blank" rel="noopener noreferrer" style={{ color:C.teal, fontWeight:700, textDecoration:'none' }}>source ↗</a>}</div>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             <Btn small color={r.active ? C.gold : C.mint} ghost={r.active} onClick={()=>toggle(r)}>{r.active ? 'Unpublish' : '✓ Go live'}</Btn>
             <Btn small ghost color={C.gold} onClick={()=>editRow(r)}>Edit</Btn>
             <Btn small ghost color={C.coral} onClick={()=>del(r.id)}>Delete</Btn>
