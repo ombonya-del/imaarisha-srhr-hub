@@ -572,7 +572,7 @@ export function useLang() {
 }
 
 // English & Kiswahili are the core languages; Sheng is an optional informal layer.
-export const LANGS = [['en','EN'],['sw','SW'],['sheng','Sheng']]
+export const LANGS = [['en','EN'],['sw','SW'],['sheng','SHE']]
 
 // ── Instant answers + emergency help + "notify me" (Nov 2026) ───────────────
 // Feedback asked for (1) an immediate answer, not only the ask-and-wait lane,
