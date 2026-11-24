@@ -39,6 +39,9 @@ const Y = {
   sans:  "'Plus Jakarta Sans', system-ui, sans-serif",
 }
 
+// Constant black header — same in every theme & mode; controls read light-on-black.
+const HDR = { bg:'#0A0C0B', txt:'#F2F5F0', mut:'#8A9893', line:'rgba(255,255,255,0.14)', tint:'rgba(255,255,255,0.08)' }
+
 
 // ── Light / dark themes ───────────────────────────────────────────────────────
 // Dark is the original evergreen look. Light uses deeper accents so text and
@@ -264,22 +267,22 @@ export default function App() {
         background:`linear-gradient(90deg, ${Y.green} 0%, ${Y.teal} 50%, ${Y.coral} 100%)` }}/>
 
       {/* Top bar */}
-      <header style={{ position:'sticky', top:3, zIndex:10, background:Y.glass,
-        backdropFilter:'blur(14px)', borderBottom:`1px solid ${Y.line}` }}>
+      <header style={{ position:'sticky', top:3, zIndex:10, background:HDR.bg,
+        borderBottom:`1px solid ${HDR.line}` }}>
         <div style={{ maxWidth:maxW, margin:'0 auto', padding: isDesktop?'12px 16px':'10px 12px',
           display:'flex', alignItems:'center', justifyContent:'space-between', gap: isDesktop?12:8 }}>
           <div style={{ display:'flex', alignItems:'center', gap: isDesktop?11:8, minWidth:0, flexShrink: isDesktop?0:1 }}>
             <img className="uk-logo" src="/logo-mark.png" alt="Imaarisha" height={isDesktop?36:26}
               style={{ display:'block', flexShrink:0, filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}/>
             <div style={{ display:'flex', flexDirection:'column', lineHeight:1, minWidth:0 }}>
-              <span className="uk-word" style={{ fontFamily:Y.disp, fontSize: isDesktop?21:17, fontWeight:600, letterSpacing:'-.02em',
+              <span className="uk-word" style={{ fontFamily:Y.disp, fontSize: isDesktop?21:17, fontWeight:600, letterSpacing:'-.02em', color:HDR.txt,
                 display:'inline-flex', alignItems:'flex-start', whiteSpace:'nowrap' }}>
                 Ukweli<span style={{ color:Y.green }}>SRHR</span>
                 <Bolt size={isDesktop?11:9} color={Y.gold}/>
               </span>
               <span style={{ fontFamily:Y.sans, fontSize: isDesktop?9.5:7.5, fontWeight:700,
                 letterSpacing: isDesktop?'.26em':'.12em', whiteSpace:'nowrap',
-                textTransform:'uppercase', color:Y.tag, marginTop:5 }}>{tr('brand_sub')}</span>
+                textTransform:'uppercase', color:'#FFFFFF', marginTop:5 }}>{tr('brand_sub')}</span>
             </div>
           </div>
 
@@ -310,8 +313,8 @@ export default function App() {
                   <button key={pl.id} onClick={()=>setPalette(pl.id)} className="uk-press uk-dot"
                     aria-label={pl.id} aria-pressed={on} title={pl.id.charAt(0).toUpperCase()+pl.id.slice(1)}
                     style={{ width: isDesktop?16:12, height: isDesktop?16:12, borderRadius:'50%', padding:0, cursor:'pointer', flexShrink:0,
-                      background: pl.pri, border:`1px solid ${Y.line}`,
-                      outline: on ? `2px solid ${Y.txt}` : 'none', outlineOffset: on ? '2px' : 0,
+                      background: pl.pri, border:`1px solid ${HDR.line}`,
+                      outline: on ? `2px solid ${HDR.txt}` : 'none', outlineOffset: on ? '2px' : 0,
                       transition:'outline-color .12s' }} />
                 )
               })}
@@ -319,16 +322,16 @@ export default function App() {
             <button onClick={toggleTheme} className="uk-press uk-themebtn"
               aria-label={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')} title={tr(theme === 'light' ? 'theme_to_dark' : 'theme_to_light')}
               style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width: isDesktop?32:24, height: isDesktop?32:24,
-                borderRadius:'50%', border:`1px solid ${Y.line}`, background:Y.tint, color:Y.txt, cursor:'pointer', flexShrink:0, padding:0 }}>
+                borderRadius:'50%', border:`1px solid ${HDR.line}`, background:HDR.tint, color:HDR.txt, cursor:'pointer', flexShrink:0, padding:0 }}>
               <ThemeIcon theme={theme} size={isDesktop?16:13}/>
             </button>
-            <div className="uk-langs" style={{ display:'flex', gap:2, background:Y.tint, borderRadius:20,
-              padding: isDesktop?3:2, border:`1px solid ${Y.line}` }}>
+            <div className="uk-langs" style={{ display:'flex', gap:2, background:HDR.tint, borderRadius:20,
+              padding: isDesktop?3:2, border:`1px solid ${HDR.line}` }}>
               {LANGS.map(([code,label]) => (
                 <button key={code} onClick={()=>setLang(code)}
                   style={{ fontFamily:Y.sans, fontSize: isDesktop?10.5:9, fontWeight:700,
                     padding: isDesktop?'4px 10px':'2px 6px', borderRadius:16, border:'none',
-                    cursor:'pointer', background: lang===code?Y.txt:'transparent', color: lang===code?Y.bg:Y.mut }}>{label}</button>
+                    cursor:'pointer', background: lang===code?HDR.txt:'transparent', color: lang===code?HDR.bg:HDR.mut }}>{label}</button>
               ))}
             </div>
             <button onClick={quickExit} title={tr('exit_leave') || 'Leave this site instantly'} aria-label={tr('exit_leave') || 'Leave this site instantly'} className="uk-press uk-exit"
@@ -931,9 +934,12 @@ function AskNudge({ q, lang, tr, answered, isDesktop }) {
                             {m.extra && <p style={{ fontFamily:Y.sans, fontSize:12.5, color:Y.txt, lineHeight:1.6, margin:'8px 0 0', opacity:.8 }}><b>{tr('what_to_do')}:</b> {m.extra}</p>}
                             {m.kind === 'know' ? (
                               <div style={{ marginTop:10 }}>
-                                <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
-                                  {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {m.source} ↗</a>}
-                                </p>
+                                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                  <img src="/char/charity-cut.png" alt="Nurse Charity" loading="lazy" style={{ width:34, height:34, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:`2px solid ${Y.teal}`, background:Y.card2, flexShrink:0 }}/>
+                                  <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>✓ {m.by || 'Nurse Charity'}
+                                    {m.source && <a href={m.url || '#'} target="_blank" rel="noopener noreferrer" style={{ fontFamily:Y.sans, fontSize:11, color:Y.teal, fontWeight:700, textDecoration:'none', marginLeft:6 }}>· {m.source} ↗</a>}
+                                  </p>
+                                </div>
                                 {(m.resources || []).length > 0 && (
                                   <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginTop:9 }}>
                                     {m.resources.map((r, i) => {
@@ -1242,9 +1248,10 @@ function AnsweredList({ tr, answered, isDesktop }) {
                 {open ? (
                   <div style={{ padding:'0 14px 13px' }}>
                     <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.85, whiteSpace:'pre-line' }}>{a.answer}</p>
-                    <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
-                      ✓ {a.answered_by || tr('verified_pro')} · {timeAgo(a.answered_at)}
-                    </p>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <img src="/char/charity-cut.png" alt="Nurse Charity" loading="lazy" style={{ width:30, height:30, borderRadius:'50%', objectFit:'cover', objectPosition:'top', border:`2px solid ${Y.teal}`, background:Y.card2, flexShrink:0 }}/>
+                      <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>✓ Nurse Charity · {timeAgo(a.answered_at)}</p>
+                    </div>
                   </div>
                 ) : (
                   <p style={{ fontFamily:Y.sans, fontSize:11.5, color:Y.green, margin:'-6px 14px 12px', fontWeight:700 }}>{tr('qs_answer')} ▾</p>
@@ -1336,7 +1343,7 @@ function MyQuestions({ tr, onCount, remember }) {
                 <>
                   <p style={{ fontFamily:Y.sans, fontSize:13.5, color:Y.txt, lineHeight:1.7, margin:'0 0 9px', opacity:.88, whiteSpace:'pre-line' }}>{r.answer}</p>
                   <p style={{ fontFamily:Y.sans, fontSize:11, color:Y.green, margin:0, fontWeight:700 }}>
-                    ✓ {r.answered_by || tr('verified_pro')} · {timeAgo(r.answered_at)}{r.keep_private ? ` · ${tr('myq_private_tag')}` : ''}
+                    ✓ Nurse Charity · {timeAgo(r.answered_at)}{r.keep_private ? ` · ${tr('myq_private_tag')}` : ''}
                   </p>
                 </>
               ) : (
