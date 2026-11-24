@@ -727,3 +727,11 @@ Object.assign(STRINGS.sheng, {
   quiz_error: 'Haikusave saa hii — check connection yako kisha ujaribu tena.',
   quiz_privacy: 'Hakuna jina, hakuna namba. Majibu yako inatusaidia tu kujua kama hii info inawork.',
 })
+
+// Peer Voices strip (Ask flow) — fictional Field Guide characters
+const PEER = {
+  en:    { peer_title:'Peer voices', peer_kevo:'“Asking isn’t weakness.”', peer_agneta:'“I learned my rights.”', peer_brenda:'“My body, my questions.”' },
+  sw:    { peer_title:'Sauti za wenzako', peer_kevo:'“Kuuliza si udhaifu.”', peer_agneta:'“Nilijua haki zangu.”', peer_brenda:'“Mwili wangu, maswali yangu.”' },
+  sheng: { peer_title:'Sauti za wasee', peer_kevo:'“Kuuliza si u-weak.”', peer_agneta:'“Nilijua rights zangu.”', peer_brenda:'“Mwili wangu, maswali zangu.”' },
+}
+for (const l of Object.keys(PEER)) Object.assign(STRINGS[l], PEER[l])
