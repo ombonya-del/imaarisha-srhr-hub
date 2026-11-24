@@ -551,7 +551,7 @@ function FeedbackModal({ tr, tab, onClose, onSent }) {
 // navigating away (sessionStorage; cleared on Quick Exit / closing the tab).
 const KEEP_PRIVATE_DEFAULT = false   // flip to true to make "just for me" the default
 
-function PeerVoices({ tr }) {
+function PeerVoices({ tr, isDesktop }) {
   const PEERS = [
     { img:'/char/kevo-cut.png',   name:'Kevo',   age:'22', q:'peer_kevo',   acc:Y.gold },
     { img:'/char/agneta-cut.png', name:'Agneta', age:'17', q:'peer_agneta', acc:Y.teal },
@@ -562,12 +562,18 @@ function PeerVoices({ tr }) {
       <p style={{ fontFamily:Y.sans, fontSize:11, fontWeight:800, letterSpacing:'.06em', textTransform:'uppercase', color:Y.teal, margin:'0 2px 9px' }}>{tr('peer_title')}</p>
       <div style={{ display:'flex', gap:8 }}>
         {PEERS.map(pr => (
-          <div key={pr.name} style={{ flex:1, minWidth:0, background:Y.card, border:`1px solid ${Y.line}`, borderTop:`3px solid ${pr.acc}`, borderRadius:14, padding:'8px 7px 10px', textAlign:'center' }}>
-            <div style={{ height:66, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
-              <img src={pr.img} alt={pr.name} loading="lazy" style={{ maxHeight:66, maxWidth:'94%', objectFit:'contain', filter:'drop-shadow(0 2px 4px rgba(0,0,0,.4))' }}/>
+          <div key={pr.name} style={{ flex:1, minWidth:0, background:Y.card, border:`1px solid ${Y.line}`,
+            borderTop: isDesktop ? `1px solid ${Y.line}` : `3px solid ${pr.acc}`, borderLeft: isDesktop ? `3px solid ${pr.acc}` : `1px solid ${Y.line}`,
+            borderRadius:14, padding: isDesktop ? '12px 14px' : '8px 7px 10px',
+            display:'flex', flexDirection: isDesktop ? 'row' : 'column', alignItems:'center', gap: isDesktop ? 12 : 0,
+            textAlign: isDesktop ? 'left' : 'center' }}>
+            <div style={{ height: isDesktop ? 96 : 66, width: isDesktop ? 80 : 'auto', flexShrink:0, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+              <img src={pr.img} alt={pr.name} loading="lazy" style={{ maxHeight: isDesktop ? 96 : 66, maxWidth: isDesktop ? '100%' : '94%', objectFit:'contain', filter:'drop-shadow(0 2px 5px rgba(0,0,0,.42))' }}/>
             </div>
-            <div style={{ fontFamily:Y.sans, fontSize:11, fontWeight:800, color:Y.txt, marginTop:5 }}>{pr.name} <span style={{ color:Y.mut, fontWeight:600 }}>· {pr.age}</span></div>
-            <div style={{ fontFamily:Y.sans, fontSize:9.5, color:Y.mut, lineHeight:1.35, marginTop:2 }}>{tr(pr.q)}</div>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontFamily:Y.sans, fontSize: isDesktop?13.5:11, fontWeight:800, color:Y.txt, marginTop: isDesktop?0:5 }}>{pr.name} <span style={{ color:Y.mut, fontWeight:600 }}>· {pr.age}</span></div>
+              <div style={{ fontFamily:Y.sans, fontSize: isDesktop?12:9.5, color:Y.mut, lineHeight:1.45, marginTop:3 }}>{tr(pr.q)}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -762,7 +768,7 @@ function Uliza({ tr, lang, isDesktop, item, setItem }) {
         )}
       </div>
 
-      <PeerVoices tr={tr}/>
+      <PeerVoices tr={tr} isDesktop={isDesktop}/>
       <AnsweredList tr={tr} answered={answered} isDesktop={isDesktop}/>
       </>
       )}
