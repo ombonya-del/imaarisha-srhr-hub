@@ -1,0 +1,51 @@
+{
+ "generated_at": "2026-11-28T15:54:00Z",
+ "source": "ImaarishaSRHR X bookmark folder (@vombonya) — daily sweep, scheduled DAILY 13:30 EAT, this run fired 2026-11-28 15:54 UTC (~18:54 EAT). Browser 2 of 4 connected Chrome profiles was the one logged in as @vombonya (Nchi Haina Rais).",
+ "target_table": "public.radar_items",
+ "folder_note": "Sweep captured 53 renderable posts. Large-step descent under-rendered (settled at 30) due to virtualization; two fine top-to-bottom passes at 300-320px steps with short pauses settled firmly at 53 across two full passes, spinner gone, scrollHeight settled ~25249, bottom reached. Live dedupe against radar_items via the public anon key: 3895 total radar urls, 38 unique live X status ids. Of the 53 captured, 37 are already in the live X set and 50 are already known once prior pending files are included. The remaining captured ids were checked against every prior pending_supplement file (scripts/ + scripts/outbox/, 25 files). Exactly 3 ids are net-new (in neither radar_items nor any prior pending file): 2123751141049577971 (@IMARATVKE BETRAYAL teaser) and 2066930086083699029 (@Tutu_lips_ family-planning stigma post) are on-theme candidates for auto-insert; 2104777608583897517 (@_James041) is an off-theme post about a jailed police OCS and is skipped. ZERO held candidates this run. ZERO ukweli candidates.",
+ "candidates": [
+  {
+   "source_name": "@IMARATVKE",
+   "title": "IMARA.TV teaser for youth SRHR film \"BETRAYAL\" (with @YSW_Kenya): \"Some conversations are uncomfortable, but too important to ignore\"",
+   "snippet": "IMARA.TV (@IMARATVKE), a Kenyan youth SRHR media outlet, posted a 'coming soon' behind-the-scenes teaser for its film BETRAYAL, co-promoted with @YSW_Kenya, framed as an uncomfortable-but-important conversation that 'deserves to be seen and heard'. 431.8K views. Promotional youth SRHR storytelling; the film's explicit subject is not stated in the teaser.",
+   "url": "https://x.com/IMARATVKE/status/2123751141049577971",
+   "platform": "x",
+   "published_at": "2026-11-20T12:11:44Z",
+   "srhr_relevance": 6,
+   "harm_score": 0,
+   "sentiment": "positive",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "en"
+   ],
+   "review_note": "Net-new to the live radar_items X set and to every prior pending_supplement file (scripts/ + outbox/). IMARA.TV is an established Kenyan youth SRHR media outlet (its YSW Kenya/UNFPA-backed condom film was inserted on a prior run); this is a 'coming soon' teaser for its film BETRAYAL, co-promoted with @YSW_Kenya, so it reads as youth SRHR media/awareness content. NOT disinformation (is_disinfo=false, harm_score=0): promotional, carries no false health claim. sentiment=positive (constructive youth SRHR storytelling). typology=none. srhr_relevance=6, kept deliberately moderate because the teaser does not state the film's explicit SRHR subject — relevance rests on the outlet's SRHR remit and the YSW Kenya partnership rather than on content in the post itself. Not sensitive: no minor, no identifiable victim, no unproven allegation against a named person. Full teaser text read from the status page. Auto-insert."
+  },
+  {
+   "source_name": "@Tutu_lips_",
+   "title": "Viral Sheng post stigmatising young women's use of injectable family planning: \"Mnadungwa family planning in your 20's juu ya sex??????\"",
+   "snippet": "Daisy Ndemo (@Tutu_lips_) posted, in Sheng, 'Mnadungwa family planning in your 20's juu ya sex??????' (roughly 'You get put on the family-planning jab in your 20s just because of sex??'), a mocking, incredulous framing that shames young women for using injectable contraception. 1M views with high engagement.",
+   "url": "https://x.com/Tutu_lips_/status/2066930086083699029",
+   "platform": "x",
+   "published_at": "2026-06-16T17:05:08Z",
+   "srhr_relevance": 8,
+   "harm_score": 5,
+   "sentiment": "negative",
+   "typology": "none",
+   "is_disinfo": false,
+   "languages": [
+    "sw",
+    "sheng"
+   ],
+   "review_note": "Net-new to the live radar_items X set and to every prior pending_supplement file. On-theme SRHR: contraception / family planning. sentiment=negative and harm_score=5 because the post stigmatises and mocks young women's use of injectable family planning ('juu ya sex'), a shaming narrative that can discourage contraceptive uptake — the kind of negative SRHR discourse the radar tracks against the positive-share benchmark. is_disinfo=false and typology=none: it shames rather than asserting a specific false medical claim, so it is not a contraceptive_myth factual falsehood (nor fertility/abortion, anti-CSE or faith-healing). srhr_relevance=8 (directly about family planning). languages sw+sheng (Kenyan Sheng). Not sensitive: a general stigma statement, no minor, no identifiable victim, no unproven allegation against a named person. Full tweet text read from the status page (single tweet, no truncation, no quoted tweet). Auto-insert."
+  }
+ ],
+ "ukweli_candidates": [],
+ "skipped_new_this_run": [
+  {
+   "source_name": "@_James041",
+   "url": "https://x.com/_James041/status/2104777608583897517",
+   "reason": "Off-theme: a political/police-accountability post about a jailed OCS (names Wycliffe Kwendo, Lumakanda) 'cooling his buttocks inside a state owned AirBnB'. No SRHR content. It names an identifiable person in an incarceration context, but it is simply off-topic for the SRHR radar, so it is skipped and not inserted."
+  }
+ ]
+}
